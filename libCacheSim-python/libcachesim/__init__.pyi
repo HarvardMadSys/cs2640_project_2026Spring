@@ -26,10 +26,35 @@ libCacheSim Python bindings
     PythonHookCachePolicy
     process_trace
     process_trace_python_hook
+    create_zipf_requests
+    create_uniform_requests
 """
 
-from .const import TraceType
 from typing import Any, Callable, Optional, Union
+from collections.abc import Iterator
+
+from _libcachesim import TraceType, ReqOp
+
+
+class ReqOp:
+    """Request operation types."""
+    NOP: int
+    GET: int
+    GETS: int
+    SET: int
+    ADD: int
+    CAS: int
+    REPLACE: int
+    APPEND: int
+    PREPEND: int
+    DELETE: int
+    INCR: int
+    DECR: int
+    READ: int
+    WRITE: int
+    UPDATE: int
+    INVALID: int
+
 
 def open_trace(
     trace_path: str,
@@ -60,6 +85,55 @@ def process_trace_python_hook(
     """
 
 
+# Trace generation functions
+def create_zipf_requests(
+    num_objects: int,
+    num_requests: int,
+    alpha: float = 1.0,
+    obj_size: int = 4000,
+    time_span: int = 86400 * 7,
+    start_obj_id: int = 0,
+    seed: Optional[int] = None
+) -> Iterator[Request]:
+    """Create a Zipf-distributed request generator.
+
+    Args:
+        num_objects (int): Number of unique objects
+        num_requests (int): Number of requests to generate
+        alpha (float): Zipf skewness parameter (alpha >= 0)
+        obj_size (int): Object size in bytes
+        time_span (int): Time span in seconds
+        start_obj_id (int): Starting object ID
+        seed (int, optional): Random seed for reproducibility
+
+    Returns:
+        Iterator[Request]: A generator that yields Request objects
+    """
+
+
+def create_uniform_requests(
+    num_objects: int,
+    num_requests: int,
+    obj_size: int = 4000,
+    time_span: int = 86400 * 7,
+    start_obj_id: int = 0,
+    seed: Optional[int] = None
+) -> Iterator[Request]:
+    """Create a uniform-distributed request generator.
+
+    Args:
+        num_objects (int): Number of unique objects
+        num_requests (int): Number of requests to generate
+        obj_size (int): Object size in bytes
+        time_span (int): Time span in seconds
+        start_obj_id (int): Starting object ID
+        seed (int, optional): Random seed for reproducibility
+
+    Returns:
+        Iterator[Request]: A generator that yields Request objects
+    """
+
+
 class reader_init_param_t:
     time_field: int
     obj_id_field: int
@@ -71,9 +145,11 @@ class reader_init_param_t:
 
 class Cache:
     n_req: int
-    n_obj: int
-    occupied_byte: int
     cache_size: int
+    @property
+    def n_obj(self) -> int: ...
+    @property
+    def occupied_byte(self) -> int: ...
     def get(self, req: Request) -> bool: ...
 
 
@@ -82,7 +158,22 @@ class Request:
     hv: int
     obj_id: int
     obj_size: int
-    op: int
+    op: ReqOp
+
+    def __init__(self) -> None: ...
+    def __init__(self, obj_id: int, obj_size: int = 1, clock_time: int = 0, hv: int = 0, op: ReqOp = ReqOp.GET) -> None:
+        """Create a request instance.
+
+        Args:
+            obj_id (int): The object ID.
+            obj_size (int): The object size. (default: 1)
+            clock_time (int): The clock time. (default: 0)
+            hv (int): The hash value. (default: 0)
+            op (ReqOp): The operation. (default: ReqOp.GET)
+
+        Returns:
+            Request: A new request instance.
+        """
 
 
 class Reader:
@@ -134,8 +225,23 @@ class EvictionPolicyBase:
 
 
 # Eviction policy classes
-class FIFO(EvictionPolicyBase):
-    """First In First Out replacement policy."""
+class ARC(EvictionPolicyBase):
+    """Adaptive Replacement Cache policy."""
+    def __init__(self, cache_size: int) -> None: ...
+
+
+class Belady(EvictionPolicyBase):
+    """Belady replacement policy (optimal offline algorithm)."""
+    def __init__(self, cache_size: int) -> None: ...
+
+
+class BeladySize(EvictionPolicyBase):
+    """BeladySize replacement policy (optimal offline algorithm with size consideration)."""
+    def __init__(self, cache_size: int) -> None: ...
+
+
+class Cacheus(EvictionPolicyBase):
+    """Cacheus replacement policy."""
     def __init__(self, cache_size: int) -> None: ...
 
 
@@ -144,9 +250,24 @@ class Clock(EvictionPolicyBase):
     def __init__(self, cache_size: int, n_bit_counter: int = 1, init_freq: int = 0) -> None: ...
 
 
-class TwoQ(EvictionPolicyBase):
-    """2Q replacement policy."""
-    def __init__(self, cache_size: int, ain_size_ratio: float = 0.25, aout_size_ratio: float = 0.5) -> None: ...
+class FIFO(EvictionPolicyBase):
+    """First In First Out replacement policy."""
+    def __init__(self, cache_size: int) -> None: ...
+
+
+class LeCaR(EvictionPolicyBase):
+    """LeCaR (Learning Cache Replacement) adaptive replacement policy."""
+    def __init__(self, cache_size: int) -> None: ...
+
+
+class LFU(EvictionPolicyBase):
+    """LFU (Least Frequently Used) replacement policy."""
+    def __init__(self, cache_size: int) -> None: ...
+
+
+class LFUDA(EvictionPolicyBase):
+    """LFUDA (LFU with Dynamic Aging) replacement policy."""
+    def __init__(self, cache_size: int) -> None: ...
 
 
 class LRB(EvictionPolicyBase):
@@ -159,18 +280,24 @@ class LRU(EvictionPolicyBase):
     def __init__(self, cache_size: int) -> None: ...
 
 
-class ARC(EvictionPolicyBase):
-    """Adaptive Replacement Cache policy."""
+class QDLP(EvictionPolicyBase):
+    """QDLP (Queue Demotion with Lazy Promotion) replacement policy."""
     def __init__(self, cache_size: int) -> None: ...
 
 
 class S3FIFO(EvictionPolicyBase):
     """S3FIFO replacement policy."""
-    def __init__(self, cache_size: int, fifo_size_ratio: float = 0.1, ghost_size_ratio: float = 0.9, move_to_main_threshold: int = 2) -> None: ...
+    def __init__(self, cache_size: int, fifo_size_ratio: float = 0.1,
+        ghost_size_ratio: float = 0.9, move_to_main_threshold: int = 2) -> None: ...
 
 
 class Sieve(EvictionPolicyBase):
     """Sieve replacement policy."""
+    def __init__(self, cache_size: int) -> None: ...
+
+
+class SLRU(EvictionPolicyBase):
+    """SLRU (Segmented LRU) replacement policy."""
     def __init__(self, cache_size: int) -> None: ...
 
 
@@ -181,6 +308,16 @@ class ThreeLCache(EvictionPolicyBase):
 
 class TinyLFU(EvictionPolicyBase):
     """TinyLFU replacement policy."""
+    def __init__(self, cache_size: int, main_cache: str = "SLRU", window_size: float = 0.01) -> None: ...
+
+
+class TwoQ(EvictionPolicyBase):
+    """2Q replacement policy."""
+    def __init__(self, cache_size: int, ain_size_ratio: float = 0.25, aout_size_ratio: float = 0.5) -> None: ...
+
+
+class WTinyLFU(EvictionPolicyBase):
+    """WTinyLFU (Windowed TinyLFU) replacement policy."""
     def __init__(self, cache_size: int, main_cache: str = "SLRU", window_size: float = 0.01) -> None: ...
 
 

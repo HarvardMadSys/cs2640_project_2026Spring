@@ -224,15 +224,38 @@ PYBIND11_MODULE(_libcachesim, m) {  // NOLINT(readability-named-parameter)
       .value("UNKNOWN_TRACE", trace_type_e::UNKNOWN_TRACE)
       .export_values();
 
+  py::enum_<req_op_e>(m, "ReqOp")
+      .value("NOP", req_op_e::OP_NOP)
+      .value("GET", req_op_e::OP_GET)
+      .value("GETS", req_op_e::OP_GETS)
+      .value("SET", req_op_e::OP_SET)
+      .value("ADD", req_op_e::OP_ADD)
+      .value("CAS", req_op_e::OP_CAS)
+      .value("REPLACE", req_op_e::OP_REPLACE)
+      .value("APPEND", req_op_e::OP_APPEND)
+      .value("PREPEND", req_op_e::OP_PREPEND)
+      .value("DELETE", req_op_e::OP_DELETE)
+      .value("INCR", req_op_e::OP_INCR)
+      .value("DECR", req_op_e::OP_DECR)
+      .value("READ", req_op_e::OP_READ)
+      .value("WRITE", req_op_e::OP_WRITE)
+      .value("UPDATE", req_op_e::OP_UPDATE)
+      .value("INVALID", req_op_e::OP_INVALID)
+      .export_values();
+
   // *************** structs ***************
   /**
    * @brief Cache structure
    */
   py::class_<cache_t, std::unique_ptr<cache_t, CacheDeleter>>(m, "Cache")
       .def_readwrite("n_req", &cache_t::n_req)
-      .def_readwrite("n_obj", &cache_t::n_obj)
-      .def_readwrite("occupied_byte", &cache_t::occupied_byte)
       .def_readwrite("cache_size", &cache_t::cache_size)
+      // Use proper accessor functions for private fields
+      .def_property_readonly(
+          "n_obj", [](const cache_t& self) { return self.get_n_obj(&self); })
+      .def_property_readonly(
+          "occupied_byte",
+          [](const cache_t& self) { return self.get_occupied_byte(&self); })
       // methods
       .def("get", [](cache_t& self, const request_t& req) {
         return self.get(&self, &req);
@@ -244,6 +267,32 @@ PYBIND11_MODULE(_libcachesim, m) {  // NOLINT(readability-named-parameter)
   py::class_<request_t, std::unique_ptr<request_t, RequestDeleter>>(m,
                                                                     "Request")
       .def(py::init([]() { return new_request(); }))
+      .def(py::init([](uint64_t obj_id, uint64_t obj_size, uint64_t clock_time,
+                       uint64_t hv, req_op_e op) {
+             request_t* req = new_request();
+             req->obj_id = obj_id;
+             req->obj_size = obj_size;
+             req->clock_time = clock_time;
+             req->hv = hv;
+             req->op = op;
+             return req;
+           }),
+           py::arg("obj_id"), py::arg("obj_size") = 1,
+           py::arg("clock_time") = 0, py::arg("hv") = 0,
+           py::arg("op") = req_op_e::OP_GET,
+           R"pbdoc(
+            Create a request instance.
+
+            Args:
+                obj_id (int): The object ID.
+                obj_size (int): The object size. (default: 1)
+                clock_time (int): The clock time. (default: 0)
+                hv (int): The hash value. (default: 0)
+                op (req_op_e): The operation. (default: OP_GET)
+
+            Returns:
+                Request: A new request instance.
+        )pbdoc")
       .def_readwrite("clock_time", &request_t::clock_time)
       .def_readwrite("hv", &request_t::hv)
       .def_readwrite("obj_id", &request_t::obj_id)
@@ -740,6 +789,201 @@ PYBIND11_MODULE(_libcachesim, m) {  // NOLINT(readability-named-parameter)
 
             Returns:
                 Cache: A new TwoQ cache instance.
+      )pbdoc");
+
+  /**
+   * @brief Create a LFU cache instance.
+   */
+  m.def(
+      "LFU_init",
+      [](uint64_t cache_size) {
+        common_cache_params_t cc_params = {.cache_size = cache_size};
+        cache_t* ptr = LFU_init(cc_params, nullptr);
+        return std::unique_ptr<cache_t, CacheDeleter>(ptr);
+      },
+      py::arg("cache_size"),
+      R"pbdoc(
+            Create a LFU cache instance.
+
+            Args:
+                cache_size (int): Size of the cache in bytes.
+
+            Returns:
+                Cache: A new LFU cache instance.
+      )pbdoc");
+
+  /**
+   * @brief Create a LFUDA cache instance.
+   */
+  m.def(
+      "LFUDA_init",
+      [](uint64_t cache_size) {
+        common_cache_params_t cc_params = {.cache_size = cache_size};
+        cache_t* ptr = LFUDA_init(cc_params, nullptr);
+        return std::unique_ptr<cache_t, CacheDeleter>(ptr);
+      },
+      py::arg("cache_size"),
+      R"pbdoc(
+            Create a LFUDA cache instance.
+
+            Args:
+                cache_size (int): Size of the cache in bytes.
+
+            Returns:
+                Cache: A new LFUDA cache instance.
+      )pbdoc");
+
+  /**
+   * @brief Create a SLRU cache instance.
+   */
+  m.def(
+      "SLRU_init",
+      [](uint64_t cache_size) {
+        common_cache_params_t cc_params = {.cache_size = cache_size};
+        cache_t* ptr = SLRU_init(cc_params, nullptr);
+        return std::unique_ptr<cache_t, CacheDeleter>(ptr);
+      },
+      py::arg("cache_size"),
+      R"pbdoc(
+            Create a SLRU cache instance.
+
+            Args:
+                cache_size (int): Size of the cache in bytes.
+
+            Returns:
+                Cache: A new SLRU cache instance.
+      )pbdoc");
+
+  /**
+   * @brief Create a Belady cache instance.
+   */
+  m.def(
+      "Belady_init",
+      [](uint64_t cache_size) {
+        common_cache_params_t cc_params = {.cache_size = cache_size};
+        cache_t* ptr = Belady_init(cc_params, nullptr);
+        return std::unique_ptr<cache_t, CacheDeleter>(ptr);
+      },
+      py::arg("cache_size"),
+      R"pbdoc(
+            Create a Belady cache instance.
+
+            Args:
+                cache_size (int): Size of the cache in bytes.
+
+            Returns:
+                Cache: A new Belady cache instance.
+      )pbdoc");
+
+  /**
+   * @brief Create a BeladySize cache instance.
+   */
+  m.def(
+      "BeladySize_init",
+      [](uint64_t cache_size) {
+        common_cache_params_t cc_params = {.cache_size = cache_size};
+        cache_t* ptr = BeladySize_init(cc_params, nullptr);
+        return std::unique_ptr<cache_t, CacheDeleter>(ptr);
+      },
+      py::arg("cache_size"),
+      R"pbdoc(
+            Create a BeladySize cache instance.
+
+            Args:
+                cache_size (int): Size of the cache in bytes.
+
+            Returns:
+                Cache: A new BeladySize cache instance.
+      )pbdoc");
+
+  /**
+   * @brief Create a QDLP cache instance.
+   */
+  m.def(
+      "QDLP_init",
+      [](uint64_t cache_size) {
+        common_cache_params_t cc_params = {.cache_size = cache_size};
+        cache_t* ptr = QDLP_init(cc_params, nullptr);
+        return std::unique_ptr<cache_t, CacheDeleter>(ptr);
+      },
+      py::arg("cache_size"),
+      R"pbdoc(
+            Create a QDLP cache instance.
+
+            Args:
+                cache_size (int): Size of the cache in bytes.
+
+            Returns:
+                Cache: A new QDLP cache instance.
+      )pbdoc");
+
+  /**
+   * @brief Create a LeCaR cache instance.
+   */
+  m.def(
+      "LeCaR_init",
+      [](uint64_t cache_size) {
+        common_cache_params_t cc_params = {.cache_size = cache_size};
+        cache_t* ptr = LeCaR_init(cc_params, nullptr);
+        return std::unique_ptr<cache_t, CacheDeleter>(ptr);
+      },
+      py::arg("cache_size"),
+      R"pbdoc(
+            Create a LeCaR cache instance.
+
+            Args:
+                cache_size (int): Size of the cache in bytes.
+
+            Returns:
+                Cache: A new LeCaR cache instance.
+      )pbdoc");
+
+  /**
+   * @brief Create a Cacheus cache instance.
+   */
+  m.def(
+      "Cacheus_init",
+      [](uint64_t cache_size) {
+        common_cache_params_t cc_params = {.cache_size = cache_size};
+        cache_t* ptr = Cacheus_init(cc_params, nullptr);
+        return std::unique_ptr<cache_t, CacheDeleter>(ptr);
+      },
+      py::arg("cache_size"),
+      R"pbdoc(
+            Create a Cacheus cache instance.
+
+            Args:
+                cache_size (int): Size of the cache in bytes.
+
+            Returns:
+                Cache: A new Cacheus cache instance.
+      )pbdoc");
+
+  /**
+   * @brief Create a WTinyLFU cache instance.
+   */
+  m.def(
+      "WTinyLFU_init",
+      [](uint64_t cache_size, std::string main_cache, double window_size) {
+        common_cache_params_t cc_params = {.cache_size = cache_size};
+        cache_t* ptr = WTinyLFU_init(
+            cc_params, ("main-cache=" + main_cache + "," +
+                        "window-size=" + std::to_string(window_size))
+                           .c_str());
+        return std::unique_ptr<cache_t, CacheDeleter>(ptr);
+      },
+      py::arg("cache_size"), py::arg("main_cache") = "SLRU",
+      py::arg("window_size") = 0.01,
+      R"pbdoc(
+            Create a WTinyLFU cache instance.
+
+            Args:
+                cache_size (int): Size of the cache in bytes.
+                main_cache (str): Main cache to use (default: "SLRU").
+                window_size (float): Window size for TinyLFU (default: 0.01).
+
+            Returns:
+                Cache: A new WTinyLFU cache instance.
       )pbdoc");
 
   /**
