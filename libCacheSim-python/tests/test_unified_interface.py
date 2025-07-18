@@ -8,7 +8,7 @@ import os
 import pytest
 
 # Add the parent directory to the Python path for development testing
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 try:
     import libcachesim as lcs
@@ -25,9 +25,7 @@ def create_trace_reader():
         Reader or None: A trace reader instance, or None if trace file not found.
     """
     data_file = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-        "data",
-        "cloudPhysicsIO.oracleGeneral.bin"
+        os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "cloudPhysicsIO.oracleGeneral.bin"
     )
     if not os.path.exists(data_file):
         return None
@@ -99,14 +97,14 @@ def test_unified_process_trace_interface():
             pytest.skip(f"Cannot create reader for {name} test")
 
         # Test process_trace method exists
-        assert hasattr(cache, 'process_trace'), f"{name} missing process_trace method"
+        assert hasattr(cache, "process_trace"), f"{name} missing process_trace method"
 
         # Test process_trace functionality
-        miss_ratio = cache.process_trace(test_reader, max_req=max_requests)
-        results[name] = miss_ratio
+        obj_miss_ratio, byte_miss_ratio = cache.process_trace(test_reader, max_req=max_requests)
+        results[name] = obj_miss_ratio
 
         # Verify miss_ratio is valid
-        assert 0.0 <= miss_ratio <= 1.0, f"{name} returned invalid miss_ratio: {miss_ratio}"
+        assert 0.0 <= obj_miss_ratio <= 1.0, f"{name} returned invalid miss_ratio: {obj_miss_ratio}"
 
     # Verify we got results for all caches
     assert len(results) == len(caches), "Not all caches were tested"
@@ -124,7 +122,7 @@ def test_unified_properties_interface():
         "Python Hook": lcs.PythonHookCachePolicy(cache_size, "TestCache"),
     }
 
-    required_properties = ['cache_size', 'n_req', 'n_obj', 'occupied_byte']
+    required_properties = ["cache_size", "n_req", "n_obj", "occupied_byte"]
 
     for name, cache in caches.items():
         # Test all required properties exist
@@ -164,7 +162,7 @@ def test_get_interface_consistency():
         initial_occupied = cache.occupied_byte
 
         # Test get method exists
-        assert hasattr(cache, 'get'), f"{name} missing get method"
+        assert hasattr(cache, "get"), f"{name} missing get method"
 
         # Test first access (should be miss for new object)
         result = cache.get(test_req)

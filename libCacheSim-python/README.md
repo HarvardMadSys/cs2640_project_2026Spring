@@ -3,8 +3,7 @@
 [![Python Release](https://github.com/1a1a11a/libCacheSim/actions/workflows/pypi-release.yml/badge.svg)](https://github.com/1a1a11a/libCacheSim/actions/workflows/pypi-release.yml)
 [![Python Versions](https://img.shields.io/pypi/pyversions/libcachesim.svg?logo=python&logoColor=white)](https://pypi.org/project/libcachesim)
 [![PyPI Version](https://img.shields.io/pypi/v/libcachesim.svg?)](https://pypi.org/project/libcachesim)
-![PyPI - Downloads](https://img.shields.io/pypi/dd/libcachesim)
-
+[![PyPI - Downloads](https://img.shields.io/pypi/dd/libcachesim)](https://pypistats.org/packages/libcachesim)
 
 Python bindings for libCacheSim, a high-performance cache simulator and analysis library.
 
@@ -63,24 +62,35 @@ print(cache.get(req))  # True (second access)
 
 ### Trace Processing
 
+To simulate with traces, we need to read the request of traces correctly. `open_trace` is an unified interface for trace reading, which accepet three parameters:
+
+- `trace_path`: trace path, can be relative or absolutive path.
+- `type` (optional): if not given, we will automatically infer the type of trace according to the suffix of the trace file.
+- `params` (optional): if not given, default params are applied.
+
 ```python
 import libcachesim as lcs
 
 # Open trace and process efficiently
-reader = lcs.open_trace("./data/cloudPhysicsIO.oracleGeneral.bin", lcs.TraceType.ORACLE_GENERAL_TRACE)
+reader = lcs.open_trace(
+    trace_path = "./data/cloudPhysicsIO.oracleGeneral.bin",
+    type = lcs.TraceType.ORACLE_GENERAL_TRACE,
+    params = lcs.ReaderInitParam(ignore_obj_size=True)
+)
 cache = lcs.S3FIFO(cache_size=1024*1024)
 
 # Process entire trace efficiently (C++ backend)
-miss_ratio = cache.process_trace(reader)
-print(f"Miss ratio: {miss_ratio:.4f}")
+obj_miss_ratio, byte_miss_ratio = cache.process_trace(reader)
+print(f"Object miss ratio: {obj_miss_ratio:.4f}, Byte miss ratio: {byte_miss_ratio:.4f}")
 
+cache = lcs.S3FIFO(cache_size=1024*1024)
 # Process with limits and time ranges
-miss_ratio = cache.process_trace(
+obj_miss_ratio, byte_miss_ratio = cache.process_trace(
     reader,
-    start_req=100,
+    start_req=0,
     max_req=1000
 )
-print(f"Miss ratio: {miss_ratio:.4f}")
+print(f"Object miss ratio: {obj_miss_ratio:.4f}, Byte miss ratio: {byte_miss_ratio:.4f}")
 ```
 
 ## Custom Cache Policies
@@ -147,8 +157,8 @@ print(f"Cache hit: {hit}")  # Should be False (miss)
 ```python
 import libcachesim as lcs
 from collections import deque
+from contextlib import suppress
 
-# Create a custom FIFO cache
 cache = lcs.PythonHookCachePolicy(cache_size=1024, cache_name="CustomFIFO")
 
 def init_hook(cache_size):
@@ -164,15 +174,13 @@ def eviction_hook(fifo_queue, obj_id, obj_size):
     return fifo_queue[0]  # Return first item (oldest)
 
 def remove_hook(fifo_queue, obj_id):
-    if fifo_queue and fifo_queue[0] == obj_id:
-        fifo_queue.popleft()
+    with suppress(ValueError):
+        fifo_queue.remove(obj_id)
 
 # Set the hooks and test
 cache.set_hooks(init_hook, hit_hook, miss_hook, eviction_hook, remove_hook)
 
-req = lcs.Request()
-req.obj_id = 1
-req.obj_size = 100
+req = lcs.Request(obj_id=1, obj_size=100)
 hit = cache.get(req)
 print(f"Cache hit: {hit}")  # Should be False (miss)
 ```
@@ -225,6 +233,7 @@ req = lcs.Request()
 req.obj_id = 1
 req.obj_size = 100
 hit = lru_cache.get(req)
+print(hit)
 ```
 
 ## Examples and Testing
@@ -238,8 +247,8 @@ def compare_algorithms(trace_path):
     algorithms = ['LRU', 'S3FIFO', 'Sieve', 'ARC']
     for algo_name in algorithms:
         cache = getattr(lcs, algo_name)(cache_size=1024*1024)
-        miss_ratio = cache.process_trace(reader)
-        print(f"{algo_name}\t\t{miss_ratio:.4f}")
+        obj_miss_ratio, byte_miss_ratio = cache.process_trace(reader)
+        print(f"{algo_name}\t\tObj: {obj_miss_ratio:.4f}, Byte: {byte_miss_ratio:.4f}")
 
 compare_algorithms("./data/cloudPhysicsIO.vscsi")
 ```
@@ -299,8 +308,8 @@ caches = [
 ]
 
 for i, cache in enumerate(caches):
-    miss_ratio_oracle = cache.process_trace(oracle_reader)
-    miss_ratio_csv = cache.process_trace(csv_reader)
+    miss_ratio_oracle = cache.process_trace(oracle_reader)[0]
+    miss_ratio_csv = cache.process_trace(csv_reader)[0]
     print(f"Cache {i} miss ratio: {miss_ratio_oracle:.4f}, {miss_ratio_csv:.4f}")
 ```
 

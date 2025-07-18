@@ -307,15 +307,15 @@ PYBIND11_MODULE(_libcachesim, m) {  // NOLINT(readability-named-parameter)
       .def_readwrite("n_total_req", &reader_t::n_total_req)
       .def_readwrite("trace_path", &reader_t::trace_path)
       .def_readwrite("file_size", &reader_t::file_size)
+      .def_readwrite("ignore_obj_size", &reader_t::ignore_obj_size)
       // methods
       .def(
           "get_wss",
-          [](reader_t& self, bool ignore_obj_size) {
+          [](reader_t& self) {
             int64_t wss_obj = 0, wss_byte = 0;
             cal_working_set_size(&self, &wss_obj, &wss_byte);
-            return ignore_obj_size ? wss_obj : wss_byte;
+            return self.ignore_obj_size ? wss_obj : wss_byte;
           },
-          py::arg("ignore_obj_size") = false,
           R"pbdoc(
             Get the working set size of the trace.
 
@@ -355,38 +355,144 @@ PYBIND11_MODULE(_libcachesim, m) {  // NOLINT(readability-named-parameter)
         if (ret != 0) {
           throw py::stop_iteration();
         }
-        // std::cout << "Read request: " << req->obj_id
-        //           << ", size: " << req->obj_size << std::endl;
         return req;
       });
 
-  py::class_<reader_init_param_t>(m, "reader_init_param_t")
-      .def(py::init<>())
-      .def_readwrite("time_field", &reader_init_param_t::time_field)
-      .def_readwrite("obj_id_field", &reader_init_param_t::obj_id_field)
-      .def_readwrite("obj_size_field", &reader_init_param_t::obj_size_field)
-      .def_readwrite("delimiter", &reader_init_param_t::delimiter)
-      .def_readwrite("has_header", &reader_init_param_t::has_header)
-      .def_property(
-          "binary_fmt_str",
-          // Getter: C char* to Python string (returns copy)
-          [](const reader_init_param_t& self) {
-            return self.binary_fmt_str ? std::string(self.binary_fmt_str) : "";
-          },
-          // Setter: Python string to C char* (handles deep copy and old memory)
-          [](reader_init_param_t& self, const std::string& value) {
-            // Free existing memory if any
-            if (self.binary_fmt_str != nullptr) {
-              free(self.binary_fmt_str);  // Use free() since it was
-                                          // strdup'd/malloc'd
-            }
-            // Deep copy the new string
-            self.binary_fmt_str = strdup(value.c_str());
-            if (self.binary_fmt_str == nullptr && !value.empty()) {
-              throw std::runtime_error(
-                  "Failed to allocate memory for binary_fmt_str");
-            }
-          });
+  // Helper function to apply parameters from dictionary to reader_init_param_t
+  auto apply_params_from_dict = [](reader_init_param_t& params,
+                                   py::dict dict_params) {
+    // Template field setter with type safety
+    auto set_if_present = [&](const char* key, auto& field) {
+      if (dict_params.contains(key)) {
+        field =
+            dict_params[key].cast<std::remove_reference_t<decltype(field)>>();
+      }
+    };
+
+    // Apply all standard fields
+    set_if_present("time_field", params.time_field);
+    set_if_present("obj_id_field", params.obj_id_field);
+    set_if_present("obj_size_field", params.obj_size_field);
+    set_if_present("has_header", params.has_header);
+    set_if_present("ignore_obj_size", params.ignore_obj_size);
+    set_if_present("ignore_size_zero_req", params.ignore_size_zero_req);
+    set_if_present("obj_id_is_num", params.obj_id_is_num);
+    set_if_present("obj_id_is_num_set", params.obj_id_is_num_set);
+    set_if_present("has_header_set", params.has_header_set);
+    set_if_present("cap_at_n_req", params.cap_at_n_req);
+    set_if_present("op_field", params.op_field);
+    set_if_present("ttl_field", params.ttl_field);
+    set_if_present("cnt_field", params.cnt_field);
+    set_if_present("tenant_field", params.tenant_field);
+    set_if_present("next_access_vtime_field", params.next_access_vtime_field);
+    set_if_present("block_size", params.block_size);
+    set_if_present("trace_start_offset", params.trace_start_offset);
+
+    // Special fields with custom handling
+    if (dict_params.contains("delimiter")) {
+      std::string delim = dict_params["delimiter"].cast<std::string>();
+      params.delimiter = delim.empty() ? ',' : delim[0];
+    }
+
+    if (dict_params.contains("binary_fmt_str")) {
+      // Free existing memory first to prevent leaks
+      if (params.binary_fmt_str) {
+        free(params.binary_fmt_str);
+        params.binary_fmt_str = nullptr;
+      }
+      std::string fmt = dict_params["binary_fmt_str"].cast<std::string>();
+      if (!fmt.empty()) {
+        // Note: Using strdup for C-compatible memory allocation
+        // Memory is managed by reader_init_param_t destructor/cleanup
+        params.binary_fmt_str = strdup(fmt.c_str());
+        if (!params.binary_fmt_str) {
+          throw std::runtime_error(
+              "Failed to allocate memory for binary_fmt_str");
+        }
+      }
+    }
+
+    if (dict_params.contains("feature_fields")) {
+      auto ff = dict_params["feature_fields"].cast<std::vector<int32_t>>();
+      if (ff.size() > N_MAX_FEATURES) {
+        throw py::value_error("Too many feature fields (max " +
+                              std::to_string(N_MAX_FEATURES) + ")");
+      }
+      params.n_feature_fields = static_cast<int32_t>(ff.size());
+      // Use copy_n for explicit bounds checking
+      std::copy_n(ff.begin(), params.n_feature_fields, params.feature_fields);
+    }
+  };
+
+  py::class_<reader_init_param_t>(m, "ReaderInitParam")
+      .def(py::init([]() {
+             reader_init_param_t params;
+             set_default_reader_init_params(&params);
+             return params;
+           }),
+           "Create with default parameters")
+
+      .def(py::init([apply_params_from_dict](py::kwargs kwargs) {
+             reader_init_param_t params;
+             set_default_reader_init_params(&params);
+
+             // Convert kwargs to dict and apply using shared helper
+             py::dict dict_params = py::dict(kwargs);
+             apply_params_from_dict(params, dict_params);
+
+             return params;
+           }),
+           "Create with keyword arguments")
+
+      .def(py::init([apply_params_from_dict](py::dict dict_params) {
+             reader_init_param_t params;
+             set_default_reader_init_params(&params);
+
+             // Apply using shared helper function
+             apply_params_from_dict(params, dict_params);
+
+             return params;
+           }),
+           py::arg("params"), "Create from dictionary (backward compatibility)")
+      .def("__repr__", [](const reader_init_param_t& params) {
+        std::stringstream ss;
+        ss << "ReaderInitParam(\n";
+
+        // Group 1: Core fields
+        ss << "  # Core fields\n";
+        ss << "  time_field=" << params.time_field << ", ";
+        ss << "obj_id_field=" << params.obj_id_field << ", ";
+        ss << "obj_size_field=" << params.obj_size_field << ",\n";
+
+        // Group 2: Flags and options
+        ss << "  # Flags and options\n";
+        ss << "  has_header=" << params.has_header << ", ";
+        ss << "ignore_obj_size=" << params.ignore_obj_size << ", ";
+        ss << "ignore_size_zero_req=" << params.ignore_size_zero_req << ", ";
+        ss << "obj_id_is_num=" << params.obj_id_is_num << ",\n";
+
+        // Group 3: Internal state flags
+        ss << "  # Internal state\n";
+        ss << "  obj_id_is_num_set=" << params.obj_id_is_num_set << ", ";
+        ss << "has_header_set=" << params.has_header_set << ",\n";
+
+        // Group 4: Optional fields
+        ss << "  # Optional fields\n";
+        ss << "  cap_at_n_req=" << params.cap_at_n_req << ", ";
+        ss << "op_field=" << params.op_field << ", ";
+        ss << "ttl_field=" << params.ttl_field << ", ";
+        ss << "cnt_field=" << params.cnt_field << ",\n";
+        ss << "  tenant_field=" << params.tenant_field << ", ";
+        ss << "next_access_vtime_field=" << params.next_access_vtime_field
+           << ",\n";
+
+        // Group 5: Miscellaneous
+        ss << "  # Miscellaneous\n";
+        ss << "  block_size=" << params.block_size << ", ";
+        ss << "trace_start_offset=" << params.trace_start_offset;
+        ss << "\n)";
+        return ss.str();
+      });
 
   // *************** functions ***************
   /**
@@ -394,7 +500,8 @@ PYBIND11_MODULE(_libcachesim, m) {  // NOLINT(readability-named-parameter)
    */
   m.def(
       "open_trace",
-      [](const std::string& trace_path, py::object type, py::object params) {
+      [apply_params_from_dict](const std::string& trace_path, py::object type,
+                               py::object params) {
         trace_type_e c_type = UNKNOWN_TRACE;
         if (!type.is_none()) {
           c_type = type.cast<trace_type_e>();
@@ -408,67 +515,18 @@ PYBIND11_MODULE(_libcachesim, m) {  // NOLINT(readability-named-parameter)
           }
         }
 
-        // Create an init_param instance, it will be populated from Python
-        reader_init_param_t init_param = {};
+        // Handle different parameter types
+        reader_init_param_t init_param;
+        set_default_reader_init_params(&init_param);
 
-        // === IMPORTANT: Initialize binary_fmt_str to nullptr ===
-        // This is crucial if it's not always set from Python,
-        // so that free() won't be called on uninitialized memory if not set
-        // later.
-        init_param.binary_fmt_str = nullptr;
-
-        // Populate other fields from Python dict or object
         if (py::isinstance<py::dict>(params)) {
+          // Dictionary parameters - use shared helper function
           py::dict dict_params = params.cast<py::dict>();
-          init_param.time_field = dict_params["time_field"].cast<int>();
-          init_param.obj_id_field = dict_params["obj_id_field"].cast<int>();
-          init_param.obj_size_field = dict_params["obj_size_field"].cast<int>();
-          init_param.delimiter =
-              dict_params["delimiter"].cast<std::string>()[0];
-          init_param.has_header = dict_params["has_header"].cast<bool>();
-          // If binary_fmt_str is in dict_params, set it via property setter
-          if (dict_params.contains("binary_fmt_str") &&
-              !dict_params["binary_fmt_str"].is_none()) {
-            std::string bfs_val =
-                dict_params["binary_fmt_str"].cast<std::string>();
-            if (init_param.binary_fmt_str != nullptr)
-              free(init_param.binary_fmt_str);
-            init_param.binary_fmt_str = strdup(bfs_val.c_str());
-            if (init_param.binary_fmt_str == nullptr && !bfs_val.empty()) {
-              throw std::runtime_error(
-                  "Failed to allocate memory for binary_fmt_str from dict");
-            }
-          }
+          apply_params_from_dict(init_param, dict_params);
         } else if (!params.is_none()) {
-          // If using a reader_init_param_t object from Python, its members are
-          // already set via def_property (No need to copy here, just ensure
-          // it's reader_init_param_t object) If `params` is a
-          // `reader_init_param_t` object, Pybind11 will pass its fields
-          // directly We need to ensure that the `binary_fmt_str` member of
-          // `params` is correctly handled. The direct `getattr` below is for
-          // other fields, for binary_fmt_str, the `def_property` takes care.
-          init_param.time_field = py::getattr(params, "time_field").cast<int>();
-          init_param.obj_id_field =
-              py::getattr(params, "obj_id_field").cast<int>();
-          init_param.obj_size_field =
-              py::getattr(params, "obj_size_field").cast<int>();
-          init_param.delimiter =
-              py::getattr(params, "delimiter").cast<std::string>()[0];
-          init_param.has_header =
-              py::getattr(params, "has_header").cast<bool>();
-          // Handle binary_fmt_str if it's set on the Python object
-          if (py::hasattr(params, "binary_fmt_str") &&
-              !py::getattr(params, "binary_fmt_str").is_none()) {
-            std::string bfs_val =
-                py::getattr(params, "binary_fmt_str").cast<std::string>();
-            if (init_param.binary_fmt_str != nullptr)
-              free(init_param.binary_fmt_str);
-            init_param.binary_fmt_str = strdup(bfs_val.c_str());
-            if (init_param.binary_fmt_str == nullptr && !bfs_val.empty()) {
-              throw std::runtime_error(
-                  "Failed to allocate memory for binary_fmt_str from object");
-            }
-          }
+          // reader_init_param_t object - direct cast (pybind11 handles
+          // conversion)
+          init_param = params.cast<reader_init_param_t>();
         }
         reader_t* ptr = open_trace(trace_path.c_str(), c_type, &init_param);
         return std::unique_ptr<reader_t, ReaderDeleter>(ptr);
@@ -1034,20 +1092,25 @@ PYBIND11_MODULE(_libcachesim, m) {  // NOLINT(readability-named-parameter)
       "process_trace",
       [](cache_t& cache, reader_t& reader, int64_t start_req = 0,
          int64_t max_req = -1) {
-        request_t* req = new_request();
-        int64_t n_req = 0, n_hit = 0;
-        bool hit;
-
         reset_reader(&reader);
         if (start_req > 0) {
           skip_n_req(&reader, start_req);
         }
 
+        request_t* req = new_request();
+        int64_t n_req = 0, n_hit = 0;
+        int64_t bytes_req = 0, bytes_hit = 0;
+        bool hit;
+
         read_one_req(&reader, req);
         while (req->valid) {
           n_req += 1;
+          bytes_req += req->obj_size;
           hit = cache.get(&cache, req);
-          if (hit) n_hit += 1;
+          if (hit) {
+            n_hit += 1;
+            bytes_hit += req->obj_size;
+          }
           read_one_req(&reader, req);
           if (max_req > 0 && n_req >= max_req) {
             break;  // Stop if we reached the max request limit
@@ -1056,7 +1119,10 @@ PYBIND11_MODULE(_libcachesim, m) {  // NOLINT(readability-named-parameter)
 
         free_request(req);
         // return the miss ratio
-        return n_req > 0 ? 1.0 - (double)n_hit / n_req : 0.0;
+        double obj_miss_ratio = n_req > 0 ? 1.0 - (double)n_hit / n_req : 0.0;
+        double byte_miss_ratio =
+            bytes_req > 0 ? 1.0 - (double)bytes_hit / bytes_req : 0.0;
+        return std::make_tuple(obj_miss_ratio, byte_miss_ratio);
       },
       py::arg("cache"), py::arg("reader"), py::arg("start_req") = 0,
       py::arg("max_req") = -1,
@@ -1073,13 +1139,14 @@ PYBIND11_MODULE(_libcachesim, m) {  // NOLINT(readability-named-parameter)
                 max_req (int): Maximum number of requests to process (-1 for no limit).
 
             Returns:
-                float: Miss ratio (0.0 to 1.0).
+                float: Object miss ratio (0.0 to 1.0).
+                float: Byte miss ratio (0.0 to 1.0).
 
             Example:
                 >>> cache = libcachesim.LRU(1024*1024)
                 >>> reader = libcachesim.open_trace("trace.csv", libcachesim.TraceType.CSV_TRACE)
-                >>> miss_ratio = libcachesim.process_trace(cache, reader)
-                >>> print(f"Miss ratio: {miss_ratio:.4f}")
+                >>> obj_miss_ratio, byte_miss_ratio = libcachesim.process_trace(cache, reader)
+                >>> print(f"Obj miss ratio: {obj_miss_ratio:.4f}, Byte miss ratio: {byte_miss_ratio:.4f}")
       )pbdoc");
 
   /**
@@ -1089,20 +1156,25 @@ PYBIND11_MODULE(_libcachesim, m) {  // NOLINT(readability-named-parameter)
       "process_trace_python_hook",
       [](PythonHookCache& cache, reader_t& reader, int64_t start_req = 0,
          int64_t max_req = -1) {
-        request_t* req = new_request();
-        int n_req = 0, n_hit = 0;
-        bool hit;
-
         reset_reader(&reader);
         if (start_req > 0) {
           skip_n_req(&reader, start_req);
         }
 
+        request_t* req = new_request();
+        int64_t n_req = 0, n_hit = 0;
+        int64_t bytes_req = 0, bytes_hit = 0;
+        bool hit;
+
         read_one_req(&reader, req);
         while (req->valid) {
           n_req += 1;
+          bytes_req += req->obj_size;
           hit = cache.get(*req);
-          if (hit) n_hit += 1;
+          if (hit) {
+            n_hit += 1;
+            bytes_hit += req->obj_size;
+          }
           read_one_req(&reader, req);
           if (max_req > 0 && n_req >= max_req) {
             break;  // Stop if we reached the max request limit
@@ -1111,7 +1183,10 @@ PYBIND11_MODULE(_libcachesim, m) {  // NOLINT(readability-named-parameter)
 
         free_request(req);
         // return the miss ratio
-        return n_req > 0 ? 1.0 - (double)n_hit / n_req : 0.0;
+        double obj_miss_ratio = n_req > 0 ? 1.0 - (double)n_hit / n_req : 0.0;
+        double byte_miss_ratio =
+            bytes_req > 0 ? 1.0 - (double)bytes_hit / bytes_req : 0.0;
+        return std::make_tuple(obj_miss_ratio, byte_miss_ratio);
       },
       py::arg("cache"), py::arg("reader"), py::arg("start_req") = 0,
       py::arg("max_req") = -1,
@@ -1129,14 +1204,15 @@ PYBIND11_MODULE(_libcachesim, m) {  // NOLINT(readability-named-parameter)
                 max_req (int): Maximum number of requests to process (-1 for no limit).
 
             Returns:
-                float: Miss ratio (0.0 to 1.0).
+                float: Object miss ratio (0.0 to 1.0).
+                float: Byte miss ratio (0.0 to 1.0).
 
             Example:
                 >>> cache = libcachesim.PythonHookCachePolicy(1024*1024)
                 >>> cache.set_hooks(init_hook, hit_hook, miss_hook, eviction_hook, remove_hook)
                 >>> reader = libcachesim.open_trace("trace.csv", libcachesim.TraceType.CSV_TRACE)
-                >>> miss_ratio = libcachesim.process_trace_python_hook(cache.cache, reader)
-                >>> print(f"Miss ratio: {miss_ratio:.4f}")
+                >>> obj_miss_ratio, byte_miss_ratio = libcachesim.process_trace_python_hook(cache.cache, reader)
+                >>> print(f"Obj miss ratio: {obj_miss_ratio:.4f}, Byte miss ratio: {byte_miss_ratio:.4f}")
       )pbdoc");
 
 #ifdef VERSION_INFO
