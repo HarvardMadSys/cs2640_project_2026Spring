@@ -11,7 +11,7 @@ A high-performance library for building and running cache simulations
 ---
 
 [![build](https://github.com/1a1a11a/libCacheSim/actions/workflows/build.yml/badge.svg)](https://github.com/1a1a11a/libCacheSim/actions/workflows/build.yml)
-[![Python Release](https://github.com/1a1a11a/libCacheSim/actions/workflows/pypi-release.yml/badge.svg)](https://github.com/1a1a11a/libCacheSim/actions/workflows/pypi-release.yml)
+[![Python Release](https://github.com/cacheMon/libCacheSim-python/actions/workflows/pypi-release.yml/badge.svg)](https://github.com/1a1a11a/libCacheSim/actions/workflows/pypi-release.yml)
 [![NPM Release](https://github.com/1a1a11a/libCacheSim/actions/workflows/npm-release.yml/badge.svg)](https://github.com/1a1a11a/libCacheSim/actions/workflows/npm-release.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/1a1a11a/libCacheSim/badge)](https://scorecard.dev/viewer/?uri=github.com/1a1a11a/libCacheSim)
 
@@ -291,14 +291,16 @@ If you are not extremely sensitive to the performance, our python binding can of
 pip install libcachesim
 ```
 
+
+
 ### Simulation with python
 
 ```python
-import libcachesim as lcs
+from libcachesim import SyntheticReader, TraceReader, FIFO
 
-reader = lcs.create_zipf_requests(num_objects=1000, num_requests=10000) # synthetic trace
-# reader = lcs.open_trace("./data/cloudPhysicsIO.oracleGeneral.bin") # real trace
-cache = lcs.FIFO(cache_size=1024*1024)
+reader = SyntheticReader(num_objects=1000, num_of_req=10000, alpha=1.0, dist="zipf") # synthetic trace
+# reader = TraceReader("./data/cloudPhysicsIO.oracleGeneral.bin") # real trace
+cache = FIFO(cache_size=1024*1024)
 obj_miss_ratio, byte_miss_ratio = cache.process_trace(reader)
 print(f"Obj miss ratio: {obj_miss_ratio:.4f}, byte miss ratio: {byte_miss_ratio:.4f}")
 ```
@@ -310,42 +312,51 @@ With python package, you can extend new algorithm to test your own eviction desi
 <summary> See an example below </summary>
 
 ```python
-import libcachesim as lcs
-from collections import deque
-from contextlib import suppress
+from collections import OrderedDict
+from typing import Any
 
-cache = lcs.PythonHookCachePolicy(cache_size=1024, cache_name="CustomFIFO")
+from libcachesim import PluginCache, LRU, CommonCacheParams, Request
 
-def init_hook(cache_size):
-    return deque()  # Use deque for FIFO order
+def init_hook(_: CommonCacheParams) -> Any:
+    return OrderedDict()
 
-def hit_hook(fifo_queue, obj_id, obj_size):
-    pass  # FIFO doesn't reorder on hit
+def hit_hook(data: Any, req: Request) -> None:
+    data.move_to_end(req.obj_id, last=True)
 
-def miss_hook(fifo_queue, obj_id, obj_size):
-    fifo_queue.append(obj_id)  # Add to end of queue
+def miss_hook(data: Any, req: Request) -> None:
+    data.__setitem__(req.obj_id, req.obj_size)
 
-def eviction_hook(fifo_queue, obj_id, obj_size):
-    return fifo_queue[0]  # Return first item (oldest)
+def eviction_hook(data: Any, _: Request) -> int:
+    return data.popitem(last=False)[0]
 
-def remove_hook(fifo_queue, obj_id):
-    with suppress(ValueError):
-        fifo_queue.remove(obj_id)
+def remove_hook(data: Any, obj_id: int) -> None:
+    data.pop(obj_id, None)
 
-# Set the hooks and test
-cache.set_hooks(init_hook, hit_hook, miss_hook, eviction_hook, remove_hook)
+def free_hook(data: Any) -> None:
+    data.clear()
 
-reader = lcs.open_trace(
-    trace_path="./data/cloudPhysicsIO.oracleGeneral.bin",
-    params=lcs.ReaderInitParam(ignore_obj_size=True)
+
+plugin_lru_cache = PluginCache(
+    cache_size=128,
+    cache_init_hook=init_hook,
+    cache_hit_hook=hit_hook,
+    cache_miss_hook=miss_hook,
+    cache_eviction_hook=eviction_hook,
+    cache_remove_hook=remove_hook,
+    cache_free_hook=free_hook,
+    cache_name="Plugin_LRU",
 )
-obj_miss_ratio, byte_miss_ratio = cache.process_trace(reader)
-print(f"Obj miss ratio: {obj_miss_ratio:.4f}, byte miss ratio: {byte_miss_ratio:.4f}")
+
+reader = lcs.SyntheticReader(num_objects=1000, num_of_req=10000, obj_size=1, alpha=1.0, dist="zipf")
+req_miss_ratio, byte_miss_ratio = plugin_lru_cache.process_trace(reader)
+ref_req_miss_ratio, ref_byte_miss_ratio = LRU(128).process_trace(reader)
+print(f"plugin req miss ratio {req_miss_ratio}, ref req miss ratio {ref_req_miss_ratio}")
+print(f"plugin byte miss ratio {byte_miss_ratio}, ref byte miss ratio {ref_byte_miss_ratio}")
 ```
 
 </details>
 
-See more information in [README.md](./libCacheSim-python/README.md) of the Python binding.
+See more information in [README.md](https://github.com/cacheMon/libCacheSim-python) of the Python binding.
 
 ---
 ## Open source cache traces
