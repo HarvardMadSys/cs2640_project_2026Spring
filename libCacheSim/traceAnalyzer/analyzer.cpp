@@ -108,15 +108,16 @@ void traceAnalyzer::TraceAnalyzer::run() {
       next_time_window_ts += time_window_;
     }
 
-    if (curr_time_window_idx != time_to_window_idx(req->clock_time)) {
-      ERROR(
-          "The data is not ordered by time, please sort the trace first!"
+    int32_t correct_time_window_idx = time_to_window_idx(req->clock_time);
+    if (curr_time_window_idx != correct_time_window_idx) {
+      WARN_ONCE(
+          "The data is not strictly ordered by time; continuing anyway. "
           "Current time %ld requested object %lu, obj size %lu\n",
           (long)(req->clock_time + start_ts_), (unsigned long)req->obj_id,
           (long)req->obj_size);
+      curr_time_window_idx = correct_time_window_idx;
+      next_time_window_ts = (curr_time_window_idx + 1) * time_window_;
     }
-
-    DEBUG_ASSERT(curr_time_window_idx == time_to_window_idx(req->clock_time));
 
     n_req_ += 1;
     sum_obj_size_req += req->obj_size;
