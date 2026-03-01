@@ -4,7 +4,7 @@
 
 #include "analyzer.h"
 
-#include <algorithm>  // std::make_heap, std::pop_heap, std::push_heap, std::sort_heap
+#include <algorithm>  // std::make_heap, std::min, std::pop_heap, std::push_heap, std::sort_heap
 #include <vector>  // std::vector
 
 #include "utils/include/utils.h"
@@ -355,8 +355,9 @@ void traceAnalyzer::TraceAnalyzer::post_processing() {
 
   if (option_.popularity) {
     popularity_stat_ = new Popularity(obj_map_);
-    auto sorted_freq = popularity_stat_->get_sorted_freq();
-    for (int i = 0; i < track_n_popular_; i++) {
+    auto &sorted_freq = popularity_stat_->get_sorted_freq();
+    int n = std::min(track_n_popular_, (int)sorted_freq.size());
+    for (int i = 0; i < n; i++) {
       popular_cnt_[i] = sorted_freq[i];
     }
   }

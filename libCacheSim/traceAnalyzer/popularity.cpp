@@ -85,7 +85,4 @@ void Popularity::run(obj_info_map_type &obj_map) {
   has_run = true;
 }
 
-vector<uint32_t> freq_vec_{};
-double slope_, intercept_, r2_;
-bool has_run = false;
 };  // namespace traceAnalyzer
