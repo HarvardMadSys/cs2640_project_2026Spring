@@ -43,6 +43,11 @@ def load_popularity_data(datapath):
 
     ifile.close()
 
+    if len(sorted_freq) < 2:
+        raise ValueError(
+            f"insufficient popularity data in {datapath} "
+            "(need at least 2 objects, trace may have too few)"
+        )
     return sorted_freq, freq_cnt
 
 
