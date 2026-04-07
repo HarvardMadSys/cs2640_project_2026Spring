@@ -1,0 +1,12 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+results/exp_haiku_5/*/repos/
+results/exp_haiku_5/*/__pycache__/
+*.egg-info/
+dist/
+build/
+.obsidian/
+raw/papers/*.pdf

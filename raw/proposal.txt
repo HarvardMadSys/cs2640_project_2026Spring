@@ -1,0 +1,38 @@
+AdaptiveCache: Context Management for LLM Agents
+Vlad Cainamisir
+Harvard University
+Problem. LLM agents maintain long, evolving contexts (code, tool outputs, history), leading to increasing
+latency and token cost. Modern systems exploit prefix caching, which reuses previously computed KV states
+for identical prompt prefixes to avoid recomputation. However, any change to the prefix invalidates cached
+computation. Since cached tokens can be much cheaper than uncached tokens, cache reuse dominates cost.
+Thus, context management becomes: how can an agent manage context online while preserving prefix reuse?
+Key Observations. (1) Non-uniform cost: recomputing prefixes is significantly more expensive than
+processing new tokens beyond the cached prefix. (2) Position matters: modifying early tokens invalidates
+all downstream computation, while suffix changes are cheap. (3) Layout matters: placing stable, high-value
+items early maximizes reuse.
+Insight. We model context as a live, ordered memory that must be continuously optimized. This
+is fundamentally a compaction and layout optimization problem, similar to storage systems where
+placement determines reuse and efficiency. This parallels caching systems where locality and ordering drive
+performance.
+Proposed Solution: AdaptiveCache. We propose AdaptiveCache, a system for live context management that jointly performs selection, eviction, and reordering during execution. At each step, the system
+performs a compaction pass, identifying reusable items using:
+• attention signals: tokens receiving high attention across steps
+• heuristics: stable structures such as function signatures, APIs, and documentation
+It then reorganizes context: reusable items are promoted toward the prefix, while volatile items are demoted
+toward the suffix for eviction. This maintains a stable prefix, enabling reuse of cached KV states across
+steps. The system operates online, continuously reorganizing context as the agent executes. Just like a
+cache.
+Challenges. Position-dependent cost, coupling between eviction and layout, task-dependent relevance, and
+noisy signals. Existing methods optimize what to remove, but ignore ordering.
+Benchmarks: We evaluate using trace-driven workloads from agent execution.
+• SWE-bench (Lite / Verified): real GitHub issues requiring multi-step code edits
+• Synthetic traces: controlled multi-step workflows
+Baselines: no pruning, LRU/FIFO, retrieval-only pruning, and context compression systems.
+Metrics: token cost (primary), latency, prefix cache hit rate, and task success rate.
+Goals. 75%: Build baseline agent with full context and simple pruning (FIFO/LRU), integrate prefix
+caching, and measure cost, latency, and success. 100%: Implement AdaptiveCache compaction and reordering, and compare against baselines using cost, prefix cache hit rate, and task success. 125%: Add
+learned signals (attention + heuristics) and adaptive policies, and analyze tradeoffs between compaction
+aggressiveness and prefix stability.
+AdaptiveCache reframes LLM context as a live compaction and layout problem under a prefix-dependent
+cost model, aiming to reduce latency and cost while preserving task performance.
+1

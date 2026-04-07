@@ -1,0 +1,13 @@
+{
+  "run_id": "adaptive_8000",
+  "config": {
+    "dataset": "lite",
+    "split": "test",
+    "model_name": "anthropic/claude-haiku-4-5-20251001",
+    "cache_policy": "adaptive",
+    "cache_budget": 8000,
+    "max_steps": 30,
+    "cost_limit": 3.0
+  },
+  "timestamp": 1775511353.731221
+}
