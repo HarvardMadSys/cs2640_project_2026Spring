@@ -150,41 +150,41 @@ class StandaloneS3FIFO:
         return removed
 
 
-def cache_init_hook(common_cache_params: CommonCacheParams):
+def init_hook(common_cache_params: CommonCacheParams):
     return StandaloneS3FIFO(cache_size=common_cache_params.cache_size)
 
 
-def cache_hit_hook(cache, request: Request):
+def hit_hook(cache, request: Request):
     cache.cache_hit(request)
 
 
-def cache_miss_hook(cache, request: Request):
+def miss_hook(cache, request: Request):
     cache.cache_miss(request)
 
 
-def cache_eviction_hook(cache, request: Request):
+def eviction_hook(cache, request: Request):
     evicted_id = None
     while evicted_id is None:
         evicted_id = cache.cache_evict(request)
     return evicted_id
 
 
-def cache_remove_hook(cache, obj_id):
+def remove_hook(cache, obj_id):
     cache.cache_remove(obj_id)
 
 
-def cache_free_hook(cache):
+def free_hook(cache):
     pass
 
 
 cache = PluginCache(
     cache_size=1024,
-    cache_init_hook=cache_init_hook,
-    cache_hit_hook=cache_hit_hook,
-    cache_miss_hook=cache_miss_hook,
-    cache_eviction_hook=cache_eviction_hook,
-    cache_remove_hook=cache_remove_hook,
-    cache_free_hook=cache_free_hook,
+    cache_init_hook=init_hook,
+    cache_hit_hook=hit_hook,
+    cache_miss_hook=miss_hook,
+    cache_eviction_hook=eviction_hook,
+    cache_remove_hook=remove_hook,
+    cache_free_hook=free_hook,
     cache_name="S3FIFO",
 )
 
