@@ -380,7 +380,7 @@ class StandaloneCACHEUS:
         size_b = cache_size - size_a
 
         # DESIGN-2: history = N/2 per expert
-        hist_size = max(1, cache_size // 2)
+        hist_size = max(1, cache_size * 10) # experiment with larger history
 
         # DESIGN-1: experts
         self.expert_a = SRLRU(capacity=size_a, history_size=hist_size)
@@ -630,5 +630,4 @@ reader = lcs.TraceReader(
 
 
 req_miss_ratio, byte_miss_ratio = cache.process_trace(reader)
-print(f"Plugin req miss ratio: {req_miss_ratio}, ref req miss ratio: {ref_req_miss_ratio}")
-print(f"Plugin byte miss ratio: {byte_miss_ratio}, ref byte miss ratio: {ref_byte_miss_ratio}")
+print(f"Final Miss Ratio: {req_miss_ratio:.6f} (requests), {byte_miss_ratio:.6f} (bytes)")
