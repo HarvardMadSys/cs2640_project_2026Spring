@@ -1,23 +1,28 @@
-#include <dlfcn.h>
-
 #include <cstddef>
+#include <dlfcn.h>
 #include <memory>
+#include <mimalloc-new-delete.h>
 #include <print>
 #include <thread>
 #include <vector>
 
+#include "hazard.h"
 #include "store.h"
 
-static std::unique_ptr<sas::object_store> g_store;
+std::unique_ptr<sas::hazard_domain> sas::g_domain;
+std::unique_ptr<sas::object_store> sas::g_store;
 
 extern "C" {
 sas::object_handle* sas_get(const char* key, size_t key_len) {
-    return g_store->get({key, key_len});
+    return sas::g_store->get({key, key_len});
 }
 void* sas_deref(sas::object_handle* handle) { return handle->value; }
-void sas_close(sas::object_handle* handle) { g_store->close(handle); }
+void sas_close(sas::object_handle* handle) { sas::g_store->close(handle); }
 void sas_put(const char* key, size_t key_len, void* value, sas::dtor_fn dtor) {
-    g_store->put({key, key_len}, value, dtor);
+    sas::g_store->put({key, key_len}, value, dtor);
+}
+void sas_gc() {
+    sas::g_domain->scan_and_reclaim(sas::hazard_thread_state::get().retired());
 }
 }
 
@@ -27,7 +32,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    g_store = std::make_unique<sas::object_store>();
+    sas::g_domain = std::make_unique<sas::hazard_domain>();
+    sas::g_store = std::make_unique<sas::object_store>();
 
     using entry_fn = void (*)(int);
     std::vector<std::pair<void*, entry_fn>> clients;
@@ -58,7 +64,9 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    g_store.reset();
+    sas::g_store.reset();
+    sas::g_domain.reset();
+
     for (auto& [handle, fn] : clients) {
         dlclose(handle);
     }

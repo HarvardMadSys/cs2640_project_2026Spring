@@ -5,6 +5,9 @@ ifeq ($(SAN),1)
   CXXFLAGS += -fsanitize=address,undefined -fno-omit-frame-pointer -g
 endif
 
+HOST_SRCS := $(wildcard *.cpp)
+HOST_HDRS := $(wildcard *.h)
+
 EXAMPLE_SRCS := $(wildcard example/*.cpp)
 EXAMPLE_LIBS := $(EXAMPLE_SRCS:.cpp=.so)
 
@@ -12,8 +15,9 @@ EXAMPLE_LIBS := $(EXAMPLE_SRCS:.cpp=.so)
 
 all: host $(EXAMPLE_LIBS)
 
-host: host.cpp store.cpp store.h client.h
-	$(CXX) $(CXXFLAGS) -Wl,--export-dynamic -o $@ host.cpp store.cpp -ldl -lpthread -lmimalloc
+host: $(HOST_SRCS) $(HOST_HDRS)
+	$(CXX) $(CXXFLAGS) -Wl,--export-dynamic -o $@ $(filter %.cpp, $^) \
+		-ldl -lpthread -lmimalloc
 
 example/%.so: example/%.cpp client.h
 	$(CXX) $(CXXFLAGS) -fPIC -shared -I. -o $@ $<

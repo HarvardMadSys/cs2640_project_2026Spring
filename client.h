@@ -13,6 +13,7 @@ void* sas_deref(sas_handle_t* handle);
 void sas_close(sas_handle_t* handle);
 void sas_put(const char* key, size_t key_len, void* value,
              void (*dtor)(void* value));
+void sas_gc();
 
 void entry(int cid);
 
@@ -102,6 +103,10 @@ inline void publish(std::string_view key) {
 
 inline ref<void> poll(std::string_view key) {
     return ref<void>{::sas_get(key.data(), key.size())};
+}
+
+inline void gc() {
+    ::sas_gc();
 }
 
 } // namespace sas
