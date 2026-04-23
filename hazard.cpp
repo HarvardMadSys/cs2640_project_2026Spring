@@ -80,17 +80,17 @@ void hazard_domain::scan_and_reclaim(std::vector<object_handle*>& retired) {
     }
 
     std::sort(active.begin(), active.end());
-    std::vector<object_handle*> survivors;
-    survivors.reserve(retired.size());
+
+    size_t survivor_count = 0;
     for (auto* handle : retired) {
         if (std::binary_search(active.begin(), active.end(), handle)) {
-            survivors.push_back(handle);
+            retired[survivor_count++] = handle;
         } else {
             impl::drop_handle(handle);
         }
     }
 
-    retired = std::move(survivors);
+    retired.resize(survivor_count);
 }
 
 void hazard_domain::orphan_retired(object_handle* handle) {

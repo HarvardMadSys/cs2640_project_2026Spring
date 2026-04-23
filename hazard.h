@@ -33,12 +33,12 @@ class hazard_domain {
     object_handle* protect(const std::atomic<object_handle*>& shared_ptr,
                            hazard_node* node);
     void unprotect(hazard_node* node);
-    void scan_and_reclaim(std::vector<object_handle*>& retired);
     void orphan_retired(object_handle* handle);
     void notify_work();
 
   private:
     void gc_loop();
+    void scan_and_reclaim(std::vector<object_handle*>& retired);
 
     std::atomic<hazard_node*> head_{nullptr};
     boost::lockfree::queue<object_handle*> orphan_q_;
