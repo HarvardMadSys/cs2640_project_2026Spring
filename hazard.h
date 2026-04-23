@@ -44,6 +44,7 @@ class hazard_domain {
     boost::lockfree::queue<object_handle*> orphan_q_;
     std::counting_semaphore<(1 << 20)> work_sem_{0};
     std::atomic<bool> shutdown_{false};
+    std::vector<object_handle*> gc_active_;
     std::thread gc_thread_;
 };
 

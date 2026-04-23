@@ -67,23 +67,24 @@ void hazard_domain::unprotect(hazard_node* node) {
 }
 
 void hazard_domain::scan_and_reclaim(std::vector<object_handle*>& retired) {
-    std::vector<object_handle*> active;
+    gc_active_.clear();
+
     auto* curr = head_.load(std::memory_order_seq_cst);
     while (curr) {
         if (curr->active.load(std::memory_order_acquire)) {
             auto* hp = curr->ptr.load(std::memory_order_seq_cst);
             if (hp) {
-                active.push_back(hp);
+                gc_active_.push_back(hp);
             }
         }
         curr = curr->next;
     }
 
-    std::sort(active.begin(), active.end());
+    std::sort(gc_active_.begin(), gc_active_.end());
 
     size_t survivor_count = 0;
     for (auto* handle : retired) {
-        if (std::binary_search(active.begin(), active.end(), handle)) {
+        if (std::binary_search(gc_active_.begin(), gc_active_.end(), handle)) {
             retired[survivor_count++] = handle;
         } else {
             impl::drop_handle(handle);
