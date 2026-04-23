@@ -11,9 +11,7 @@ typedef struct sas_handle sas_handle_t;
 sas_handle_t* sas_get(const char* key, size_t key_len);
 void* sas_deref(sas_handle_t* handle);
 void sas_close(sas_handle_t* handle);
-void sas_put(const char* key, size_t key_len, void* value,
-             void (*dtor)(void* value));
-void sas_gc();
+void sas_put(const char* key, size_t key_len, void* value, void (*dtor)(void*));
 
 void entry(int cid);
 
@@ -82,11 +80,6 @@ inline void put(std::string_view key, T* value) {
     }
 }
 
-template <typename T> inline void put(std::string_view key, T* value) {
-    ::sas_put(key.data(), key.size(), value,
-              [](void* p) { delete static_cast<T*>(p); });
-}
-
 template <typename T, typename D>
     requires std::is_empty_v<D> && std::is_default_constructible_v<D>
 inline void put(std::string_view key, std::unique_ptr<T, D> value) {
@@ -103,10 +96,6 @@ inline void publish(std::string_view key) {
 
 inline ref<void> poll(std::string_view key) {
     return ref<void>{::sas_get(key.data(), key.size())};
-}
-
-inline void gc() {
-    ::sas_gc();
 }
 
 } // namespace sas

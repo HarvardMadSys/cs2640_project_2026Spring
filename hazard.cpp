@@ -6,19 +6,20 @@
 
 namespace sas {
 
-hazard_domain::hazard_domain() : orphan_q_(1024) {}
+hazard_domain::hazard_domain() : orphan_q_(1024) {
+    gc_thread_ = std::thread(&hazard_domain::gc_loop, this);
+}
 
 hazard_domain::~hazard_domain() {
+    shutdown_.store(true, std::memory_order_release);
+    work_sem_.release();
+    gc_thread_.join();
+
     auto* curr = head_.load();
     while (curr) {
         auto* next = curr->next;
         delete curr;
         curr = next;
-    }
-
-    object_handle* handle;
-    while (orphan_q_.pop(handle)) {
-        impl::free_handle(handle);
     }
 }
 
@@ -66,14 +67,6 @@ void hazard_domain::unprotect(hazard_node* node) {
 }
 
 void hazard_domain::scan_and_reclaim(std::vector<object_handle*>& retired) {
-    constexpr int MAX_ABSORBED = 32;
-    object_handle* handle;
-    int absorbed = 0;
-    while (absorbed < MAX_ABSORBED && orphan_q_.pop(handle)) {
-        retired.push_back(handle);
-        absorbed++;
-    }
-
     std::vector<object_handle*> active;
     auto* curr = head_.load(std::memory_order_seq_cst);
     while (curr) {
@@ -100,11 +93,49 @@ void hazard_domain::scan_and_reclaim(std::vector<object_handle*>& retired) {
     retired = std::move(survivors);
 }
 
-void hazard_domain::orphan_retired(
-    const std::vector<object_handle*>& remaining) {
-    for (auto* ptr : remaining) {
-        orphan_q_.push(ptr);
+void hazard_domain::orphan_retired(object_handle* handle) {
+    orphan_q_.push(handle);
+}
+
+void hazard_domain::notify_work() { work_sem_.release(); }
+
+void hazard_domain::gc_loop() {
+    std::vector<object_handle*> local_retired;
+    local_retired.reserve(256);
+
+    auto drain = [&]() {
+        auto* curr = head_.load(std::memory_order_acquire);
+        while (curr) {
+            auto* batch =
+                curr->pending.exchange(nullptr, std::memory_order_acq_rel);
+            if (batch) {
+                local_retired.insert(local_retired.end(),
+                                     batch->handles.begin(),
+                                     batch->handles.begin() + batch->size);
+                batch->size = 0;
+                batch->in_flight.store(false, std::memory_order_release);
+            }
+            curr = curr->next;
+        }
+        object_handle* h;
+        while (orphan_q_.pop(h)) {
+            local_retired.push_back(h);
+        }
+        if (!local_retired.empty()) {
+            scan_and_reclaim(local_retired);
+        }
+    };
+
+    while (!shutdown_.load(std::memory_order_acquire)) {
+        work_sem_.acquire();
+        drain();
     }
+
+    drain();
+    for (auto* handle : local_retired) {
+        impl::free_handle(handle);
+    }
+    local_retired.clear();
 }
 
 hazard_thread_state::hazard_thread_state() : domain_(*g_domain) {
@@ -113,27 +144,48 @@ hazard_thread_state::hazard_thread_state() : domain_(*g_domain) {
 
 hazard_thread_state::~hazard_thread_state() {
     node_->ptr.store(nullptr, std::memory_order_release);
-    node_->active.store(false, std::memory_order_release);
-
-    if (!retired_.empty()) {
-        domain_.scan_and_reclaim(retired_);
-        if (!retired_.empty()) {
-            domain_.orphan_retired(retired_);
+    for (auto& buf : buffers_) {
+        while (buf.in_flight.load(std::memory_order_acquire)) {
+            domain_.notify_work();
+            while (buf.in_flight.load(std::memory_order_acquire)) {
+                std::this_thread::yield();
+            }
         }
     }
+
+    auto& buf = buffers_[cur_];
+    for (size_t i = 0; i < buf.size; ++i) {
+        domain_.orphan_retired(buf.handles[i]);
+    }
+
+    if (buf.size > 0) {
+        domain_.notify_work();
+    }
+
+    node_->active.store(false, std::memory_order_release);
 }
 
 void hazard_thread_state::retire(object_handle* handle) {
-    constexpr size_t MAX_RETIRED = 64;
-    retired_.push_back(handle);
-    if (retired_.size() >= MAX_RETIRED) {
-        domain_.scan_and_reclaim(retired_);
+    auto& buf = buffers_[cur_];
+    buf.handles[buf.size++] = handle;
+    if (buf.size == retired_batch::CAPACITY) {
+        if (buffers_[cur_ ^ 1].in_flight.load(std::memory_order_acquire)) {
+            domain_.notify_work();
+            while (
+                buffers_[cur_ ^ 1].in_flight.load(std::memory_order_acquire)) {
+                std::this_thread::yield();
+            }
+        }
+
+        buf.in_flight.store(true, std::memory_order_release);
+        node_->pending.store(&buf, std::memory_order_release);
+        domain_.notify_work();
+        cur_ ^= 1;
+        buffers_[cur_].size = 0;
     }
 }
 
 hazard_domain::hazard_node* hazard_thread_state::node() { return node_; }
-
-std::vector<object_handle*>& hazard_thread_state::retired() { return retired_; }
 
 hazard_thread_state& hazard_thread_state::get() {
     thread_local hazard_thread_state state;

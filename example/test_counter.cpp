@@ -17,8 +17,7 @@ extern "C" void entry(int cid) {
 
         for (int i = 0; i < NUM_COUNTERS; ++i) {
             std::snprintf(keys[i], sizeof(keys[i]), "tc:sync:%d", i);
-            auto* counter = new std::atomic<int>{0};
-            sas::put<std::atomic<int>>(keys[i], counter);
+            sas::put<>(keys[i], std::make_unique<std::atomic<int>>(0));
         }
 
         sas::publish("tc:sync:ready");

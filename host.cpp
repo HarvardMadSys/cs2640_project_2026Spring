@@ -21,9 +21,6 @@ void sas_close(sas::object_handle* handle) { sas::g_store->close(handle); }
 void sas_put(const char* key, size_t key_len, void* value, sas::dtor_fn dtor) {
     sas::g_store->put({key, key_len}, value, dtor);
 }
-void sas_gc() {
-    sas::g_domain->scan_and_reclaim(sas::hazard_thread_state::get().retired());
-}
 }
 
 int main(int argc, char* argv[]) {
