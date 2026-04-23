@@ -25,7 +25,7 @@ extern "C" void entry(int) {
 
     {
         static int dummy;
-        sas::put<int>("null", &dummy);
+        sas::put<int, nullptr>("null", &dummy);
         auto h = sas::get<int>("null");
         assert(*h == dummy);
     }
@@ -33,12 +33,13 @@ extern "C" void entry(int) {
     dtor_count = 0;
     sas::put<void, counting_dtor>("ow", val());
     sas::put<void, counting_dtor>("ow", val());
+    sas::gc();
     assert(dtor_count == 1);
 
     dtor_count = 0;
     {
         static int dummy;
-        sas::put<int>("nd", &dummy);
+        sas::put<int, nullptr>("nd", &dummy);
         sas::put<void, counting_dtor>("nd", val());
         assert(dtor_count == 0);
     }
@@ -50,6 +51,7 @@ extern "C" void entry(int) {
         sas::put<void, counting_dtor>("d", val());
         assert(dtor_count == 0);
     }
+    sas::gc();
     assert(dtor_count == 1);
 
     dtor_count = 0;
@@ -64,6 +66,7 @@ extern "C" void entry(int) {
         }
         assert(dtor_count == 0);
     }
+    sas::gc();
     assert(dtor_count == 1);
 
     assert(!sas::poll("missing"));

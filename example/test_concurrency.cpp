@@ -1,7 +1,7 @@
 #include <atomic>
 #include <cassert>
-#include <cstdlib>
 #include <cstdio>
+#include <cstdlib>
 #include <print>
 #include <thread>
 #include <vector>
@@ -25,9 +25,14 @@ static void drain(std::string_view key) {
     sas::put<void, nullptr>(key, nullptr);
 }
 
+struct leak_checker {
+    ~leak_checker() {
+        assert(frees.load() == allocs.load());
+        std::println("Concurrency test passed!");
+    }
+} checker;
+
 extern "C" void entry(int) {
-    allocs = 0;
-    frees = 0;
     {
         sas::put<void, tracked_free>("tc:stable", tracked_alloc());
         std::vector<std::thread> threads;
@@ -45,10 +50,8 @@ extern "C" void entry(int) {
         }
         drain("tc:stable");
     }
-    assert(frees.load() == allocs.load());
+    assert(frees.load() <= allocs.load());
 
-    allocs = 0;
-    frees = 0;
     {
         sas::put<void, tracked_free>("tc:rw", tracked_alloc());
         std::atomic<bool> stop{false};
@@ -76,10 +79,8 @@ extern "C" void entry(int) {
         writer.join();
         drain("tc:rw");
     }
-    assert(frees.load() == allocs.load());
+    assert(frees.load() <= allocs.load());
 
-    allocs = 0;
-    frees = 0;
     {
         sas::put<void, tracked_free>("tc:mw", tracked_alloc());
 
@@ -96,10 +97,8 @@ extern "C" void entry(int) {
         }
         drain("tc:mw");
     }
-    assert(frees.load() == allocs.load());
+    assert(frees.load() <= allocs.load());
 
-    allocs = 0;
-    frees = 0;
     {
         constexpr int K = 8;
         char keys[K][16];
@@ -130,7 +129,5 @@ extern "C" void entry(int) {
             drain(keys[i]);
         }
     }
-    assert(frees.load() == allocs.load());
-
-    std::println("Concurrency test passed!");
+    assert(frees.load() <= allocs.load());
 }
