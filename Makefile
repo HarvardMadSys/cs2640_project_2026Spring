@@ -1,5 +1,5 @@
 CXX      := g++
-CXXFLAGS := -std=c++23 -Wall -Wextra -O2
+CXXFLAGS := -std=c++23 -Wall -Wextra -O3
 
 ifeq ($(SAN),1)
   CXXFLAGS += -fsanitize=address,undefined -fno-omit-frame-pointer -g
