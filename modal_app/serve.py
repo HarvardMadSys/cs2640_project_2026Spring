@@ -137,6 +137,16 @@ class LLMServer:
         os.environ["LMCACHE_CHUNK_SIZE"] = str(CHUNK_SIZE)
         os.environ["LMCACHE_LOCAL_CPU"] = "True"
         os.environ["LMCACHE_MAX_LOCAL_CPU_SIZE"] = "10.0"
+        # Store ALL KV blocks to CPU proactively (not just when GPU fills up).
+        os.environ["LMCACHE_SAVE_DECODE_CACHE"] = "True"
+        # Force vLLM V0 engine (single-process) so LMCache runs in the same
+        # Python process — enabling direct object access for delete_kv_blocks().
+        os.environ["VLLM_USE_V1"] = "0"
+        # Enable LMCache's internal HTTP management API on localhost:6999.
+        # This exposes /delete_blocks, /stats etc. from inside the worker process,
+        # fixing the issue where LMCacheEngineBuilder._instances is empty when
+        # called from the main process in multiprocessing mode.
+        os.environ["LMCACHE_INTERNAL_API_SERVER_ENABLED"] = "True"
 
         ktc = KVTransferConfig(
             kv_connector="LMCacheConnectorV1",
@@ -177,8 +187,22 @@ class LLMServer:
             max_tokens=max_tokens,
         )
 
-        import io, sys, re
-        # Capture stderr to extract LMCache hit stats AND vLLM input throughput
+        import io, sys, re, logging
+
+        # Capture LMCache log records via a custom handler (LMCache uses Python logging,
+        # not sys.stderr, so we can't capture it via stderr redirection).
+        class _LogCapture(logging.Handler):
+            def __init__(self):
+                super().__init__()
+                self.messages = []
+            def emit(self, r):
+                self.messages.append(self.format(r))
+
+        capture = _LogCapture()
+        lmcache_logger = logging.getLogger("lmcache")
+        lmcache_logger.addHandler(capture)
+
+        # Also capture sys.stderr for vLLM tqdm
         captured_err = io.StringIO()
         old_stderr = sys.stderr
         sys.stderr = captured_err
@@ -188,7 +212,11 @@ class LLMServer:
         elapsed = time.perf_counter() - t_start
 
         sys.stderr = old_stderr
+        lmcache_logger.removeHandler(capture)
+
         stderr_output = captured_err.getvalue()
+        log_output = "\n".join(capture.messages)
+        combined = stderr_output + "\n" + log_output
 
         # Parse vLLM tqdm: "est. speed input: X toks/s"
         input_tps = 0.0
@@ -200,11 +228,11 @@ class LLMServer:
         if m_out:
             output_tps = float(m_out.group(1))
 
-        # Parse LMCache hit stats: "LMCache hit tokens: N"
+        # Parse LMCache per-request stats from log capture
         lmcache_hit_tokens = 0
         lmcache_computed_tokens = 0
-        m_hit = re.search(r"LMCache hit tokens: (\d+)", stderr_output)
-        m_comp = re.search(r"Inference Engine computed tokens: (\d+)", stderr_output)
+        m_hit = re.search(r"LMCache hit tokens: (\d+)", combined)
+        m_comp = re.search(r"Inference Engine computed tokens: (\d+)", combined)
         if m_hit:
             lmcache_hit_tokens = int(m_hit.group(1))
         if m_comp:
@@ -263,12 +291,21 @@ class LLMServer:
             return self._lmcache_engine
         try:
             from lmcache.v1.cache_engine import LMCacheEngineBuilder
-            engine = LMCacheEngineBuilder.get("0")
-            if engine is not None:
+            # Try known IDs: connector registers as "vllm-instance" in 0.4.3
+            for iid in ("0", "vllm-instance"):
+                engine = LMCacheEngineBuilder.get(iid)
+                if engine is not None:
+                    self._lmcache_engine = engine
+                    return engine
+            # Fallback: grab the first registered instance
+            instances = getattr(LMCacheEngineBuilder, "_instances", {})
+            if instances:
+                engine = next(iter(instances.values()))
                 self._lmcache_engine = engine
-            return engine
+                return engine
         except Exception:
-            return None
+            pass
+        return None
 
     def _get_backend(self):
         engine = self._get_lmcache_engine()
@@ -294,20 +331,146 @@ class LLMServer:
         After this call, the next generate() call with the same prefix will treat
         these positions as cache misses — vLLM recomputes only those blocks.
         Everything before the first deleted block remains a cache hit.
+
+        Tries LMCache's internal HTTP API first (requires
+        LMCACHE_INTERNAL_API_SERVER_ENABLED=True). Falls back to direct object
+        access if the HTTP server isn't up yet.
         """
+        hashes = compute_block_hashes_v1(prompt_token_ids)
+        target_hashes = [hashes[i] for i in block_indices if 0 <= i < len(hashes)]
+        if not target_hashes:
+            return 0
+
+        # --- Try internal HTTP API first ---
+        deleted = self._delete_via_http(target_hashes)
+        if deleted >= 0:
+            return deleted
+
+        # --- Fallback: direct object access ---
         backend = self._get_backend()
         if backend is None:
             return 0
-        hashes = compute_block_hashes_v1(prompt_token_ids)
         deleted = 0
-        for idx in block_indices:
-            if 0 <= idx < len(hashes):
-                try:
-                    if backend.remove(self._make_key(hashes[idx]), force=True):
-                        deleted += 1
-                except Exception:
-                    pass
+        for h in target_hashes:
+            try:
+                if backend.remove(self._make_key(h), force=True):
+                    deleted += 1
+            except Exception:
+                pass
         return deleted
+
+    def _delete_via_http(self, hashes: list) -> int:
+        """POST hashes to LMCache internal API. Returns deleted count, or -1 on failure."""
+        import urllib.request
+        import json as _json
+        try:
+            body = _json.dumps({"hashes": hashes}).encode()
+            req = urllib.request.Request(
+                "http://localhost:6999/delete_blocks",
+                data=body,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                result = _json.loads(resp.read())
+                return int(result.get("deleted", 0))
+        except Exception:
+            return -1  # API not up or endpoint doesn't exist
+
+    @modal.method()
+    def reset_lmcache(self) -> dict:
+        """Clear all blocks from LMCache's CPU store.
+
+        Call this between experiment policies to eliminate warm-cache bias.
+        Tries HTTP API first, falls back to direct backend iteration.
+        """
+        # Try HTTP API
+        import urllib.request
+        import json as _json
+        try:
+            req = urllib.request.Request(
+                "http://localhost:6999/reset",
+                data=b"{}",
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                result = _json.loads(resp.read())
+                return {"method": "http", **result}
+        except Exception:
+            pass
+
+        # Fallback: iterate backend keys and remove
+        backend = self._get_backend()
+        if backend is None:
+            return {"cleared": 0, "method": "none", "reason": "no backend"}
+
+        cleared = 0
+        try:
+            # Try common clear/flush methods
+            for method_name in ("clear", "flush", "reset"):
+                fn = getattr(backend, method_name, None)
+                if fn is not None:
+                    fn()
+                    return {"cleared": -1, "method": f"backend.{method_name}()"}
+            # Last resort: iterate keys
+            keys = getattr(backend, "keys", None) or getattr(backend, "list_keys", None)
+            if keys is not None:
+                for key in list(keys()):
+                    try:
+                        backend.remove(key, force=True)
+                        cleared += 1
+                    except Exception:
+                        pass
+        except Exception as e:
+            return {"cleared": cleared, "method": "iterate", "error": str(e)}
+
+        return {"cleared": cleared, "method": "iterate"}
+
+    @modal.method()
+    def verify_block_hashes(self, prompt_token_ids: list) -> dict:
+        """Verify our SHA256 hash chain matches LMCache's internal keys.
+
+        Lists all keys in LMCache's CPU store, computes our hashes for the
+        given prompt, and checks for overlap. Use after a warm generate() call.
+
+        Returns:
+            {
+              "our_hashes": [...],      # what compute_block_hashes_v1() returns
+              "lmcache_keys": [...],    # keys actually in the CPU store
+              "matched": int,           # how many of our hashes appear in the store
+              "store_size": int,        # total number of keys in store
+            }
+        """
+        our_hashes = compute_block_hashes_v1(prompt_token_ids)
+        out = {"our_hashes": our_hashes, "lmcache_keys": [], "matched": 0, "store_size": 0}
+
+        backend = self._get_backend()
+        if backend is None:
+            out["error"] = "no backend"
+            return out
+
+        try:
+            keys_fn = getattr(backend, "keys", None) or getattr(backend, "list_keys", None)
+            if keys_fn is not None:
+                all_keys = list(keys_fn())
+                out["store_size"] = len(all_keys)
+                # Extract chunk_hash field from CacheEngineKey objects
+                key_hashes = set()
+                key_reprs = []
+                for k in all_keys[:50]:  # cap at 50 for readability
+                    h = getattr(k, "chunk_hash", None)
+                    if h is not None:
+                        key_hashes.add(h)
+                    key_reprs.append(str(k)[:80])
+                out["lmcache_keys"] = key_reprs
+                out["matched"] = sum(1 for h in our_hashes if h in key_hashes)
+            else:
+                out["error"] = "backend has no keys() method"
+        except Exception as e:
+            out["error"] = str(e)
+
+        return out
 
     @modal.method()
     def pin_kv_blocks(self, prompt_token_ids: list, block_indices: list) -> int:
@@ -325,6 +488,34 @@ class LLMServer:
                 except Exception:
                     pass
         return pinned
+
+    @modal.method()
+    def diagnose_lmcache(self) -> dict:
+        """Inspect LMCache engine state from inside the server process."""
+        out = {}
+        try:
+            from lmcache.v1.cache_engine import LMCacheEngineBuilder
+            instances = getattr(LMCacheEngineBuilder, "_instances", {})
+            out["instance_ids"] = list(instances.keys())
+            out["n_instances"] = len(instances)
+            for iid, engine in instances.items():
+                backend = getattr(engine, "engine_", None) or getattr(engine, "storage_manager", None)
+                out[f"engine_{iid}_type"] = type(engine).__name__
+                out[f"backend_{iid}_type"] = type(backend).__name__ if backend else "None"
+                out[f"engine_{iid}_config"] = str(getattr(engine, "config", "N/A"))[:100]
+        except Exception as e:
+            out["error"] = str(e)
+
+        # Check VLLM_USE_V1
+        import os
+        out["VLLM_USE_V1"] = os.environ.get("VLLM_USE_V1", "not set")
+        out["LMCACHE_SAVE_DECODE_CACHE"] = os.environ.get("LMCACHE_SAVE_DECODE_CACHE", "not set")
+
+        # Check logging
+        import logging
+        out["lmcache_logger_handlers"] = [str(h) for h in logging.getLogger("lmcache").handlers]
+
+        return out
 
     @modal.method()
     def get_stats(self) -> dict:
@@ -398,6 +589,19 @@ class LLMServer:
 # ---------------------------------------------------------------------------
 # Smoke test
 # ---------------------------------------------------------------------------
+
+@app.local_entrypoint()
+def diagnose():
+    """Quick diagnostic: check LMCache engine state."""
+    server = LLMServer()
+    r = server.generate.remote(
+        [{"role": "user", "content": "What is 1+1?"}], max_tokens=5
+    )
+    print(f"Generated: {r['content']!r}  lmc_hit={r.get('lmcache_hit_tokens',0)}")
+    d = server.diagnose_lmcache.remote()
+    for k, v in d.items():
+        print(f"  {k}: {v}")
+
 
 @app.local_entrypoint()
 def main():

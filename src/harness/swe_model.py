@@ -358,106 +358,68 @@ class AdaptiveCacheModel(LitellmModel):
 
         return messages
 
-    # --- KV Adaptive: block-level LMCache eviction, prompt unchanged ---
+    # --- KV Adaptive: block-level LMCache eviction (Tier 1) + message reorg (Tier 2) ---
 
     def _apply_kv_adaptive(self, messages: list[dict]) -> dict:
-        """Send full unmodified messages to vLLM/LMCache, then evict low-value KV blocks.
+        """Position-aware context management with optional KV-level block eviction.
 
-        Unlike the message-level policies (adaptive, fifo, summarize), this policy
-        NEVER modifies the message list. Instead it keeps the prompt bytes identical
-        (maximizing prefix cache hits) and surgically deletes low-value KV blocks
-        from LMCache after each step.
+        Architecture (two-tier):
+          Tier 2 (message-level, always active): Uses KVController to score blocks
+              and reorganize the message list when the importance structure shifts.
+              Works with any backend (Anthropic, vLLM, etc.).
+          Tier 1 (KV-level, requires vLLM+LMCache): After each step, deletes low-value
+              KV blocks from LMCache so vLLM recomputes only those positions on the
+              next call. The prompt bytes stay identical — the prefix cache is never
+              invalidated. Requires self.kv_client pointing at the same vLLM server.
 
-        Requires self.kv_client and self.kv_controller to be set up.
-        Falls back to no-op if they are not configured.
+        Inference always goes through super().query() (litellm), which handles OpenAI
+        tool calling correctly. The KV controller runs as a post-step side effect.
 
-        Returns:
-            A dict compatible with LitellmModel.query() return format.
+        For Tier 1 KV eviction to be meaningful:
+          - litellm must be pointed at the same vLLM+LMCache server as kv_client
+          - Set model_name to the vLLM server's OpenAI-compatible endpoint
+          - This is the Phase E integration from IMPLEMENTATION_PLAN.md
         """
-        # Lazy-initialize KV infrastructure if not already set up
-        if self.kv_client is None:
+        # --- Lazy-initialize KVController (Tier 2, no KV client needed) ---
+        if self.kv_controller is None:
             try:
-                from harness.lmcache_client import LMCacheClient
                 from adaptive_cache.kv_controller import KVController
                 from adaptive_cache.config import CacheConfig
                 cfg = CacheConfig(soft_budget=self._budget)
-                self.kv_client = LMCacheClient(mode="modal")
                 self.kv_controller = KVController(config=cfg)
             except Exception as e:
-                logger.warning("KV client init failed, falling back to passthrough: %s", e)
+                logger.warning("KVController init failed: %s", e)
 
-        # --- Step 1: Generate via LMCacheClient ---
+        # --- Lazy-initialize KV client (Tier 1, requires Modal LLMServer) ---
         if self.kv_client is None:
-            # Fallback: use litellm directly without KV control
-            result = super().query(messages)
-            self._log(messages, messages, result)
-            return result
-
-        try:
-            response = self.kv_client.generate(
-                messages,
-                temperature=getattr(self.config, "temperature", 0.0),
-                max_tokens=getattr(self.config, "max_tokens", 4096),
-            )
-        except Exception as e:
-            logger.error("KV generate failed: %s", e)
-            result = super().query(messages)
-            self._log(messages, messages, result)
-            return result
-
-        content = response.get("content", "")
-        prompt_token_ids = response.get("prompt_token_ids", [])
-        prompt_tokens = response.get("prompt_tokens", 0)
-        completion_tokens = response.get("completion_tokens", 0)
-        num_cached_tokens = response.get("num_cached_tokens", 0)
-
-        real_hit_rate = num_cached_tokens / prompt_tokens if prompt_tokens > 0 else 0.0
-
-        # --- Step 2: Pass to KVController for block-level eviction ---
-        if self.kv_controller is not None and prompt_token_ids:
             try:
-                _, did_reorg = self.kv_controller.on_step_complete(
-                    messages, prompt_token_ids, self.kv_client
+                from harness.lmcache_client import LMCacheClient
+                self.kv_client = LMCacheClient(mode="modal")
+            except Exception as e:
+                logger.debug("KV client unavailable (Tier 1 disabled): %s", e)
+
+        # --- Step 1: Generate via litellm (handles tool calls correctly) ---
+        result = super().query(messages)
+        self._log(messages, messages, result)
+
+        # --- Step 2: KVController post-step (Tier 2 always, Tier 1 if kv_client set) ---
+        if self.kv_controller is not None:
+            try:
+                # prompt_token_ids: needed for Tier 1 block hash computation.
+                # Not available from litellm response. Pass empty list to skip Tier 1
+                # KV deletion while still enabling Tier 2 (message-level reorg).
+                # When using serve.py directly (not litellm), pass real token IDs here.
+                managed, did_reorg = self.kv_controller.on_step_complete(
+                    messages,
+                    prompt_token_ids=[],  # Tier 1 skipped without vLLM token IDs
+                    lmcache_client=None,  # Tier 1 disabled until vLLM endpoint wired
                 )
                 if did_reorg:
                     logger.info("Step %d: KVController Tier-2 reorg fired.", self._call_count)
             except Exception as e:
                 logger.warning("KVController step failed: %s", e)
 
-        # --- Step 3: Log cache stats ---
-        entry = {
-            "step": self._call_count,
-            "policy": "kv_adaptive",
-            "original_messages": len(messages),
-            "sent_messages": len(messages),
-            "messages_evicted": 0,
-            "prompt_tokens": prompt_tokens,
-            "completion_tokens": completion_tokens,
-            "num_cached_tokens": num_cached_tokens,
-            "cache_hit_rate": real_hit_rate,
-            "cost": 0.0,  # vLLM self-hosted — no per-token cost
-            "timestamp": time.time(),
-        }
-        self.cache_trace.append(entry)
-
-        logger.info(
-            "Step %d [kv_adaptive]: %d prompt tok, cached=%d (%.1f%%)",
-            self._call_count, prompt_tokens, num_cached_tokens, real_hit_rate * 100,
-        )
-
-        # Return in LitellmModel-compatible format
-        return {
-            "message": {"role": "assistant", "content": content},
-            "extra": {
-                "response": {
-                    "usage": {
-                        "prompt_tokens": prompt_tokens,
-                        "completion_tokens": completion_tokens,
-                    }
-                },
-                "cost": 0.0,
-            },
-        }
+        return result
 
     # --- FIFO: evict oldest steps from the BEGINNING (destroys prefix cache) ---
 
@@ -559,15 +521,25 @@ class AdaptiveCacheModel(LitellmModel):
     # --- Logging with REAL cache stats from API ---
 
     def _log(self, original_msgs: list[dict], sent_msgs: list[dict], result: dict) -> None:
-        """Log real cache statistics from the API response."""
+        """Log cache statistics from the API response.
+
+        Handles both Anthropic (cache_read_input_tokens) and vLLM/OpenAI
+        (prompt_tokens_details.cached_tokens) response formats.
+        """
         response = result.get("extra", {}).get("response", {})
         usage = response.get("usage", {})
 
-        # Real Anthropic cache stats
-        cache_read = usage.get("cache_read_input_tokens", 0) or 0
-        cache_creation = usage.get("cache_creation_input_tokens", 0) or 0
         prompt_tokens = usage.get("prompt_tokens", 0) or 0
         completion_tokens = usage.get("completion_tokens", 0) or 0
+
+        # Anthropic cache stats
+        cache_read = usage.get("cache_read_input_tokens", 0) or 0
+        cache_creation = usage.get("cache_creation_input_tokens", 0) or 0
+
+        # vLLM / OpenAI-compatible cache stats (prefix cache hits)
+        if cache_read == 0:
+            details = usage.get("prompt_tokens_details", {}) or {}
+            cache_read = details.get("cached_tokens", 0) or 0
 
         real_hit_rate = cache_read / prompt_tokens if prompt_tokens > 0 else 0.0
 

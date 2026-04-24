@@ -38,9 +38,16 @@ class LMCacheClient:
         self._server = None
 
     def _get_server(self):
-        """Lazily import and instantiate the Modal LLMServer stub."""
+        """Lazily get a stub for the deployed Modal LLMServer.
+
+        Uses modal.Cls.from_name() so this works from any Modal function.
+        App name defaults to "adaptivecache-unified" (the unified server),
+        overridable via ADAPTIVECACHE_KV_SERVER_APP env var.
+        """
         if self._server is None and self.mode == "modal":
-            from modal_app.serve import LLMServer  # type: ignore
+            import modal, os
+            app_name = os.environ.get("ADAPTIVECACHE_KV_SERVER_APP", "adaptivecache-unified")
+            LLMServer = modal.Cls.from_name(app_name, "LLMServer")
             self._server = LLMServer()
         return self._server
 
@@ -119,6 +126,12 @@ class LMCacheClient:
                 prompt_token_ids, block_indices
             )
         return 0  # No-op for non-modal modes
+
+    def reset_lmcache(self) -> dict:
+        """Clear all LMCache blocks. Call between experiment policies."""
+        if self.mode == "modal":
+            return self._get_server().reset_lmcache.remote()
+        return {}
 
     def get_stats(self) -> dict:
         """Return LMCache engine statistics."""

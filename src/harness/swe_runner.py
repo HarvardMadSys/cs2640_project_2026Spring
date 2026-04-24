@@ -38,12 +38,20 @@ DATASET_MAPPING = {
 
 
 def load_instances(config: SWEConfig) -> list[dict]:
-    """Load SWE-bench instances from HuggingFace datasets."""
-    dataset_name = DATASET_MAPPING.get(config.dataset, config.dataset)
-    logger.info("Loading dataset: %s (split=%s)", dataset_name, config.split)
+    """Load SWE-bench instances, preferring a bundled JSON over HuggingFace."""
+    from pathlib import Path
 
-    ds = load_dataset(dataset_name, split=config.split)
-    instances = [dict(row) for row in ds]
+    # Use pre-bundled instances if available (avoids HF dependency at runtime)
+    bundled = Path("/app/swebench_instances.json")
+    if bundled.exists():
+        import json
+        instances = json.loads(bundled.read_text())
+        logger.info("Loaded %d instances from bundled JSON", len(instances))
+    else:
+        dataset_name = DATASET_MAPPING.get(config.dataset, config.dataset)
+        logger.info("Loading dataset: %s (split=%s)", dataset_name, config.split)
+        ds = load_dataset(dataset_name, split=config.split)
+        instances = [dict(row) for row in ds]
 
     # Filter by instance IDs if specified
     if config.instance_ids:
@@ -138,12 +146,12 @@ def _run_via_mini_swe_agent(config: SWEConfig, output_dir: Path) -> None:
     our_config = config.to_mini_swe_config()
     merged = recursive_merge(base_config, our_config)
 
-    # Use local environment on ARM Macs (Docker images are x86_64 only)
-    import platform
-    if platform.machine() == "arm64":
-        logger.info("ARM detected — using local environment instead of Docker")
+    # Always use local environment — Modal containers don't have Docker.
+    # We clone the repo at base_commit directly into the container filesystem.
+    import shutil
+    if not shutil.which("docker"):
+        logger.info("Docker not available — using local environment (repo clone)")
         merged.setdefault("environment", {})["environment_class"] = "local"
-        # Local env needs a working directory with the repo cloned
         merged["environment"]["cwd"] = str(output_dir / "workdir")
 
     # Load instances
@@ -184,8 +192,20 @@ def _setup_local_repo(instance: dict, output_dir: Path) -> Path | None:
     workdir = output_dir / "repos" / instance_id
 
     if workdir.exists():
-        logger.info("Repo already exists: %s", workdir)
-        return workdir
+        # Verify it's actually a valid git repo at the right commit, not a leftover empty dir
+        try:
+            result = subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                cwd=str(workdir), capture_output=True, text=True, timeout=10,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                logger.info("Repo already exists and is valid: %s", workdir)
+                return workdir
+        except Exception:
+            pass
+        logger.info("Repo dir exists but is invalid — re-cloning: %s", workdir)
+        import shutil
+        shutil.rmtree(workdir)
 
     workdir.mkdir(parents=True, exist_ok=True)
     logger.info("Cloning %s at %s...", repo, base_commit[:8])

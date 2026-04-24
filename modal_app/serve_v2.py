@@ -37,7 +37,7 @@ app = modal.App("adaptivecache-server-v2")
 model_volume = modal.Volume.from_name("adaptivecache-models", create_if_missing=True)
 results_volume = modal.Volume.from_name("adaptivecache-results", create_if_missing=True)
 
-MODEL_NAME = "Qwen/Qwen2.5-7B-Instruct"
+MODEL_NAME = "Qwen/Qwen3-8B"
 PORT = 8000
 
 
@@ -52,8 +52,15 @@ PORT = 8000
     volumes={"/models": model_volume},
     scaledown_window=600,
 )
+@modal.concurrent(max_inputs=16)
 class LLMServer:
-    """vLLM OpenAI server with real cached_tokens metric."""
+    """vLLM OpenAI server exposed as a public web endpoint.
+
+    After deploy, the URL is printed and stored in the Modal dashboard.
+    Use it as base_url for litellm:
+        litellm.completion(model="openai/Qwen/Qwen2.5-7B-Instruct",
+                           base_url="https://<url>/v1", api_key="dummy", ...)
+    """
 
     @modal.enter()
     def setup(self):
@@ -65,11 +72,13 @@ class LLMServer:
             "--model", MODEL_NAME,
             "--download-dir", "/models",
             "--enable-prefix-caching",
-            "--max-model-len", "32768",
-            "--gpu-memory-utilization", "0.85",
+            "--max-model-len", "40960",
+            "--gpu-memory-utilization", "0.90",
             "--port", str(PORT),
             "--host", "0.0.0.0",
             "--disable-log-requests",
+            "--enable-auto-tool-choice",
+            "--tool-call-parser", "hermes",
         ]
         self._proc = subprocess.Popen(cmd)
 
@@ -91,6 +100,19 @@ class LLMServer:
         from openai import OpenAI
         self._client = OpenAI(api_key="dummy", base_url=f"http://localhost:{PORT}/v1")
         self._base_url = base_url
+
+    @modal.web_server(port=PORT, startup_timeout=600)
+    def serve(self):
+        """Expose vLLM's OpenAI-compatible API as a public Modal web endpoint.
+
+        After `modal deploy modal_app/serve_v2.py`, this endpoint gets a stable
+        URL in the Modal dashboard. Pass it to litellm as base_url so any
+        OpenAI-compatible client (litellm, openai SDK, mini-swe-agent) can call
+        Qwen2.5-7B with full tool-calling support.
+        """
+        # vLLM is already running on PORT (started in setup()).
+        # Modal routes external HTTPS traffic here — nothing extra to do.
+        pass
 
     @modal.method()
     def generate(

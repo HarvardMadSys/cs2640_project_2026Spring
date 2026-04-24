@@ -1,19 +1,24 @@
 """Modal batch runner for AdaptiveCache SWE-bench experiments.
 
-Runs SWE-bench instances with a specified cache policy via Modal Functions,
-writing results to the adaptivecache-results volume.
+Runs SWE-bench instances on Qwen2.5-7B via the deployed serve_v2.py web endpoint.
+All policies (none, fifo, adaptive, kv_adaptive) go through the same vLLM server
+so comparisons are fair.
 
-Usage (local entrypoint):
-    modal run modal_app/run_experiments.py
-    modal run modal_app/run_experiments.py --policy kv_adaptive --budget 32768 --n-instances 5
-    modal run modal_app/run_experiments.py --policy adaptive --budget 64000 --n-instances 10
+Setup (one-time):
+    modal deploy modal_app/serve_v2.py        # get the public URL
+    # copy the URL from the Modal dashboard, e.g.:
+    # https://vlad--adaptivecache-server-v2-llmserver-serve.modal.run
+
+Usage:
+    modal run modal_app/run_experiments.py --vllm-url https://<url>
+    modal run modal_app/run_experiments.py --vllm-url https://<url> --policy adaptive --n-instances 5
+    modal run modal_app/run_experiments.py --vllm-url https://<url> --policy kv_adaptive --budget 32768
 
 Policies:
-    kv_adaptive  — block-level KV eviction via LMCache (GPU required for inference)
-    adaptive     — message-level position-aware eviction (Anthropic API)
-    fifo         — oldest-first message eviction (Anthropic API)
-    summarize    — LLM-generated summary compression (Anthropic API)
     none         — full context, no eviction (baseline)
+    fifo         — oldest-first message eviction
+    adaptive     — position-aware message eviction (maximises prefix cache)
+    kv_adaptive  — adaptive + KV-block eviction via LMCache (Tier 1+2)
 """
 
 from __future__ import annotations
@@ -34,6 +39,7 @@ import modal
 # which calls the separate LLMServer (modal_app/serve.py).
 experiment_image = (
     modal.Image.debian_slim(python_version="3.11")
+    .apt_install("git")
     .pip_install(
         "tiktoken>=0.7",
         "numpy>=1.24",
@@ -44,12 +50,18 @@ experiment_image = (
         "httpx>=0.24",
         "openai>=1.0",
     )
-    # Bundle the local adaptive-cache + harness source into the image
+    .env({"PYTHONPATH": "/app/src"})
+    # add_local_* must come last (Modal requirement); copy=True bakes files into image
     .add_local_dir(
         "/Users/cnmsr/Projects/cacheKarpathy/src",
         remote_path="/app/src",
+        copy=True,
     )
-    .env({"PYTHONPATH": "/app/src"})
+    .add_local_file(
+        "/Users/cnmsr/Projects/cacheKarpathy/modal_app/swebench_instances.json",
+        remote_path="/app/swebench_instances.json",
+        copy=True,
+    )
 )
 
 app = modal.App("adaptivecache-experiments")
@@ -76,15 +88,15 @@ DEFAULT_INSTANCES = [
 @app.function(
     image=experiment_image,
     volumes={"/results": results_volume},
-    timeout=3600,
+    timeout=7200,   # 2 hours — astropy instances need 40-90 steps at ~30s/step
     cpu=2,
 )
 def run_swebench_instance(
     instance_id: str,
-    policy: str = "kv_adaptive",
+    policy: str = "adaptive",
     budget: int = 32768,
-    model_name: str = "Qwen/Qwen2.5-7B-Instruct",
-    max_steps: int = 30,
+    vllm_url: str = "",   # public URL of deployed serve_v2.py, e.g. https://...modal.run
+    max_steps: int = 100,
 ) -> dict:
     """Run one SWE-bench instance with a specific cache policy.
 
@@ -100,11 +112,13 @@ def run_swebench_instance(
     """
     import traceback
 
+    qwen_model = "openai/Qwen/Qwen3-30B-A3B"
+
     result: dict = {
         "instance_id": instance_id,
         "policy": policy,
         "budget": budget,
-        "model_name": model_name,
+        "model_name": qwen_model,
         "resolved": False,
         "steps": 0,
         "cache_stats": {},
@@ -118,11 +132,31 @@ def run_swebench_instance(
 
         output_dir = Path("/results") / f"{policy}_{budget}" / instance_id
 
+        # Point litellm at the deployed unified server's OpenAI endpoint.
+        if vllm_url:
+            import os
+            os.environ["OPENAI_API_BASE"] = f"{vllm_url.rstrip('/')}/v1"
+            os.environ["OPENAI_API_KEY"] = "dummy"
+
+        # For kv_adaptive: wire LMCacheClient to the unified server so
+        # delete_kv_blocks() can call the LMCache internal API via Modal.
+        if policy == "kv_adaptive":
+            import sys
+            sys.path.insert(0, "/app/src")
+            try:
+                from harness.lmcache_client import LMCacheClient
+                import modal as _modal
+                _LLMServer = _modal.Cls.from_name("adaptivecache-unified", "LLMServer")
+                # Monkey-patch the client onto AdaptiveCacheModel at import time
+                os.environ["ADAPTIVECACHE_KV_SERVER_APP"] = "adaptivecache-unified"
+            except Exception:
+                pass
+
         config = SWEConfig(
             dataset="lite",
             split="test",
             instance_ids=[instance_id],
-            model_name=model_name,
+            model_name=qwen_model,
             cache_policy=policy,
             cache_budget=budget,
             max_steps=max_steps,
@@ -179,11 +213,11 @@ def run_swebench_instance(
 
 @app.local_entrypoint()
 def main(
-    policy: str = "kv_adaptive",
+    vllm_url: str = "",
+    policy: str = "adaptive",
     budget: int = 32768,
     n_instances: int = 5,
-    model_name: str = "Qwen/Qwen2.5-7B-Instruct",
-    max_steps: int = 30,
+    max_steps: int = 100,
     instance_ids: str = "",
 ):
     """Run experiment matrix locally, dispatching to Modal workers.
@@ -202,8 +236,15 @@ def main(
     else:
         instances = DEFAULT_INSTANCES[:n_instances]
 
+    if not vllm_url:
+        print("WARNING: --vllm-url not set. Deploy serve_v2.py first:")
+        print("  modal deploy modal_app/serve_v2.py")
+        print("  Then copy the web endpoint URL from the Modal dashboard.")
+        print()
+
     print(f"AdaptiveCache SWE-bench experiment")
-    print(f"  Policy: {policy}  Budget: {budget}  Model: {model_name}")
+    print(f"  Policy: {policy}  Budget: {budget}  Model: Qwen/Qwen2.5-7B-Instruct")
+    print(f"  vLLM URL: {vllm_url or '(not set — will fail)'}")
     print(f"  Instances ({len(instances)}): {instances}")
     print()
 
@@ -216,7 +257,7 @@ def main(
             kwargs={
                 "policy": policy,
                 "budget": budget,
-                "model_name": model_name,
+                "vllm_url": vllm_url,
                 "max_steps": max_steps,
             },
         )
@@ -251,7 +292,7 @@ def main(
     summary = {
         "policy": policy,
         "budget": budget,
-        "model_name": model_name,
+        "model_name": "Qwen/Qwen2.5-7B-Instruct",
         "instances": instances,
         "resolved": resolved,
         "total": total,

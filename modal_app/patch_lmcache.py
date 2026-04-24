@@ -14,33 +14,38 @@ def patch_file(path, old, new, description):
     if old not in content:
         print(f"  WARNING: pattern not found in {path}: {old!r}")
         return
-    patched = content.replace(old, new, 1)
+    patched = content.replace(old, new)  # replace ALL occurrences
     with open(path, "w") as f:
         f.write(patched)
     print(f"  OK: {description}")
 
 
+def patch_file_regex(path, pattern, replacement, description):
+    with open(path) as f:
+        content = f.read()
+    patched, n = re.subn(pattern, replacement, content)
+    if n == 0:
+        print(f"  WARNING: pattern not found in {path}: {pattern!r}")
+        return
+    with open(path, "w") as f:
+        f.write(patched)
+    print(f"  OK: {description} ({n} replacements)")
+
+
 # -------------------------------------------------------------------
-# Patch 1: factory.py — generate a default engine_id when not set.
-# Without this, the ZMQ transport creation crashes with AssertionError.
+# Patch 1: factory.py — replace ALL engine_id assertions with a
+# fallback that generates a default engine_id when None.
+# Covers both the top-level factory and _create_zmq_server_transport.
 # -------------------------------------------------------------------
 FACTORY = f"{SRC}/lmcache/v1/lookup_client/factory.py"
 
-# Find the indentation of the assert by scanning the file
-with open(FACTORY) as f:
-    for line in f:
-        if "assert metadata.engine_id is not None" in line:
-            indent = len(line) - len(line.lstrip())
-            IND = " " * indent
-            break
-    else:
-        IND = "        "
-
-patch_file(
+patch_file_regex(
     FACTORY,
-    f"{IND}assert metadata.engine_id is not None",
-    f"{IND}metadata.engine_id = metadata.engine_id or \"default-0\"  # compat-vllm085\n{IND}assert metadata.engine_id is not None",
-    "factory.py: default engine_id when None",
+    # Match any line containing the engine_id assertion (with any indentation)
+    r"( *)(assert metadata\.engine_id is not None.*)",
+    # Replace with: set default engine_id, then keep the assert
+    r"\1metadata.engine_id = metadata.engine_id or 'default-engine-0'  # compat-vllm085\n\1\2",
+    "factory.py: default engine_id for ALL assertions",
 )
 
 # -------------------------------------------------------------------
@@ -49,23 +54,10 @@ patch_file(
 # -------------------------------------------------------------------
 ADAPTER = f"{SRC}/lmcache/integration/vllm/vllm_v1_adapter.py"
 
-with open(ADAPTER) as f:
-    for line in f:
-        if "assert self.lookup_client is not None" in line:
-            indent = len(line) - len(line.lstrip())
-            IND2 = " " * indent
-            break
-    else:
-        IND2 = "        "
-
-patch_file(
+patch_file_regex(
     ADAPTER,
-    f"{IND2}assert self.lookup_client is not None",
-    (
-        f"{IND2}if self.lookup_client is None:  # compat-vllm085: degraded mode\n"
-        f"{IND2}    return 0, request_data\n"
-        f"{IND2}assert self.lookup_client is not None"
-    ),
+    r"( *)(assert self\.lookup_client is not None.*)",
+    r"\1if self.lookup_client is None:  # compat-vllm085: degraded mode\n\1    return 0, request_data\n\1\2",
     "vllm_v1_adapter.py: graceful None lookup_client",
 )
 

@@ -237,9 +237,20 @@ def main(
     print(f"Metric: real prefix cache hit rate from vLLM Prometheus")
     print()
 
-    # Run policies sequentially to use same warm container
+    # Run policies sequentially, resetting LMCache between runs to eliminate
+    # warm-cache bias. Each policy now starts with a cold LMCache CPU store
+    # (though the GPU KV cache from vLLM's prefix caching may still be warm
+    # for the shared system+task prefix — this is acceptable as it reflects
+    # real-world prefix reuse behavior).
     results = {}
-    for policy in policy_list:
+    LLMServer = modal.Cls.from_name("adaptivecache-server", "LLMServer")
+    server = LLMServer()
+
+    for i, policy in enumerate(policy_list):
+        if i > 0:
+            print(f"[reset] Clearing LMCache CPU store before {policy}...")
+            reset_result = server.reset_lmcache.remote()
+            print(f"[reset] {reset_result}")
         print(f"--- {policy} ---")
         results[policy] = run_policy.remote(
             policy=policy, budget=budget, n_steps=n_steps

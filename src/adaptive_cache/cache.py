@@ -18,6 +18,12 @@ from adaptive_cache.scorer import Scorer
 from adaptive_cache.segmenter import segment_messages, segment_new_step
 from adaptive_cache.types import Block, BlockType, Zone
 
+# Import lazily so cache.py doesn't require harness at test time
+try:
+    from harness.attention_hook import MockAttentionHook as _MockAttentionHook
+except ImportError:
+    _MockAttentionHook = None
+
 
 class AdaptiveCache:
     """Context manager middleware for LLM agents.
@@ -44,6 +50,16 @@ class AdaptiveCache:
         self._next_block_id: int = 0
         self._total_allocated: int = 0  # includes holes
         self._reorg_count: int = 0
+
+        # Attention hook: populated with MockAttentionHook by default.
+        # Swap in VLLMAttentionHook when running with --attention-backend EAGER.
+        # Set to None to disable (useful in tests or when w_cumulative_attention=0).
+        if _MockAttentionHook is not None and self.config.w_cumulative_attention > 0:
+            self._attention_hook = _MockAttentionHook(
+                sink_positions=self.config.sink_positions
+            )
+        else:
+            self._attention_hook = None
 
     def init(self, system_prompt: str, task: str) -> list[dict]:
         """Initialize with system prompt and task description.
@@ -106,7 +122,20 @@ class AdaptiveCache:
         if observation:
             recent_content += " " + observation
 
-        # --- Step 2: Scoring Pipeline ---
+        # --- Step 2a: Update attention history (before scoring reads it) ---
+        if self._attention_hook is not None:
+            seq_len = sum(b.token_count for b in self.blocks)
+            # Compute cumulative token positions for each block
+            block_positions: dict[int, tuple[int, int]] = {}
+            offset = 0
+            for b in self.blocks:
+                block_positions[b.block_id] = (offset, offset + b.token_count)
+                offset += b.token_count
+            self._attention_hook.update_block_attention(
+                self.blocks, block_positions, seq_len
+            )
+
+        # --- Step 2b: Scoring Pipeline ---
         self.scorer.score_blocks(self.blocks, self.step, recent_content)
 
         # --- Step 3: Zone Assignment ---
