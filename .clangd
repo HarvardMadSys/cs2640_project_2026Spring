@@ -1,2 +1,2 @@
 CompileFlags:
-  Add: [-I../, -std=c++23]
+  Add: [-I../, -I../external, -std=c++23]

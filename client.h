@@ -70,7 +70,7 @@ template <typename T> inline ref<T> get(std::string_view key) {
     return ref<T>{::sas_get(key.data(), key.size())};
 }
 
-template <typename T, void (*Dtor)(T*)>
+template <typename T, void (*Dtor)(T*) = nullptr>
 inline void put(std::string_view key, T* value) {
     if constexpr (Dtor == nullptr) {
         ::sas_put(key.data(), key.size(), value, nullptr);
