@@ -51,6 +51,8 @@ void hazard_domain::scan_and_reclaim(retired_batch& retired,
             for (size_t i = 0; i < 2; ++i) {
                 void* hp = curr->ptrs[i].load(std::memory_order_seq_cst);
                 if (hp) {
+                    hp = reinterpret_cast<void*>(
+                        reinterpret_cast<uintptr_t>(hp) & ~1ULL);
                     active.push_back(hp);
                 }
             }
