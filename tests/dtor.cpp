@@ -2,7 +2,6 @@
 #include <cassert>
 #include <chrono>
 #include <cstdlib>
-#include <print>
 #include <thread>
 
 #include "client.h"
@@ -23,7 +22,6 @@ static void tfree(void* p) {
 struct leak_guard {
     ~leak_guard() {
         assert(frees.load() == allocs.load());
-        std::println("Dtor test passed!");
     }
 } guard;
 

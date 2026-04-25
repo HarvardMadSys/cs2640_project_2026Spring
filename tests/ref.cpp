@@ -1,5 +1,4 @@
 #include <cassert>
-#include <print>
 #include <type_traits>
 #include <utility>
 
@@ -67,6 +66,4 @@ extern "C" void entry(int) {
     static_assert(!std::is_copy_assignable_v<sas::ref<int>>);
     static_assert(std::is_move_constructible_v<sas::ref<int>>);
     static_assert(std::is_move_assignable_v<sas::ref<int>>);
-
-    std::println("Ref test passed!");
 }

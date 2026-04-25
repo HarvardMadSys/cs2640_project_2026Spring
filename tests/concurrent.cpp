@@ -2,7 +2,6 @@
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
-#include <print>
 #include <thread>
 #include <vector>
 
@@ -24,7 +23,6 @@ static void tfree(void* p) {
 struct leak_guard {
     ~leak_guard() {
         assert(frees.load() == allocs.load());
-        std::println("Concurrent test passed!");
     }
 } guard;
 

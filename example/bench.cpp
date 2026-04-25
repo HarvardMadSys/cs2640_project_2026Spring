@@ -108,14 +108,15 @@ extern "C" void entry(int) {
             uint32_t r = next();
             int k = static_cast<int>(r % NUM_KEYS);
             if (r < read_thresh) {
-                uint64_t t0 = rdtsc();
-                auto h = sas::get<int>(sv_keys[k]);
-                uint64_t t1 = rdtsc();
-                (void)h;
+                uint64_t t0, t1;
+                {
+                    t0 = rdtsc();
+                    auto h = sas::get<int>(sv_keys[k]);
+                    t1 = rdtsc();
+                }
                 uint64_t t2 = rdtsc();
-                uint64_t t3 = rdtsc();
                 s.get_cy.push_back(t1 - t0);
-                s.close_cy.push_back(t3 - t2);
+                s.close_cy.push_back(t2 - t1);
             } else {
                 uint64_t t0 = rdtsc();
                 sas::put<int, nullptr>(sv_keys[k], &dummy[k]);

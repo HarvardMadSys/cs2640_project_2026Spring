@@ -1,5 +1,4 @@
 #include <cassert>
-#include <print>
 #include <string>
 
 #include "client.h"
@@ -68,6 +67,4 @@ extern "C" void entry(int) {
         assert(h);
         assert(*h == 5);
     }
-
-    std::println("Basic test passed!");
 }

@@ -68,15 +68,13 @@ static std::unique_ptr<rwlock_store> g_rwlock;
 int main() {
     auto cfg = sas::bench::load_config();
     std::println(std::cerr, "Loaded config: {}", cfg);
-    auto bench = sas::bench::make_bench(cfg);
-    bench.output(&std::cerr);
 
     sas::g_domain = std::make_unique<sas::hazard_domain>();
     sas::g_store = std::make_unique<sas::object_store>();
     g_rwlock = std::make_unique<rwlock_store>();
 
-    sas::bench::run_benchmark(
-        cfg,
+    sas::bench::register_benchmarks(
+        cfg, "hazard_ptr",
         [](std::string_view key) {
             auto* h = sas::g_store->get(key);
             if (h) {
@@ -86,11 +84,10 @@ int main() {
         },
         [](std::string_view key, int* value) {
             sas::g_store->put(key, value, nullptr);
-        },
-        bench, "hazard_ptr");
+        });
 
-    sas::bench::run_benchmark(
-        cfg,
+    sas::bench::register_benchmarks(
+        cfg, "rw_lock",
         [](std::string_view key) {
             auto* h = g_rwlock->get(key);
             if (h) {
@@ -100,8 +97,7 @@ int main() {
         },
         [](std::string_view key, int* value) {
             g_rwlock->put(key, value, nullptr);
-        },
-        bench, "rw_lock");
+        });
 
-    bench.render(ankerl::nanobench::templates::json(), std::cout);
+    sas::bench::run_benchmarks();
 }
