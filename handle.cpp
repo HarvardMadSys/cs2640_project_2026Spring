@@ -1,4 +1,5 @@
 #include <array>
+#include <atomic>
 #include <cassert>
 #include <cstddef>
 
@@ -41,7 +42,8 @@ handle_owner make_handle(void* value, dtor_fn dtor) {
 void drop_handle(object_handle* handle) {
     assert(handle);
     assert(handle->refcount.load(std::memory_order_relaxed) > 0);
-    if (handle->refcount.fetch_sub(1, std::memory_order_acq_rel) == 1) {
+    if (handle->refcount.fetch_sub(1, std::memory_order_release) == 1) {
+        std::atomic_thread_fence(std::memory_order_acquire);
         free_handle(handle);
     }
 }
