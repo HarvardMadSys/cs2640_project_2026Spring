@@ -71,6 +71,7 @@ FetchContent_Declare(
   GIT_TAG 0.11.8
 )
 
+set(HDR_HISTOGRAM_BUILD_PROGRAMS OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(hdrhistogram)
 
 file(GLOB ALL_BENCH_SRCS "benchmarks/*.cpp")

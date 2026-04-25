@@ -27,7 +27,7 @@ struct leak_guard {
 
 static void flush_gc() {
     static int dummy;
-    for (int i = 0; i < 65; ++i) {
+    for (int i = 0; i < 257; ++i) {
         sas::put<int, nullptr>("__flush_dtor__", &dummy);
     }
 }

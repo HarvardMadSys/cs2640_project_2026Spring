@@ -37,7 +37,7 @@ static void wait_frees(int expected) {
 
 static void flush_gc() {
     static int dummy;
-    for (int i = 0; i < 65; ++i) {
+    for (int i = 0; i < 257; ++i) {
         sas::put<int, nullptr>("__flush_gc__", &dummy);
     }
 }
