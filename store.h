@@ -10,13 +10,14 @@
 
 namespace sas {
 
-struct hash_node {
+struct alignas(64) hash_node {
     std::string key;
+    size_t hash;
     atomic_tagged_ptr<object_handle> handle;
     atomic_tagged_ptr<hash_node> next;
 
-    hash_node(std::string_view k, object_handle* h)
-        : key(k), handle(h), next(nullptr) {}
+    hash_node(std::string_view k, size_t kh, object_handle* h)
+        : key(k), hash(kh), handle(h), next(nullptr) {}
 };
 
 struct hash_table {

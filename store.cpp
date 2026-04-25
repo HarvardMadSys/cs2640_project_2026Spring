@@ -55,10 +55,12 @@ object_handle* object_store::get(std::string_view key) {
         return nullptr;
     }
 
-    size_t idx = hash(key) & (table->capacity - 1);
+    size_t hval = hash(key);
+    size_t idx = hval & (table->capacity - 1);
     auto curr = table->buckets[idx].load(std::memory_order_acquire);
+
     while (curr) {
-        if (curr->key == key) {
+        if (curr->hash == hval && curr->key == key) {
             result = g_domain->protect(curr->handle, state.node());
             if (result) {
                 result->refcount.fetch_add(1, std::memory_order_relaxed);
@@ -82,7 +84,8 @@ void object_store::put(std::string_view key, void* value, dtor_fn dtor) {
 
     while (true) {
         auto* table = g_domain->protect(table_, state.node());
-        size_t idx = hash(key) & (table->capacity - 1);
+        size_t hval = hash(key);
+        size_t idx = hval & (table->capacity - 1);
         auto& bucket = table->buckets[idx];
 
         auto head = bucket.load(std::memory_order_acquire);
@@ -97,7 +100,7 @@ void object_store::put(std::string_view key, void* value, dtor_fn dtor) {
         bool retry_table = false;
 
         while (curr) {
-            if (curr->key == key) {
+            if (curr->hash == hval && curr->key == key) {
                 auto old_handle = curr->handle.load(std::memory_order_acquire);
                 while (true) {
                     if (old_handle.is_frozen()) {
@@ -129,7 +132,7 @@ void object_store::put(std::string_view key, void* value, dtor_fn dtor) {
             continue;
         }
 
-        hash_node* new_node = new hash_node(key, new_handle.get());
+        hash_node* new_node = new hash_node(key, hval, new_handle.get());
         new_node->next.store(head.ptr(), std::memory_order_relaxed);
 
         if (bucket.compare_exchange_strong(head, new_node,
@@ -176,8 +179,8 @@ void object_store::resize(hash_table* expected) {
                 }
             }
 
-            hash_node* copy = new hash_node(curr->key, h.ptr());
-            size_t new_idx = hash(copy->key) & (new_cap - 1);
+            hash_node* copy = new hash_node(curr->key, curr->hash, h.ptr());
+            size_t new_idx = copy->hash & (new_cap - 1);
 
             copy->next.store(
                 new_table->buckets[new_idx].load(std::memory_order_relaxed),
