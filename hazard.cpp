@@ -13,7 +13,7 @@ hazard_domain::~hazard_domain() {
     auto* curr = head_.load();
     while (curr) {
         for (auto& entry : curr->orphaned) {
-            entry.deleter(entry.ptr);
+            entry.free();
         }
         auto* next = curr->next;
         delete curr;
@@ -62,7 +62,7 @@ void hazard_domain::scan_and_reclaim(retired_batch& retired,
 
     if (active.empty()) {
         for (size_t i = 0; i < retired.size; ++i) {
-            retired.entries[i].deleter(retired.entries[i].ptr);
+            retired.entries[i].free();
         }
         retired.size = 0;
         return;
@@ -74,10 +74,10 @@ void hazard_domain::scan_and_reclaim(retired_batch& retired,
     size_t survivor_count = 0;
     for (size_t i = 0; i < retired.size; ++i) {
         auto& entry = retired.entries[i];
-        if (std::binary_search(active.begin(), active.end(), entry.ptr)) {
+        if (std::binary_search(active.begin(), active.end(), entry.ptr())) {
             retired.entries[survivor_count++] = entry;
         } else {
-            entry.deleter(entry.ptr);
+            entry.free();
         }
     }
 
@@ -95,7 +95,7 @@ hazard_thread_state::hazard_thread_state() : domain_(*g_domain) {
     impl::init_pool();
     node_ = domain_.acquire_node();
     for (auto& entry : node_->orphaned) {
-        retire(entry.ptr, entry.deleter);
+        push_retire(entry);
     }
     node_->orphaned.clear();
 }
@@ -111,16 +111,19 @@ hazard_thread_state::~hazard_thread_state() {
     node_->active.store(false, std::memory_order_release);
 }
 
-void hazard_thread_state::retire(void* ptr, void (*deleter)(void*)) {
-    retired_.entries[retired_.size++] = {ptr, deleter};
+void hazard_thread_state::retire(object_handle* ptr) {
+    push_retire(tagged_ptr<void>(ptr, false));
+}
+
+void hazard_thread_state::retire(hash_table* ptr) {
+    push_retire(tagged_ptr<void>(ptr, true));
+}
+
+void hazard_thread_state::push_retire(tagged_ptr<void> ptr) {
+    retired_.entries[retired_.size++] = ptr;
     if (retired_.size == retired_.CAPACITY) {
         domain_.scan_and_reclaim(retired_, active_);
     }
-}
-
-void hazard_thread_state::retire(object_handle* handle) {
-    retire(handle,
-           [](void* p) { impl::drop_handle(static_cast<object_handle*>(p)); });
 }
 
 hazard_domain::hazard_node* hazard_thread_state::node() { return node_; }

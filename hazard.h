@@ -5,14 +5,24 @@
 #include <vector>
 
 #include "handle.h"
+#include "store.h"
+#include "tagged_ptr.h"
 
 namespace sas {
 
 class hazard_domain {
   public:
-    struct retired_entry {
-        void* ptr;
-        void (*deleter)(void*);
+    struct retired_entry : public tagged_ptr<void> {
+        using tagged_ptr<void>::tagged_ptr;
+        constexpr retired_entry(tagged_ptr<void> base) noexcept
+            : tagged_ptr<void>(base) {}
+        void free() {
+            if (!is_frozen()) {
+                impl::drop_handle(static_cast<object_handle*>(ptr()));
+            } else {
+                impl::free_table(static_cast<hash_table*>(ptr()));
+            }
+        }
     };
 
     struct retired_batch {
@@ -49,6 +59,24 @@ class hazard_domain {
         return ptr;
     }
 
+    template <typename T>
+    T* protect(const atomic_tagged_ptr<T>& shared_ptr, hazard_node* node) {
+        T* ptr;
+        while (true) {
+            auto tp = shared_ptr.load(std::memory_order_acquire);
+            ptr = tp.ptr();
+            if (!ptr) {
+                break;
+            }
+
+            node->ptrs[get_index<T>()].store(ptr, std::memory_order_seq_cst);
+            if (shared_ptr.load(std::memory_order_acquire) == tp) {
+                break;
+            }
+        }
+        return ptr;
+    }
+
     template <typename T> void unprotect(hazard_node* node) {
         node->ptrs[get_index<T>()].store(nullptr, std::memory_order_release);
     }
@@ -66,8 +94,8 @@ class hazard_thread_state {
     hazard_thread_state();
     ~hazard_thread_state();
 
-    void retire(void* ptr, void (*deleter)(void*));
     void retire(object_handle* handle);
+    void retire(hash_table* handle);
 
     hazard_domain::hazard_node* node();
     static hazard_thread_state& get();
@@ -77,6 +105,8 @@ class hazard_thread_state {
     hazard_domain::hazard_node* node_;
     hazard_domain::retired_batch retired_;
     std::vector<void*> active_;
+
+    void push_retire(tagged_ptr<void> ptr);
 };
 
 extern std::unique_ptr<hazard_domain> g_domain;

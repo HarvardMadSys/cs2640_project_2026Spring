@@ -6,13 +6,14 @@
 #include <string_view>
 
 #include "handle.h"
+#include "tagged_ptr.h"
 
 namespace sas {
 
 struct hash_node {
     std::string key;
-    std::atomic<object_handle*> handle;
-    std::atomic<hash_node*> next;
+    atomic_tagged_ptr<object_handle> handle;
+    atomic_tagged_ptr<hash_node> next;
 
     hash_node(std::string_view k, object_handle* h)
         : key(k), handle(h), next(nullptr) {}
@@ -20,10 +21,10 @@ struct hash_node {
 
 struct hash_table {
     size_t capacity;
-    std::atomic<hash_node*>* buckets;
+    atomic_tagged_ptr<hash_node>* buckets;
 
     explicit hash_table(size_t c) : capacity(c) {
-        buckets = new std::atomic<hash_node*>[capacity] {};
+        buckets = new atomic_tagged_ptr<hash_node>[capacity] {};
     }
 };
 
@@ -44,5 +45,11 @@ class object_store {
 };
 
 extern std::unique_ptr<object_store> g_store;
+
+namespace impl {
+
+void free_table(hash_table* table);
+
+}
 
 } // namespace sas
