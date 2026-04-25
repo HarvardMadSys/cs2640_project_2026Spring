@@ -1,7 +1,7 @@
 #pragma once
 
 #include <atomic>
-#include <boost/unordered/concurrent_flat_map.hpp>
+#include <mutex>
 #include <string>
 #include <string_view>
 
@@ -9,10 +9,27 @@
 
 namespace sas {
 
+struct hash_node {
+    std::string key;
+    std::atomic<object_handle*> handle;
+    std::atomic<hash_node*> next;
+
+    hash_node(std::string_view k, object_handle* h)
+        : key(k), handle(h), next(nullptr) {}
+};
+
+struct hash_table {
+    size_t capacity;
+    std::atomic<hash_node*>* buckets;
+
+    explicit hash_table(size_t c) : capacity(c) {
+        buckets = new std::atomic<hash_node*>[capacity] {};
+    }
+};
+
 class object_store {
   public:
-    explicit object_store(size_t initial_capacity = 1024)
-        : map_(initial_capacity) {}
+    explicit object_store(size_t initial_capacity = 1024);
     ~object_store();
 
     object_handle* get(std::string_view key);
@@ -20,36 +37,10 @@ class object_store {
     void put(std::string_view key, void* value, dtor_fn dtor);
 
   private:
-    struct key_hash {
-        using is_transparent = void;
-        size_t operator()(std::string_view sv) const noexcept {
-            return std::hash<std::string_view>{}(sv);
-        }
-    };
+    void resize(hash_table* expected);
 
-    struct key_pred {
-        using is_transparent = void;
-        bool operator()(std::string_view a, std::string_view b) const noexcept {
-            return a == b;
-        }
-    };
-
-    struct map_value {
-        mutable std::atomic<object_handle*> handle;
-
-        map_value(object_handle* handle) : handle(handle) {}
-        map_value(map_value&& other) noexcept
-            : handle(other.handle.load(std::memory_order_relaxed)) {}
-        map_value& operator=(map_value&& other) noexcept {
-            handle.store(other.handle.load(std::memory_order_relaxed),
-                         std::memory_order_relaxed);
-            return *this;
-        }
-        map_value(const map_value&) = delete;
-        map_value& operator=(const map_value&) = delete;
-    };
-
-    boost::concurrent_flat_map<std::string, map_value, key_hash, key_pred> map_;
+    std::atomic<hash_table*> table_;
+    std::mutex resize_mutex_;
 };
 
 extern std::unique_ptr<object_store> g_store;

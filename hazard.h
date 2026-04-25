@@ -2,7 +2,6 @@
 
 #include <array>
 #include <atomic>
-#include <boost/lockfree/queue.hpp>
 #include <vector>
 
 #include "handle.h"
@@ -11,36 +10,65 @@ namespace sas {
 
 class hazard_domain {
   public:
+    struct retired_entry {
+        void* ptr;
+        void (*deleter)(void*);
+    };
+
     struct retired_batch {
         static constexpr size_t CAPACITY = 256;
-        std::array<object_handle*, CAPACITY> handles;
+        std::array<retired_entry, CAPACITY> entries;
         size_t size{0};
     };
 
     struct alignas(64) hazard_node {
-        std::atomic<object_handle*> ptr{nullptr};
+        std::array<std::atomic<void*>, 2> ptrs{{nullptr, nullptr}};
         std::atomic<bool> active{true};
-        std::vector<object_handle*> orphaned;
+        std::vector<retired_entry> orphaned;
         hazard_node* next{nullptr};
     };
 
     explicit hazard_domain();
     ~hazard_domain();
     hazard_node* acquire_node();
-    object_handle* protect(const std::atomic<object_handle*>& shared_ptr,
-                           hazard_node* node);
-    void unprotect(hazard_node* node);
-    void scan_and_reclaim(retired_batch& retired, std::vector<object_handle*>& active);
+
+    template <typename T>
+    T* protect(const std::atomic<T*>& shared_ptr, hazard_node* node) {
+        T* ptr;
+        while (true) {
+            ptr = shared_ptr.load(std::memory_order_acquire);
+            if (!ptr) {
+                break;
+            }
+
+            node->ptrs[get_index<T>()].store(ptr, std::memory_order_seq_cst);
+            if (shared_ptr.load(std::memory_order_acquire) == ptr) {
+                break;
+            }
+        }
+        return ptr;
+    }
+
+    template <typename T> void unprotect(hazard_node* node) {
+        node->ptrs[get_index<T>()].store(nullptr, std::memory_order_release);
+    }
+
+    void scan_and_reclaim(retired_batch& retired, std::vector<void*>& active);
 
   private:
     std::atomic<hazard_node*> head_{nullptr};
+
+    template <typename T> size_t get_index() const noexcept;
 };
 
 class hazard_thread_state {
   public:
     hazard_thread_state();
     ~hazard_thread_state();
+
+    void retire(void* ptr, void (*deleter)(void*));
     void retire(object_handle* handle);
+
     hazard_domain::hazard_node* node();
     static hazard_thread_state& get();
 
@@ -48,7 +76,7 @@ class hazard_thread_state {
     hazard_domain& domain_;
     hazard_domain::hazard_node* node_;
     hazard_domain::retired_batch retired_;
-    std::vector<object_handle*> active_;
+    std::vector<void*> active_;
 };
 
 extern std::unique_ptr<hazard_domain> g_domain;
