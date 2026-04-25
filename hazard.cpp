@@ -104,6 +104,7 @@ void hazard_domain::scan_and_reclaim(retired_batch& retired,
 }
 
 hazard_thread_state::hazard_thread_state() : domain_(*g_domain) {
+    impl::init_pool();
     node_ = domain_.acquire_node();
     for (auto* handle : node_->orphaned) {
         retire(handle);

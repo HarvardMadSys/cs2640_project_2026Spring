@@ -20,9 +20,17 @@ static_assert(sizeof(object_handle) <= 64UL);
 
 namespace impl {
 
-std::unique_ptr<object_handle> make_handle(void* value, dtor_fn dtor);
 void drop_handle(object_handle* handle);
 void free_handle(object_handle* handle);
+void init_pool() noexcept;
+
+struct handle_deleter {
+    void operator()(object_handle* h) const noexcept { free_handle(h); }
+};
+
+using handle_owner = std::unique_ptr<object_handle, handle_deleter>;
+
+handle_owner make_handle(void* value, dtor_fn dtor);
 
 } // namespace impl
 
