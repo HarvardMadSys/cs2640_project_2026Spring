@@ -1,7 +1,9 @@
 #include <atomic>
 #include <cassert>
-#include <functional>
 #include <thread>
+
+#define XXH_INLINE_ALL
+#include "xxhash.h"
 
 #include "hazard.h"
 #include "store.h"
@@ -18,7 +20,7 @@ size_t next_power_of_two(size_t n) {
     return cap;
 }
 
-size_t hash(std::string_view s) { return std::hash<std::string_view>{}(s); }
+size_t hash(std::string_view s) { return XXH3_64bits(s.data(), s.size()); }
 
 } // namespace
 
@@ -96,7 +98,6 @@ void object_store::put(std::string_view key, void* value, dtor_fn dtor) {
         }
 
         hash_node* curr = head.ptr();
-        size_t bucket_depth = 0;
         bool retry_table = false;
 
         while (curr) {
@@ -122,7 +123,6 @@ void object_store::put(std::string_view key, void* value, dtor_fn dtor) {
                 break;
             }
 
-            bucket_depth++;
             curr = curr->next.load(std::memory_order_acquire).ptr();
         }
 
@@ -139,8 +139,23 @@ void object_store::put(std::string_view key, void* value, dtor_fn dtor) {
                                            std::memory_order_release,
                                            std::memory_order_acquire)) {
             new_handle.release();
+
+            size_t shard_idx = hval & hash_table::SHARD_MASK;
+            size_t shard_count = table->shards[shard_idx].v.fetch_add(
+                                     1, std::memory_order_relaxed) +
+                                 1;
+
+            bool needs_resize = false;
+            if (shard_count * hash_table::NUM_SHARDS >= table->capacity) {
+                size_t total = 0;
+                for (size_t i = 0; i < hash_table::NUM_SHARDS; ++i) {
+                    total += table->shards[i].v.load(std::memory_order_relaxed);
+                }
+                needs_resize = total >= table->capacity;
+            }
+
             g_domain->unprotect<hash_table>(state.node());
-            if (bucket_depth >= 4) {
+            if (needs_resize) {
                 resize(table);
             }
             return;
@@ -189,6 +204,17 @@ void object_store::resize(hash_table* expected) {
 
             curr = curr->next.load(std::memory_order_relaxed).ptr();
         }
+    }
+
+    size_t total = 0;
+    for (size_t i = 0; i < hash_table::NUM_SHARDS; ++i) {
+        total += old_table->shards[i].v.load(std::memory_order_relaxed);
+    }
+    size_t base = total / hash_table::NUM_SHARDS;
+    size_t rem = total % hash_table::NUM_SHARDS;
+    for (size_t i = 0; i < hash_table::NUM_SHARDS; ++i) {
+        new_table->shards[i].v.store(base + (i < rem ? 1 : 0),
+                                     std::memory_order_relaxed);
     }
 
     table_.store(new_table, std::memory_order_release);

@@ -21,8 +21,16 @@ struct alignas(64) hash_node {
 };
 
 struct hash_table {
+    static constexpr size_t NUM_SHARDS = 32;
+    static constexpr size_t SHARD_MASK = NUM_SHARDS - 1;
+
+    struct alignas(64) count_shard {
+        std::atomic<size_t> v{0};
+    };
+
     size_t capacity;
     atomic_tagged_ptr<hash_node>* buckets;
+    std::array<count_shard, NUM_SHARDS> shards;
 
     explicit hash_table(size_t c) : capacity(c) {
         buckets = new atomic_tagged_ptr<hash_node>[capacity] {};

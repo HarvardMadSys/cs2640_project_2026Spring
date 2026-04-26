@@ -26,7 +26,7 @@ set(STORE_SRCS store.cpp hazard.cpp handle.cpp)
 add_executable(host ${HOST_SRCS})
 target_link_libraries(host PRIVATE dl pthread mimalloc)
 set_target_properties(host PROPERTIES ENABLE_EXPORTS TRUE)
-target_include_directories(host PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_include_directories(host PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/external")
 
 function(add_plugin TARGET_NAME SRC_FILE OUT_DIR INCLUDE_DIRS)
     add_library(${TARGET_NAME} MODULE ${SRC_FILE})
