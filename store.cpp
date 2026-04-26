@@ -6,11 +6,16 @@
 #include "xxhash.h"
 
 #include "hazard.h"
+#include "memory_pool.h"
 #include "store.h"
 
 namespace sas {
 
 namespace {
+
+constexpr size_t NODE_POOL_CAPACITY = 512;
+
+thread_local memory_pool<hash_node, NODE_POOL_CAPACITY> node_pool_;
 
 size_t next_power_of_two(size_t n) {
     size_t cap = 1;
@@ -21,6 +26,20 @@ size_t next_power_of_two(size_t n) {
 }
 
 size_t hash(std::string_view s) { return XXH3_64bits(s.data(), s.size()); }
+
+hash_node* make_node(std::string_view key, size_t hval, object_handle* h) {
+    if (auto* n = node_pool_.acquire()) {
+        n->key.assign(key.data(), key.size());
+        n->hash = hval;
+        n->handle.store(tagged_ptr<object_handle>(h),
+                        std::memory_order_relaxed);
+        n->next.store(tagged_ptr<hash_node>(), std::memory_order_relaxed);
+        return n;
+    }
+    return new hash_node(key, hval, h);
+}
+
+void free_node(hash_node* n) noexcept { node_pool_.release(n); }
 
 } // namespace
 
@@ -40,7 +59,7 @@ object_store::~object_store() {
                 close(h.ptr());
             }
             auto next = curr->next.load(std::memory_order_relaxed);
-            delete curr.ptr();
+            free_node(curr.ptr());
             curr = next;
         }
     }
@@ -132,7 +151,7 @@ void object_store::put(std::string_view key, void* value, dtor_fn dtor) {
             continue;
         }
 
-        hash_node* new_node = new hash_node(key, hval, new_handle.get());
+        hash_node* new_node = make_node(key, hval, new_handle.get());
         new_node->next.store(head.ptr(), std::memory_order_relaxed);
 
         if (bucket.compare_exchange_strong(head, new_node,
@@ -161,7 +180,7 @@ void object_store::put(std::string_view key, void* value, dtor_fn dtor) {
             return;
         }
 
-        delete new_node;
+        free_node(new_node);
         g_domain->unprotect<hash_table>(state.node());
     }
 }
@@ -194,7 +213,7 @@ void object_store::resize(hash_table* expected) {
                 }
             }
 
-            hash_node* copy = new hash_node(curr->key, curr->hash, h.ptr());
+            hash_node* copy = make_node(curr->key, curr->hash, h.ptr());
             size_t new_idx = copy->hash & (new_cap - 1);
 
             copy->next.store(
@@ -231,13 +250,15 @@ void free_table(hash_table* table) {
             table->buckets[i].load(std::memory_order_relaxed).ptr();
         while (curr) {
             hash_node* next = curr->next.load(std::memory_order_relaxed).ptr();
-            delete curr;
+            free_node(curr);
             curr = next;
         }
     }
     delete[] table->buckets;
     delete table;
 }
+
+void init_node_pool() noexcept { (void)node_pool_; }
 
 } // namespace impl
 

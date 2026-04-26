@@ -58,7 +58,8 @@ extern std::unique_ptr<object_store> g_store;
 namespace impl {
 
 void free_table(hash_table* table);
+void init_node_pool() noexcept;
 
-}
+} // namespace impl
 
 } // namespace sas

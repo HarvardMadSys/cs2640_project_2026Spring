@@ -1,9 +1,9 @@
-#include <array>
 #include <atomic>
 #include <cassert>
 #include <cstddef>
 
 #include "handle.h"
+#include "memory_pool.h"
 
 namespace sas::impl {
 
@@ -11,26 +11,14 @@ namespace {
 
 constexpr size_t POOL_CAPACITY = 512;
 
-struct handle_pool {
-    std::array<object_handle*, POOL_CAPACITY> storage;
-    size_t size{0};
-
-    ~handle_pool() {
-        for (size_t i = 0; i < size; ++i) {
-            delete storage[i];
-        }
-    }
-};
-
-thread_local handle_pool pool;
+thread_local memory_pool<object_handle, POOL_CAPACITY> pool;
 
 } // namespace
 
 void init_pool() noexcept { (void)pool; }
 
 handle_owner make_handle(void* value, dtor_fn dtor) {
-    if (pool.size > 0) {
-        auto* h = pool.storage[--pool.size];
+    if (auto* h = pool.acquire()) {
         h->value = value;
         h->dtor = dtor;
         h->refcount.store(1, std::memory_order_relaxed);
@@ -53,11 +41,7 @@ void free_handle(object_handle* handle) {
     if (handle->dtor) {
         handle->dtor(handle->value);
     }
-    if (pool.size < POOL_CAPACITY) {
-        pool.storage[pool.size++] = handle;
-    } else {
-        delete handle;
-    }
+    pool.release(handle);
 }
 
 } // namespace sas::impl

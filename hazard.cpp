@@ -93,6 +93,7 @@ template <> size_t hazard_domain::get_index<hash_table>() const noexcept {
 
 hazard_thread_state::hazard_thread_state() : domain_(*g_domain) {
     impl::init_pool();
+    impl::init_node_pool();
     node_ = domain_.acquire_node();
     for (auto& entry : node_->orphaned) {
         push_retire(entry);
