@@ -10,6 +10,14 @@
 
 namespace sas {
 
+namespace impl {
+
+template <typename T> inline size_t get_index() noexcept;
+template <> inline size_t get_index<object_handle>() noexcept { return 0; }
+template <> inline size_t get_index<hash_table>() noexcept { return 1; }
+
+} // namespace impl
+
 class hazard_domain {
   public:
     struct retired_entry : public tagged_ptr<void> {
@@ -51,7 +59,8 @@ class hazard_domain {
                 break;
             }
 
-            node->ptrs[get_index<T>()].store(ptr, std::memory_order_seq_cst);
+            node->ptrs[impl::get_index<T>()].store(ptr,
+                                                   std::memory_order_seq_cst);
             if (shared_ptr.load(std::memory_order_acquire) == ptr) {
                 break;
             }
@@ -69,7 +78,8 @@ class hazard_domain {
                 break;
             }
 
-            node->ptrs[get_index<T>()].store(ptr, std::memory_order_seq_cst);
+            node->ptrs[impl::get_index<T>()].store(ptr,
+                                                   std::memory_order_seq_cst);
             if (shared_ptr.load(std::memory_order_acquire) == tp) {
                 break;
             }
@@ -78,15 +88,14 @@ class hazard_domain {
     }
 
     template <typename T> void unprotect(hazard_node* node) {
-        node->ptrs[get_index<T>()].store(nullptr, std::memory_order_release);
+        node->ptrs[impl::get_index<T>()].store(nullptr,
+                                               std::memory_order_release);
     }
 
     void scan_and_reclaim(retired_batch& retired, std::vector<void*>& active);
 
   private:
     std::atomic<hazard_node*> head_{nullptr};
-
-    template <typename T> size_t get_index() const noexcept;
 };
 
 class hazard_thread_state {
@@ -96,6 +105,8 @@ class hazard_thread_state {
 
     void retire(object_handle* handle);
     void retire(hash_table* handle);
+
+    hash_table* acquire_table(const std::atomic<hash_table*>& src) noexcept;
 
     hazard_domain::hazard_node* node();
     static hazard_thread_state& get();

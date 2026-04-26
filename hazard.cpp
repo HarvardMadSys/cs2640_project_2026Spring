@@ -84,13 +84,6 @@ void hazard_domain::scan_and_reclaim(retired_batch& retired,
     retired.size = survivor_count;
 }
 
-template <> size_t hazard_domain::get_index<object_handle>() const noexcept {
-    return 0;
-}
-template <> size_t hazard_domain::get_index<hash_table>() const noexcept {
-    return 1;
-}
-
 hazard_thread_state::hazard_thread_state() : domain_(*g_domain) {
     impl::init_pool();
     impl::init_node_pool();
@@ -110,6 +103,17 @@ hazard_thread_state::~hazard_thread_state() {
     node_->orphaned.insert(node_->orphaned.end(), retired_.entries.begin(),
                            retired_.entries.begin() + retired_.size);
     node_->active.store(false, std::memory_order_release);
+}
+
+hash_table* hazard_thread_state::acquire_table(
+    const std::atomic<hash_table*>& src) noexcept {
+    hash_table* current = src.load(std::memory_order_acquire);
+    void* cached = node_->ptrs[impl::get_index<hash_table>()].load(
+        std::memory_order_relaxed);
+    if (static_cast<void*>(current) == cached) {
+        return current;
+    }
+    return domain_.protect<hash_table>(src, node_);
 }
 
 void hazard_thread_state::retire(object_handle* ptr) {

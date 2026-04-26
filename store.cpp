@@ -71,7 +71,7 @@ object_handle* object_store::get(std::string_view key) {
     auto& state = hazard_thread_state::get();
     object_handle* result = nullptr;
 
-    hash_table* table = g_domain->protect(table_, state.node());
+    hash_table* table = state.acquire_table(table_);
     if (!table) {
         return nullptr;
     }
@@ -92,7 +92,6 @@ object_handle* object_store::get(std::string_view key) {
     }
 
     g_domain->unprotect<object_handle>(state.node());
-    g_domain->unprotect<hash_table>(state.node());
 
     return result;
 }
@@ -104,14 +103,13 @@ void object_store::put(std::string_view key, void* value, dtor_fn dtor) {
     auto new_handle = impl::make_handle(value, dtor);
 
     while (true) {
-        auto* table = g_domain->protect(table_, state.node());
+        auto* table = state.acquire_table(table_);
         size_t hval = hash(key);
         size_t idx = hval & (table->capacity - 1);
         auto& bucket = table->buckets[idx];
 
         auto head = bucket.load(std::memory_order_acquire);
         if (head.is_frozen()) {
-            g_domain->unprotect<hash_table>(state.node());
             std::this_thread::yield();
             continue;
         }
@@ -135,7 +133,6 @@ void object_store::put(std::string_view key, void* value, dtor_fn dtor) {
                             state.retire(old_handle.ptr());
                         }
                         new_handle.release();
-                        g_domain->unprotect<hash_table>(state.node());
                         return;
                     }
                 }
@@ -146,7 +143,6 @@ void object_store::put(std::string_view key, void* value, dtor_fn dtor) {
         }
 
         if (retry_table) {
-            g_domain->unprotect<hash_table>(state.node());
             std::this_thread::yield();
             continue;
         }
@@ -173,7 +169,6 @@ void object_store::put(std::string_view key, void* value, dtor_fn dtor) {
                 needs_resize = total >= table->capacity;
             }
 
-            g_domain->unprotect<hash_table>(state.node());
             if (needs_resize) {
                 resize(table);
             }
@@ -181,7 +176,6 @@ void object_store::put(std::string_view key, void* value, dtor_fn dtor) {
         }
 
         free_node(new_node);
-        g_domain->unprotect<hash_table>(state.node());
     }
 }
 
