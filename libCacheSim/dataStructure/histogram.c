@@ -6,6 +6,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* Polyfill for older glib (<2.68) which lacks g_memdup2.
+   g_memdup is functionally identical for byte_size < UINT_MAX. */
+#if !GLIB_CHECK_VERSION(2, 68, 0)
+#define g_memdup2(mem, byte_size) g_memdup((mem), (guint)(byte_size))
+#endif
+
 ReuseHistogram* init_histogram(void) {
   ReuseHistogram* hist = (ReuseHistogram*)malloc(sizeof(ReuseHistogram));
   hist->bins = g_hash_table_new(g_int64_hash, g_int64_equal);
