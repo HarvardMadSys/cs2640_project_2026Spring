@@ -1,0 +1,30 @@
+srun: job 8444954 queued and waiting for resources
+srun: job 8444954 has been allocated resources
+device=cuda, model=Qwen/Qwen3-0.6B, max_tokens=8192, attn_chunk=256, qw=256, last_k=4
+  GPU mem: 84.7 GB free / 85.1 GB total — NVIDIA A100-SXM4-80GB
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/311 [00:00<?, ?it/s]Loading weights:   0%|          | 1/311 [00:00<02:24,  2.14it/s]Loading weights:  33%|███▎      | 103/311 [00:00<00:00, 238.12it/s]Loading weights:  52%|█████▏    | 161/311 [00:00<00:00, 266.99it/s]Loading weights:  67%|██████▋   | 207/311 [00:00<00:00, 273.06it/s]Loading weights:  79%|███████▉  | 246/311 [00:01<00:00, 284.06it/s]Loading weights:  91%|█████████ | 283/311 [00:01<00:00, 282.52it/s]Loading weights: 100%|██████████| 311/311 [00:01<00:00, 245.52it/s]
+  loaded in 3.7s, n_layers=28
+
+Loading 30 Hermes traces...
+  got 30 traces
+  resume: skipping 1 already-done task_ids
+  done 3/30  (13s)
+  done 6/30  (15s)
+  done 9/30  (18s)
+  done 12/30  (21s)
+  done 15/30  (24s)
+  done 18/30  (26s)
+  done 21/30  (29s)
+  done 24/30  (31s)
+  done 27/30  (34s)
+  done 30/30  (36s)
+
+Wrote studies/lifetime_cost/out/hermes/attention_scores.csv  (304 rows)
+Wrote studies/lifetime_cost/out/hermes/attention_vs_proxies.csv
+
+=== Correlations across 295 messages ===
+  attn_per_tok vs citation:    Pearson r = 0.144
+  attn_per_tok vs cos_sim:     Pearson r = 0.003
+  citation     vs cos_sim:     Pearson r = 0.016

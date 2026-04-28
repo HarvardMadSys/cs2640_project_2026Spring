@@ -1,0 +1,49 @@
+# External agent / reasoning trace dumps. Zero $$ analysis.
+#
+# Run with:
+#   python -m studies.lifetime_cost.scripts.run_external_traces \\
+#     --config studies/lifetime_cost/configs/external_traces.yaml
+
+sources:
+  applied_compute:
+    enabled: true
+    workloads:
+      - path: studies/lifetime_cost/external_traces/applied_compute/agentic_coding_8k.jsonl
+        benchmark: ac_agentic_coding_8k
+      - path: studies/lifetime_cost/external_traces/applied_compute/code_qa_8k.jsonl
+        benchmark: ac_code_qa_8k
+      - path: studies/lifetime_cost/external_traces/applied_compute/office_work_8k.jsonl
+        benchmark: ac_office_work_8k
+    max_traces_per_workload: 200        # bump for stronger stats
+
+  hermes:
+    enabled: true
+    config: kimi                # or glm-5.1
+    max_traces: 200
+
+  trail:
+    enabled: false              # ditto
+    max_traces: 148
+
+policies:
+  - name: none
+  - name: naive_summary
+    kwargs: { recent_keep: 4, trigger_ratio: 0.85 }
+  - name: microcompact
+    kwargs: { per_msg_threshold_tokens: 800, trigger_ratio: 0.85 }
+  - name: prefix_preserving
+    kwargs: { keep_first_turns: 6, keep_recent_turns: 4, trigger_ratio: 0.85 }
+  - name: boundary_aware
+    kwargs: { keep_first_turns: 6, keep_recent_turns: 4, trigger_ratio: 0.85 }
+
+cost_models:
+  - anthropic/claude-haiku-4-5
+  - anthropic/claude-sonnet-4-6
+  - openai/gpt-4.1-mini
+  - openai/gpt-4.1
+  - qwen/qwen3-30b-a3b
+
+budget_tokens: 32000             # was 8000 — too tight; AC traces have median peak prompt 20-50K
+hard_budget_tokens: 64000
+
+out_dir: studies/lifetime_cost/out/external_traces_b32k

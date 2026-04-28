@@ -10,3 +10,9 @@ dist/
 build/
 .obsidian/
 raw/papers/*.pdf
+
+# Datasets — too large for git, fetched via HF/curl on demand
+*.parquet
+*.arrow
+studies/lifetime_cost/external_traces/hermes/
+studies/lifetime_cost/external_traces/applied_compute/
