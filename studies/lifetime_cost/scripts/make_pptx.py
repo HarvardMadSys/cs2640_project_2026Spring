@@ -1,25 +1,22 @@
-"""Build the AdaptiveCache project deck (.pptx).
+"""Build the AdaptiveCache decks (.pptx).
 
-Output: studies/lifetime_cost/reports/AdaptiveCache_talk.pptx
+Outputs two files:
+  reports/AdaptiveCache_talk.pptx     — 5 slides, the 4-5 min talk
+  reports/AdaptiveCache_appendix.pptx — 18 backup slides for Q&A
 
-Structure
----------
-PART 1 — Talk (mirrors TALK_5MIN.md, 5 slides):
+Talk (mirrors TALK_5MIN.md, 5 slides ≈ 5 min):
   1. Title — hook
   2. Setup — what's the experiment?
   3. Experiment — fig3 placeholder ablation (HERO)
   4. Mechanism — why "less is more"
   5. Why it matters — closing takeaway
 
-PART 2 — Appendix (backup slides):
-  6. Project arc
-  7. AdaptiveCache vision
-  8. Method family tree
-  9–20. The 12 method panels
-  21. Pareto SWE-bench (N=10)
-  22. Cost decomposition
-  23. Cliff amplification
-  24. Compaction wins
+Appendix (backup, never opened during the talk itself):
+  - Project arc
+  - AdaptiveCache vision
+  - Method family tree
+  - 12 method panels
+  - Pareto SWE-bench, cost decomposition, cliff amplification
 
 Palette (content-informed, matches figures): navy + cream + warm orange + green.
 """
@@ -35,7 +32,8 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 FIG = ROOT / "reports" / "figures"
-OUT = ROOT / "reports" / "AdaptiveCache_talk.pptx"
+OUT_TALK = ROOT / "reports" / "AdaptiveCache_talk.pptx"
+OUT_APPENDIX = ROOT / "reports" / "AdaptiveCache_appendix.pptx"
 
 # 16:9 widescreen
 SLIDE_W_IN = 13.333
@@ -228,7 +226,7 @@ def slide_setup(prs):
              "Reasonable expectation: the detailed Post-it should help the AI more.",
              size=15, italic=True, color=WHITE, align="center", valign="middle")
 
-    add_footer(s, "Slide 2 / 24")
+    add_footer(s, "Slide 2 / 5")
 
 
 def slide_experiment(prs):
@@ -252,7 +250,7 @@ def slide_experiment(prs):
              "The DETAILED Post-it lost both runs — agent retried the wrong fix 18 times.",
              size=17, bold=True, color=NAVY_DEEP, valign="middle")
 
-    add_footer(s, "Slide 3 / 24")
+    add_footer(s, "Slide 3 / 5")
 
 
 def slide_mechanism(prs):
@@ -302,7 +300,7 @@ def slide_mechanism(prs):
              "Lesson: a confident-looking summary anchors the agent on the wrong hypothesis.",
              size=17, bold=True, color=WHITE, valign="middle")
 
-    add_footer(s, "Slide 4 / 24", on_dark=False)
+    add_footer(s, "Slide 4 / 5", on_dark=False)
 
 
 def slide_why_it_matters(prs):
@@ -392,42 +390,56 @@ def slide_method(prs, fig_filename, family_label, family_color, *, slide_num):
 # Build
 # ---------------------------------------------------------------------------
 
-def build():
-    global prs
-    prs = Presentation()
-    prs.slide_width = Inches(SLIDE_W_IN)
-    prs.slide_height = Inches(SLIDE_H_IN)
+def _new_pres():
+    p = Presentation()
+    p.slide_width = Inches(SLIDE_W_IN)
+    p.slide_height = Inches(SLIDE_H_IN)
+    return p
 
-    # PART 1 — TALK
+
+def build_talk():
+    """5-slide deck for the 4-5 min presentation."""
+    global prs
+    prs = _new_pres()
     slide_title(prs)
     slide_setup(prs)
     slide_experiment(prs)
     slide_mechanism(prs)
     slide_why_it_matters(prs)
+    prs.save(str(OUT_TALK))
+    print(f"wrote {OUT_TALK}")
+    print(f"  size: {OUT_TALK.stat().st_size / 1024:.0f} KB")
+    print(f"  slides: {len(prs.slides)}")
 
-    # PART 2 — APPENDIX
+
+def build_appendix():
+    """Backup deck for Q&A — never opened during the talk itself."""
+    global prs
+    prs = _new_pres()
+    n_total = 18  # divider + 3 framing + 12 methods + 3 supporting
+    sn = lambda i: f"Backup {i} / {n_total}"
+
     appendix_divider(prs, "Appendix",
-                     "Project arc · vision · methods · supporting results")
+                     "Backup slides — open only if asked.")
 
     slide_figure(prs,
                  "The project — four phases, one negative-with-a-twist result",
                  FIG / "fig6_project_arc.png",
                  "Phase A: measurement → Phase B: τ-bench → Phase C: SWE-bench → Phase D: mechanism finding.",
-                 slide_num="Slide 7 / 24")
+                 slide_num=sn(2))
 
     slide_figure(prs,
                  "AdaptiveCache vision — context as a live, ordered memory",
                  FIG / "fig8_vision.png",
                  "Reorganize the prompt on compaction: pin stable items at the front; leave evictable holes in the suffix.",
-                 slide_num="Slide 8 / 24")
+                 slide_num=sn(3))
 
     slide_figure(prs,
                  "The compaction design space — 6 families, 12 methods",
                  FIG / "fig9_method_family_tree.png",
                  "All 12 policies we tested split on which signal they trust to decide what to drop.",
-                 slide_num="Slide 9 / 24")
+                 slide_num=sn(4))
 
-    # 12 method panels
     method_specs = [
         ("method_01_none.png",                       "BASELINE",      MUTED),
         ("method_02_naive_summary.png",              "SUMMARIZE",     RGBColor(0x9D, 0x7C, 0xD8)),
@@ -442,32 +454,36 @@ def build():
         ("method_11_consumption_evict_facts.png",    "ACTION-GRAPH",  RGBColor(0x00, 0x72, 0xB2)),
         ("method_12_consumption_evict_outline.png",  "ACTION-GRAPH",  RGBColor(0x00, 0x72, 0xB2)),
     ]
-    for i, (fname, fam, col) in enumerate(method_specs, start=10):
-        slide_method(prs, fname, fam, col, slide_num=f"Slide {i} / 24")
+    for i, (fname, fam, col) in enumerate(method_specs, start=5):
+        slide_method(prs, fname, fam, col, slide_num=sn(i))
 
-    # Closing supporting results
     slide_figure(prs,
                  "Headline result — none dominates on N=10 SWE-bench Lite",
                  FIG / "fig1_pareto_swebench.png",
                  "The training-free heuristic-compaction Pareto frontier vs. no-compaction baseline.",
-                 slide_num="Slide 22 / 24")
+                 slide_num=sn(17))
 
     slide_figure(prs,
                  "Cost decomposition — uncached input tokens dominate after cliffs",
                  FIG / "fig2_cost_decomposition.png",
                  "Each compaction event invalidates the prefix cache → uncached re-billing dominates.",
-                 slide_num="Slide 23 / 24")
+                 slide_num=sn(18))
 
     slide_figure(prs,
                  "Cliff tax — 10× cost amplification per compaction event",
                  FIG / "fig5_cliff_amplification.png",
                  "$0.10/MTok cached vs $1.00/MTok uncached. One cliff fires the difference for the rest of the trajectory.",
-                 slide_num="Slide 24 / 24")
+                 slide_num=sn(n_total))
 
-    prs.save(str(OUT))
-    print(f"wrote {OUT}")
-    print(f"  size: {OUT.stat().st_size / 1024:.0f} KB")
+    prs.save(str(OUT_APPENDIX))
+    print(f"wrote {OUT_APPENDIX}")
+    print(f"  size: {OUT_APPENDIX.stat().st_size / 1024:.0f} KB")
     print(f"  slides: {len(prs.slides)}")
+
+
+def build():
+    build_talk()
+    build_appendix()
 
 
 if __name__ == "__main__":
