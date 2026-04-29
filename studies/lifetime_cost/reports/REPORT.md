@@ -28,6 +28,28 @@ The negative result directly motivates Paper 2 (KV-pointer recall): byte-level e
 
 ---
 
+## Positive results — the highlight reel
+
+The negative result is the headline, but several findings are positive and publishable in their own right. Lead with these in the talk.
+
+**1. Placeholder design dominates resolve outcome — *less is more*.** On `pytest-7490` (the only validatable SWE-bench Lite task where the four policies' trajectories diverge), plain `consumption_evict` and `consumption_evict_outline` both **resolve the bug** (FAIL_TO_PASS 2/2). The `_facts` variant — same eviction signal, but placeholder includes a one-line summary of the file's function defs — **fails** (F2P 0/2). Mechanism: the function-name list anchors the agent into 7–18 edit-revert iterations on the wrong function. Plain placeholder forces a re-fetch → agent finds the real bug. **Replicates across two seeds.** [Fig 3]
+
+**2. Action-graph supersession works mechanistically.** Across 60+ trajectories, the `consumption_evict` family correctly identifies confirmed-stale tool obs — no false positives observed in trajectory inspection. Max prompt drops ~30% (~63K under `none` → ~46K under plain). The signal — *use the agent's own subsequent tool calls to decide what is provably stale* — is novel: no prior compaction system uses tool-graph supersession. The cost loss to `none` is from the cliff tax, not a broken signal.
+
+**3. Real-test validator caught 5/10 false positives in the line-overlap oracle.** Built `scripts/validate_with_tests.py`: replays agent `edit_file` calls onto fresh checkouts at `base_commit`, applies SWE-bench's `test_patch`, runs FAIL_TO_PASS in per-instance Python 3.9 venvs (via `uv`, no docker). On the Phase D v2 set, the line-overlap oracle reported 9/10 across all policies; real tests showed 5/10 with one task (`pytest-7490`) cleanly distinguishing them. The 30% overcounting is itself a methodological warning shot for the field's loose oracles.
+
+**4. Compaction wins below an agent-quality threshold.** Phase C v6 Qwen3-30B-A3B with eager triggering: `smart_evict` 2/4 resolved at $0.065 vs `none` 0/4 at ∞. The mechanism: compaction prevents catastrophic failure modes (false-submit at step 2, context overflow at step 80). This is a clean *when does compaction matter* finding — single-seed and fragile, but it nicely brackets the Haiku-strong-agent negative result.
+
+**5. Phase A measurement findings are independently citeable.**
+   - **3 importance proxies near-zero correlated.** Citation count, embedding similarity, and post-rotated attention from later tokens — pairwise Spearman near zero on real Hermes Agent Reasoning Traces. *No single signal is sufficient; AdaptiveCache must triangulate.*
+   - **Position primacy invariant Qwen3 0.6B → 8B.** First-10% tokens carry 500–1500× more attention mass than the rest, holding across model size. Empirical anchor for the *pinned-prefix-zone* design.
+   - **Tool obs are 77% of agent-loop tokens; big tool obs get proportional attention.** Naïve size-based eviction is wrong. Confirmed by extraction of attention weights on real traces.
+   - **Cliff cost is real and large.** Recorded $0.10–0.15 per compaction event; 5+ steps of amortization needed to break even. This single number explains the entire negative result.
+
+**6. The τ-bench multi-customer chain harness is a reusable contribution.** `_ChainedEnv` bundles N customer tasks into one logical session, auto-advances on the user-sim's `###STOP###`, reports mean per-customer reward. Not in any prior τ-bench paper. The right framing for studying long-running multi-task agents.
+
+---
+
 ## Project background
 
 ### The problem
