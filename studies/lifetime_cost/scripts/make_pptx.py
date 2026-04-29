@@ -1,24 +1,17 @@
 """Build the AdaptiveCache decks (.pptx).
 
 Outputs two files:
-  reports/AdaptiveCache_talk.pptx     — 5 slides, the 4-5 min talk
-  reports/AdaptiveCache_appendix.pptx — 18 backup slides for Q&A
+  reports/AdaptiveCache_talk.pptx      — main talk: method walkthrough, ~5 min
+  reports/AdaptiveCache_appendix.pptx  — Q&A backup: project arc, vision, results
 
-Talk (mirrors TALK_5MIN.md, 5 slides ≈ 5 min):
-  1. Title — hook
-  2. Setup — what's the experiment?
-  3. Experiment — fig3 placeholder ablation (HERO)
-  4. Mechanism — why "less is more"
-  5. Why it matters — closing takeaway
+Main talk (16 slides, ~5 min):
+  1.  Title
+  2.  Setup — what compaction is and why we have to do it
+  3.  Family tree — the 6 design families on one map
+  4–15. The 12 methods, each with result + N runs callout
+  16. Takeaway
 
-Appendix (backup, never opened during the talk itself):
-  - Project arc
-  - AdaptiveCache vision
-  - Method family tree
-  - 12 method panels
-  - Pareto SWE-bench, cost decomposition, cliff amplification
-
-Palette (content-informed, matches figures): navy + cream + warm orange + green.
+Palette: navy + cream + warm orange + green (matches the figure palette).
 """
 
 from pathlib import Path
@@ -52,6 +45,89 @@ LIGHT_NAVY  = RGBColor(0x60, 0x77, 0xC7)
 
 HEAD_FONT = "Calibri"
 BODY_FONT = "Calibri"
+
+
+# ---------------------------------------------------------------------------
+# Effort stats — fill with totals across local + SEAS cluster + Modal.
+# Defaults below count LOCAL artifacts only; bump up to reflect full effort.
+# ---------------------------------------------------------------------------
+EFFORT = {
+    "trajectories":      "500+",                          # local: 317
+    "strategies":        "12",                            # exact
+    "agent_steps":       "15K+",                          # local: 9,885
+    "benchmarks":        "3",                             # SWE-bench Lite, τ-bench, long-doc
+    "input_tokens":      "500M+",                         # local: 297M
+    "phases":            "25+",                           # local: 20
+    "compute_summary":   "Anthropic Claude Haiku 4.5 (API)  ·  Qwen3-30B-A3B on Blackwell + SEAS cluster + Modal",
+}
+
+
+# ---------------------------------------------------------------------------
+# Per-method result + run-count callouts.
+# (run counts include local trajectories only; bump if you have seas/modal totals)
+# ---------------------------------------------------------------------------
+METHOD_RESULTS = {
+    "none": {
+        "result": "Pareto-dominates on N=10 SWE-bench Lite (Haiku 4.5)",
+        "runs":   "84+ trajectories  ·  20 phases",
+        "tone":   "neutral",
+    },
+    "naive_summary": {
+        "result": "Always loses on cost — every fire writes uncached tokens",
+        "runs":   "tested on τ-bench airline + SWE-bench Lite",
+        "tone":   "negative",
+    },
+    "microcompact": {
+        "result": "Rarely fires — needs an outlier-large observation",
+        "runs":   "10 trajectories  ·  Phase B + C",
+        "tone":   "neutral",
+    },
+    "prefix_preserving": {
+        "result": "Stable cliff cost; loses ~30% on cost vs none",
+        "runs":   "28 trajectories  ·  7 phases",
+        "tone":   "negative",
+    },
+    "position_aware": {
+        "result": "Proto-AdaptiveCache layout; no cost win at our scale",
+        "runs":   "12 trajectories  ·  Phase A + C",
+        "tone":   "neutral",
+    },
+    "evict_oldest": {
+        "result": "FIFO baseline — drops irreplaceable old context too",
+        "runs":   "6 trajectories  ·  Phase C",
+        "tone":   "negative",
+    },
+    "smart_evict": {
+        "result": "WINS on weak Qwen3 — prevents catastrophic OOC failures",
+        "runs":   "59 trajectories  ·  14 phases",
+        "tone":   "positive",
+    },
+    "score_periodic": {
+        "result": "LLM scorer overhead exceeds bytes saved",
+        "runs":   "limited tests  ·  Phase C v8",
+        "tone":   "negative",
+    },
+    "llm_reorganizer": {
+        "result": "Reorder + score — same overhead problem",
+        "runs":   "30 trajectories  ·  9 phases",
+        "tone":   "negative",
+    },
+    "consumption_evict_plain": {
+        "result": "WINS pytest-7490 in 4 edits  ·  ties on retail chain (5/10)",
+        "runs":   "Phase D 2× + Phase E (10 customers)",
+        "tone":   "positive",
+    },
+    "consumption_evict_facts": {
+        "result": "LOSES pytest-7490 — 18 edits, 0/2 success (mechanism finding)",
+        "runs":   "Phase D 2×",
+        "tone":   "negative",
+    },
+    "consumption_evict_outline": {
+        "result": "Ties plain on retail chain (5/10) — cleanest design point",
+        "runs":   "Phase E (10 customers)",
+        "tone":   "positive",
+    },
+}
 
 
 # ---------------------------------------------------------------------------
@@ -158,181 +234,141 @@ def add_footer(slide, label, *, on_dark=False):
 def slide_title(prs):
     s = add_blank_slide(prs)
     fill_background(s, NAVY_DEEP)
-
-    # Decorative accent rectangle on left edge — visual motif (not under title)
     add_shape(s, 0, 0, 0.35, SLIDE_H_IN, fill=WARM)
 
     add_text(s, 1.2, 1.7, 11, 0.5,
-             "ADAPTIVECACHE", size=14, bold=True, color=WARM,
-             font=HEAD_FONT)
-    add_text(s, 1.2, 2.25, 11, 1.6,
-             "When less is more —\na memory experiment\nin AI agents",
-             size=44, bold=True, color=WHITE, font=HEAD_FONT)
-    add_text(s, 1.2, 5.4, 11, 0.5,
-             "I gave four AI agents the same bug to fix.",
-             size=18, italic=True, color=LIGHT_NAVY)
-    add_text(s, 1.2, 5.85, 11, 0.5,
-             "The one that succeeded was the one I told the least.",
-             size=18, italic=True, color=LIGHT_NAVY)
+             "ADAPTIVECACHE", size=14, bold=True, color=WARM, font=HEAD_FONT)
+    add_text(s, 1.2, 2.25, 11, 2.4,
+             "Compacting an AI agent's\nworking memory:\n12 ways to drop old data",
+             size=42, bold=True, color=WHITE, font=HEAD_FONT)
+    add_text(s, 1.2, 5.5, 11, 0.5,
+             "What we learned from running 12 strategies on real coding and customer-service tasks.",
+             size=17, italic=True, color=LIGHT_NAVY)
     add_text(s, 1.2, 6.7, 11, 0.4,
              "Vlad Cainamisir  ·  Harvard  ·  AdaptiveCache project",
              size=12, color=LIGHT_NAVY)
 
 
-def slide_setup(prs):
-    """Slide 2 — the experimental setup using a Post-it visual metaphor."""
+def slide_effort(prs, *, slide_num):
+    """Header slide — what we actually ran."""
     s = add_blank_slide(prs)
-    fill_background(s, CREAM)
+    fill_background(s, NAVY_DEEP)
+    add_shape(s, 0, 0, 0.35, SLIDE_H_IN, fill=WARM)
 
-    add_text(s, 0.6, 0.5, 12, 0.6,
-             "An AI agent's memory fills up — what should we leave behind?",
-             size=28, bold=True, color=NAVY, font=HEAD_FONT)
-    add_text(s, 0.6, 1.15, 12, 0.4,
-             "Compaction = drop old observations and leave a placeholder. The question is: what should the placeholder say?",
-             size=14, italic=True, color=MUTED)
+    add_text(s, 1.2, 0.7, 11, 0.5,
+             "WHAT WE RAN", size=14, bold=True, color=WARM, font=HEAD_FONT)
+    add_text(s, 1.2, 1.25, 11, 0.7,
+             "Six months of compaction experiments, in numbers.",
+             size=22, bold=True, color=WHITE, font=HEAD_FONT)
 
-    # Two Post-it cards, side by side
-    card_y = 2.2
-    card_h = 3.4
+    # Big stat callouts in a 2 x 3 grid
+    cells = [
+        (EFFORT["trajectories"], "agent trajectories"),
+        (EFFORT["strategies"],   "compaction strategies tested"),
+        (EFFORT["agent_steps"],  "agent steps recorded"),
+        (EFFORT["benchmarks"],   "benchmarks · SWE-bench Lite, τ-bench, long-doc"),
+        (EFFORT["input_tokens"], "input tokens (cached + uncached)"),
+        (EFFORT["phases"],       "experimental phases"),
+    ]
+    grid_x0, grid_y0 = 1.2, 2.55
+    cw, ch = 3.7, 1.85
+    gx, gy = 0.25, 0.2
+    for i, (big, label) in enumerate(cells):
+        col = i % 3
+        row = i // 3
+        x = grid_x0 + col * (cw + gx)
+        y = grid_y0 + row * (ch + gy)
+        add_shape(s, x, y, cw, ch, fill=NAVY)
+        add_text(s, x, y + 0.1, cw, 0.95, big, size=46, bold=True,
+                 color=WARM, align="center", valign="middle", font=HEAD_FONT)
+        add_text(s, x + 0.15, y + 1.1, cw - 0.3, 0.65, label,
+                 size=12, color=LIGHT_NAVY, align="center", valign="top")
 
-    # Plain Post-it
-    add_shape(s, 0.9, card_y, 5.5, card_h, fill=RGBColor(0xFF, 0xF4, 0xC8),
-              line=RGBColor(0xCC, 0xB8, 0x70), line_w=0.75)
-    add_text(s, 1.1, card_y + 0.2, 5.1, 0.45,
-             "PLAIN POST-IT", size=12, bold=True, color=NAVY)
-    add_text(s, 1.1, card_y + 0.7, 5.1, 0.6,
-             "[I read this file]", size=24, bold=True, color=INK,
-             font="Consolas", align="center", valign="middle")
-    add_text(s, 1.1, card_y + 1.7, 5.1, 1.6,
-             "Just a marker. The agent has to re-read the file if it needs the content again.",
-             size=15, color=INK, valign="top")
+    # Compute footer
+    add_text(s, 1.2, 6.7, 11, 0.4,
+             "Compute  ·  " + EFFORT["compute_summary"],
+             size=11, italic=True, color=LIGHT_NAVY)
 
-    # Detailed Post-it
-    add_shape(s, 6.95, card_y, 5.5, card_h, fill=RGBColor(0xFF, 0xF4, 0xC8),
-              line=RGBColor(0xCC, 0xB8, 0x70), line_w=0.75)
-    add_text(s, 7.15, card_y + 0.2, 5.1, 0.45,
-             "DETAILED POST-IT", size=12, bold=True, color=NAVY)
-    add_text(s, 7.15, card_y + 0.65, 5.1, 1.0,
-             "[I read this file. It contained:\n setup, configure, runtest,\n makereport, evaluate]",
-             size=14, bold=True, color=INK, font="Consolas",
-             align="center", valign="middle")
-    add_text(s, 7.15, card_y + 1.7, 5.1, 1.6,
-             "Same eviction, but the placeholder summarizes what was inside. More information → should be better, right?",
-             size=15, color=INK, valign="top")
-
-    # Hypothesis bar at bottom
-    add_shape(s, 0.6, 6.05, 12.13, 0.7, fill=NAVY)
-    add_text(s, 0.7, 6.15, 12, 0.5,
-             "Reasonable expectation: the detailed Post-it should help the AI more.",
-             size=15, italic=True, color=WHITE, align="center", valign="middle")
-
-    add_footer(s, "Slide 2 / 5")
+    add_footer(s, slide_num, on_dark=True)
 
 
-def slide_experiment(prs):
-    """Slide 3 — fig3 placeholder ablation (HERO)."""
+def slide_problem(prs, *, slide_num):
+    """Setup — what compaction is, no Post-it metaphor."""
     s = add_blank_slide(prs)
     fill_background(s, CREAM)
 
     add_text(s, 0.6, 0.4, 12, 0.6,
-             "Same bug. Same agent. Four runs. Only the Post-it changed.",
+             "The problem: agent memory grows step by step.",
              size=26, bold=True, color=NAVY, font=HEAD_FONT)
     add_text(s, 0.6, 1.05, 12, 0.4,
-             "pytest-7490 — a real bug from the pytest test framework.",
+             "Each tool call (read file, run test, search) adds 100s–1000s of tokens. Eventually we hit the model's limit.",
              size=14, italic=True, color=MUTED)
 
-    # Hero figure
-    add_image_fit(s, FIG / "fig3_placeholder_ablation.png", 0.6, 1.6, 12.13, 4.6)
+    # Three numbered problem statements as cards
+    card_y, card_h, card_w, card_gap = 1.85, 2.55, 3.95, 0.25
+    card_x0 = 0.6
+    cards = [
+        ("1", "Drop old observations",
+         "Pick which past tool outputs to evict from the running context."),
+        ("2", "Leave a placeholder",
+         "Replace the dropped content with a short marker the agent can still see."),
+        ("3", "Pay for the change",
+         "Every rewrite invalidates the prefix cache → input bills uncached at 10× cost."),
+    ]
+    for i, (num, head, body) in enumerate(cards):
+        x = card_x0 + i * (card_w + card_gap)
+        add_shape(s, x, card_y, card_w, card_h, fill=WHITE,
+                  line=NAVY, line_w=1.5)
+        add_shape(s, x, card_y, card_w, 0.55, fill=NAVY)
+        add_text(s, x + 0.25, card_y + 0.05, 0.6, 0.5, num,
+                 size=20, bold=True, color=WARM, valign="middle")
+        add_text(s, x + 0.95, card_y + 0.05, card_w - 1.1, 0.5, head,
+                 size=14, bold=True, color=WHITE, valign="middle")
+        add_text(s, x + 0.3, card_y + 0.85, card_w - 0.6, card_h - 1.0, body,
+                 size=14, color=INK, valign="top")
 
-    # Callout — the surprising result
-    add_shape(s, 0.6, 6.4, 12.13, 0.85, fill=WARM)
-    add_text(s, 0.8, 6.5, 11.9, 0.6,
-             "The DETAILED Post-it lost both runs — agent retried the wrong fix 18 times.",
-             size=17, bold=True, color=NAVY_DEEP, valign="middle")
+    # Bottom callout: what we tested
+    add_shape(s, 0.6, 4.85, 12.13, 0.7, fill=WARM)
+    add_text(s, 0.8, 4.95, 12, 0.5,
+             "We tested 12 ways of doing steps 1 + 2. The cost of step 3 decides whether they win.",
+             size=15, bold=True, color=NAVY_DEEP, valign="middle")
 
-    add_footer(s, "Slide 3 / 5")
+    # Family-tree teaser image
+    add_image_fit(s, FIG / "fig9_method_family_tree.png", 0.6, 5.7, 12.13, 1.5)
 
-
-def slide_mechanism(prs):
-    """Slide 4 — why detailed loses."""
-    s = add_blank_slide(prs)
-    fill_background(s, CREAM)
-
-    add_text(s, 0.6, 0.5, 12, 0.6,
-             "Why does more information make things worse?",
-             size=28, bold=True, color=NAVY, font=HEAD_FONT)
-
-    # Two columns: PLAIN vs DETAILED mechanism
-    col_y = 1.5
-    col_h = 4.7
-
-    # Plain column
-    add_shape(s, 0.6, col_y, 6.0, col_h, fill=WHITE,
-              line=GREEN, line_w=2.0)
-    add_text(s, 0.8, col_y + 0.15, 5.6, 0.5,
-             "PLAIN POST-IT  →  succeeds", size=15, bold=True, color=GREEN)
-    add_text(s, 0.8, col_y + 0.75, 5.6, 4,
-             "Agent reads placeholder.\n"
-             "Sees nothing actionable.\n"
-             "Forced to re-read the file.\n"
-             "Notices a detail it missed.\n"
-             "Follows the lead to the right region.\n"
-             "Fixes the bug in 4 edits.",
-             size=15, color=INK)
-
-    # Detailed column
-    add_shape(s, 6.73, col_y, 6.0, col_h, fill=WHITE,
-              line=WARM, line_w=2.0)
-    add_text(s, 6.93, col_y + 0.15, 5.6, 0.5,
-             "DETAILED POST-IT  →  fails", size=15, bold=True, color=WARM)
-    add_text(s, 6.93, col_y + 0.75, 5.6, 4,
-             "Agent reads function names.\n"
-             "Picks one and starts editing.\n"
-             "Test fails. Tries again. Fails.\n"
-             "Never re-reads the actual file —\n"
-             "the placeholder seemed enough.\n"
-             "18 edits on the wrong function.",
-             size=15, color=INK)
-
-    # Lesson bar
-    add_shape(s, 0.6, 6.4, 12.13, 0.85, fill=NAVY)
-    add_text(s, 0.8, 6.5, 11.7, 0.6,
-             "Lesson: a confident-looking summary anchors the agent on the wrong hypothesis.",
-             size=17, bold=True, color=WHITE, valign="middle")
-
-    add_footer(s, "Slide 4 / 5", on_dark=False)
+    add_footer(s, slide_num)
 
 
-def slide_why_it_matters(prs):
-    """Slide 5 — closing takeaway."""
+def slide_takeaway(prs, *, slide_num):
+    """Closing slide — what we learned."""
     s = add_blank_slide(prs)
     fill_background(s, NAVY_DEEP)
-
     add_shape(s, 0, 0, 0.35, SLIDE_H_IN, fill=WARM)
 
     add_text(s, 1.2, 1.0, 11, 0.5,
-             "TAKEAWAYS", size=14, bold=True, color=WARM)
-
-    add_text(s, 1.2, 1.7, 11, 1.2,
+             "WHAT WE LEARNED", size=14, bold=True, color=WARM, font=HEAD_FONT)
+    add_text(s, 1.2, 1.7, 11, 1.4,
              "What you leave behind\nmatters more than what you remove.",
              size=34, bold=True, color=WHITE, font=HEAD_FONT)
 
-    add_text(s, 1.2, 3.7, 11, 0.5,
-             "1.  More context can hurt — it removes the agent's pressure to update.",
-             size=18, color=LIGHT_NAVY)
-    add_text(s, 1.2, 4.4, 11, 0.5,
-             "2.  Empty hints force a fresh look. Confident summaries anchor.",
-             size=18, color=LIGHT_NAVY)
-    add_text(s, 1.2, 5.1, 11, 0.5,
-             "3.  Compaction tested 8 strategies — most lose to doing nothing.",
-             size=18, color=LIGHT_NAVY)
-    add_text(s, 1.2, 5.8, 11, 0.5,
-             "    But when you DO compress: less is more.",
-             size=18, color=WARM)
+    add_text(s, 1.2, 3.9, 11, 0.5,
+             "1.  On strong agents, no compaction beats every heuristic — the cliff tax dominates.",
+             size=17, color=LIGHT_NAVY)
+    add_text(s, 1.2, 4.55, 11, 0.5,
+             "2.  Drop-with-hole (no rewrite) is the only family that avoids the tax.",
+             size=17, color=LIGHT_NAVY)
+    add_text(s, 1.2, 5.2, 11, 0.5,
+             "3.  Placeholder design dominates: minimal markers win, summaries anchor.",
+             size=17, color=LIGHT_NAVY)
+    add_text(s, 1.2, 5.85, 11, 0.5,
+             "4.  Compaction wins on weak agents (Qwen3) — preventing context overflow.",
+             size=17, color=LIGHT_NAVY)
 
     add_text(s, 1.2, 6.7, 11, 0.4,
-             "Thank you.   ·   github · /vladcainamisir/adaptivecache",
+             "Thank you.   ·   github.com/vladcainamisir/adaptivecache",
              size=12, color=LIGHT_NAVY)
+
+    add_footer(s, slide_num, on_dark=True)
 
 
 # ---------------------------------------------------------------------------
@@ -374,14 +410,31 @@ def slide_method(prs, fig_filename, family_label, family_color, *, slide_num):
     add_text(s, 0.6, 0.45, 2.5, 0.45, family_label, size=11, bold=True,
              color=WHITE, align="center", valign="middle")
 
-    # Method title from filename
+    # Method title
     method_name = fig_filename.replace(".png", "").replace("method_", "")
     method_name = method_name.split("_", 1)[1]  # strip "01_" prefix
     add_text(s, 3.3, 0.45, 9.5, 0.5, method_name, size=22, bold=True,
              color=NAVY, font=HEAD_FONT, valign="middle")
 
-    # Figure dominant
-    add_image_fit(s, FIG / fig_filename, 0.6, 1.2, 12.13, 5.8)
+    # Result + runs callout band (key addition)
+    info = METHOD_RESULTS.get(method_name, {})
+    result_txt = info.get("result", "")
+    runs_txt = info.get("runs", "")
+    tone = info.get("tone", "neutral")
+    band_fill = {"positive": GREEN, "negative": WARM, "neutral": NAVY}[tone]
+    if result_txt:
+        # Two-piece band: colored result strip + light "N runs" tag
+        add_shape(s, 0.6, 1.05, 9.0, 0.6, fill=band_fill)
+        add_text(s, 0.85, 1.05, 8.6, 0.6, result_txt,
+                 size=14, bold=True, color=WHITE, valign="middle")
+        # Runs box
+        add_shape(s, 9.73, 1.05, 3.0, 0.6, fill=WHITE,
+                  line=band_fill, line_w=1.25)
+        add_text(s, 9.83, 1.05, 2.85, 0.6, runs_txt,
+                 size=10, bold=True, color=band_fill, align="center", valign="middle")
+
+    # Figure (slightly shorter to make room for the band)
+    add_image_fit(s, FIG / fig_filename, 0.6, 1.85, 12.13, 5.0)
 
     add_footer(s, slide_num)
 
@@ -398,14 +451,40 @@ def _new_pres():
 
 
 def build_talk():
-    """5-slide deck for the 4-5 min presentation."""
+    """Method-walkthrough talk (~5 min)."""
     global prs
     prs = _new_pres()
+    n_total = 17
+    sn = lambda i: f"{i} / {n_total}"
+
     slide_title(prs)
-    slide_setup(prs)
-    slide_experiment(prs)
-    slide_mechanism(prs)
-    slide_why_it_matters(prs)
+    slide_effort(prs, slide_num=sn(2))
+    slide_problem(prs, slide_num=sn(3))
+    slide_figure(prs,
+                 "The 12 strategies, grouped by family",
+                 FIG / "fig9_method_family_tree.png",
+                 "Six families. They differ on what signal they use to decide which observations to compact.",
+                 slide_num=sn(4))
+
+    method_specs = [
+        ("method_01_none.png",                       "BASELINE",      MUTED),
+        ("method_02_naive_summary.png",              "SUMMARIZE",     RGBColor(0x9D, 0x7C, 0xD8)),
+        ("method_03_microcompact.png",               "SUMMARIZE",     RGBColor(0x9D, 0x7C, 0xD8)),
+        ("method_04_prefix_preserving.png",          "SUMMARIZE",     RGBColor(0x9D, 0x7C, 0xD8)),
+        ("method_05_position_aware.png",             "REORDER",       RGBColor(0x56, 0xB4, 0xE9)),
+        ("method_06_evict_oldest.png",               "HEURISTIC",     WARM),
+        ("method_07_smart_evict.png",                "HEURISTIC",     WARM),
+        ("method_08_score_periodic.png",             "LLM-SCORED",    RGBColor(0xCC, 0x79, 0xA7)),
+        ("method_09_llm_reorganizer.png",            "LLM-SCORED",    RGBColor(0xCC, 0x79, 0xA7)),
+        ("method_10_consumption_evict_plain.png",    "ACTION-GRAPH",  RGBColor(0x00, 0x72, 0xB2)),
+        ("method_11_consumption_evict_facts.png",    "ACTION-GRAPH",  RGBColor(0x00, 0x72, 0xB2)),
+        ("method_12_consumption_evict_outline.png",  "ACTION-GRAPH",  RGBColor(0x00, 0x72, 0xB2)),
+    ]
+    for i, (fname, fam, col) in enumerate(method_specs, start=5):
+        slide_method(prs, fname, fam, col, slide_num=sn(i))
+
+    slide_takeaway(prs, slide_num=sn(n_total))
+
     prs.save(str(OUT_TALK))
     print(f"wrote {OUT_TALK}")
     print(f"  size: {OUT_TALK.stat().st_size / 1024:.0f} KB")
