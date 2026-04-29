@@ -945,6 +945,162 @@ def fig_methods_panels():
         print(f"  wrote {OUT_DIR / f'method_{fname}.png'}")
 
 
+def fig_method_family_tree():
+    """A single 'design space' figure that groups the 12 methods into 5 families.
+
+    Goal: lets the audience see that 'compaction' is a 5-branch design tree, not
+    a single technique. Colors encode the family. Branch label = the *signal*
+    each family uses to decide what to drop. Leaf style encodes structural
+    transform (replace-in-place / hole-leave / reorder).
+    """
+    fig, ax = plt.subplots(figsize=(18, 10))
+    ax.set_xlim(0, 100)
+    ax.set_ylim(0, 100)
+    ax.axis("off")
+
+    # Family palette (color-blind friendly)
+    FAM = {
+        "noop":       "#7F7F7F",
+        "summarize":  "#9D7CD8",
+        "heuristic":  "#E69F00",
+        "reorder":    "#56B4E9",
+        "llm_score":  "#CC79A7",
+        "actiongraph":"#0072B2",
+    }
+
+    # Title
+    ax.text(50, 96, "The compaction design space — six approaches, one root question",
+            ha="center", fontsize=16, fontweight="bold")
+    ax.text(50, 91,
+            "All 12 methods we tested answer the same question — \"what should the agent's context "
+            "look like after we touch it?\" — \nbut split on which signal they trust to decide.",
+            ha="center", fontsize=11, color="#444")
+
+    # Root node
+    root_x, root_y = 50, 80
+    ax.add_patch(plt.Rectangle((root_x - 18, root_y - 3), 36, 6,
+                                facecolor="white", edgecolor="black", linewidth=1.5))
+    ax.text(root_x, root_y, "How do we keep context cheap?",
+            ha="center", va="center", fontsize=12, fontweight="bold")
+
+    # Family nodes — laid out left-to-right with extra space for big families
+    families = [
+        ("noop",       "do nothing",            "no signal",                 6),
+        ("summarize",  "rewrite middle",        "context-window pressure",  24),
+        ("heuristic",  "drop oldest / scored",  "position + text heuristic",43),
+        ("reorder",    "promote + hole",        "attention prior",           58),
+        ("llm_score",  "LLM scorer",            "LLM judgement",             73),
+        ("actiongraph","drop-when-superseded",  "agent's own actions (NEW)", 91),
+    ]
+    fam_y = 64
+    fam_pos = {}
+    for fkey, ftitle, fsig, fx in families:
+        col = FAM[fkey]
+        # Connector from root to family
+        ax.plot([root_x, fx], [root_y - 3, fam_y + 4], color=col, linewidth=1.6, alpha=0.7)
+        # Family box
+        ax.add_patch(plt.Rectangle((fx - 7.5, fam_y - 4), 15, 8,
+                                    facecolor=col, edgecolor="black", linewidth=1.0, alpha=0.85))
+        ax.text(fx, fam_y + 0.8, ftitle, ha="center", va="center",
+                fontsize=10, fontweight="bold", color=("white" if fkey != "heuristic" else "black"))
+        ax.text(fx, fam_y - 2.4, f"signal: {fsig}", ha="center", va="center",
+                fontsize=8, color=("white" if fkey != "heuristic" else "black"), style="italic")
+        fam_pos[fkey] = (fx, fam_y - 4)
+
+    # Leaves: (family, short_label, marker_style, footnote)
+    # marker_style: 'square' = replace-in-place, 'circle' = hole-leave, 'star' = reorder
+    leaves = [
+        ("noop",        "none",            "circle", ""),
+        ("summarize",   "naive\nsummary",  "square", ""),
+        ("summarize",   "micro\ncompact",  "square", ""),
+        ("summarize",   "prefix\npreserve","square", ""),
+        ("heuristic",   "evict\noldest",   "circle", ""),
+        ("heuristic",   "smart\nevict",    "circle", "wins on\nweak Qwen3"),
+        ("reorder",     "position\naware", "star",   "proto-\nAdaptiveCache"),
+        ("llm_score",   "score\nperiodic", "circle", ""),
+        ("llm_score",   "llm\nreorg",      "star",   ""),
+        ("actiongraph", "cons_evict\nplain",   "circle", "wins at\nsmall N"),
+        ("actiongraph", "cons_evict\nfacts",   "square", "loses\npytest-7490"),
+        ("actiongraph", "cons_evict\noutline", "square", "ties plain"),
+    ]
+
+    # Position leaves under each family
+    leaves_per_fam = {}
+    for fkey, *_ in leaves:
+        leaves_per_fam.setdefault(fkey, 0)
+        leaves_per_fam[fkey] += 1
+
+    leaf_y = 40
+    fam_count = {k: 0 for k in leaves_per_fam}
+    for fkey, label, mstyle, footnote in leaves:
+        fx, _ = fam_pos[fkey]
+        n = leaves_per_fam[fkey]
+        idx = fam_count[fkey]
+        # Spread leaves horizontally under family. ~5 units per leaf for label room.
+        if n == 1:
+            offsets = [0]
+        elif n == 2:
+            offsets = [-3.5, 3.5]
+        else:  # 3
+            offsets = [-5.5, 0, 5.5]
+        lx = fx + offsets[idx]
+        col = FAM[fkey]
+        # Connector family→leaf
+        ax.plot([fx, lx], [fam_y - 4, leaf_y + 4.5], color=col, linewidth=1.0, alpha=0.5)
+        # Marker
+        if mstyle == "square":
+            patch = plt.Rectangle((lx - 1.2, leaf_y + 2.8), 2.4, 2.4,
+                                   facecolor=col, edgecolor="black", linewidth=0.8)
+            ax.add_patch(patch)
+        elif mstyle == "circle":
+            patch = mpatches.Circle((lx, leaf_y + 4.0), 1.3,
+                                     facecolor=col, edgecolor="black", linewidth=0.8)
+            ax.add_patch(patch)
+        elif mstyle == "star":
+            ax.scatter([lx], [leaf_y + 4.0], marker="*", s=260,
+                       facecolor=col, edgecolor="black", linewidth=0.8, zorder=5)
+        # Label
+        ax.text(lx, leaf_y, label, ha="center", va="top", fontsize=8.0,
+                fontweight="bold", color="#222")
+        # Footnote
+        if footnote:
+            ax.text(lx, leaf_y - 7.5, footnote, ha="center", va="top", fontsize=7.0,
+                    color="#0072B2", style="italic")
+        fam_count[fkey] += 1
+
+    # Legend for marker styles
+    legend_y = 16
+    ax.text(50, legend_y + 4, "Structural action", ha="center", fontsize=10,
+            fontweight="bold", color="#444")
+    legend_items = [
+        ("square", "replace-in-place\n(rewrites tokens — invalidates cache)", 25),
+        ("circle", "drop with hole\n(no recompute, no new tokens)", 50),
+        ("star",   "drop + reorder\n(promote stable items to prefix)", 75),
+    ]
+    for mstyle, ltext, lx in legend_items:
+        if mstyle == "square":
+            ax.add_patch(plt.Rectangle((lx - 1.4, legend_y - 1.4), 2.8, 2.8,
+                                        facecolor="#888", edgecolor="black"))
+        elif mstyle == "circle":
+            ax.add_patch(mpatches.Circle((lx, legend_y), 1.5,
+                                          facecolor="#888", edgecolor="black"))
+        elif mstyle == "star":
+            ax.scatter([lx], [legend_y], marker="*", s=320,
+                       facecolor="#888", edgecolor="black", zorder=5)
+        ax.text(lx + 4, legend_y, ltext, ha="left", va="center", fontsize=8.5, color="#222")
+
+    # Footer takeaway
+    ax.text(50, 4,
+            "Takeaway: every family was tried. Only `none` and the action-graph (NOVEL) family "
+            "produce no cache-invalidating writes — the rest pay a 'cliff tax' on every fire.",
+            ha="center", fontsize=10.5, color="#222",
+            bbox=dict(boxstyle="round,pad=0.5", fc="#f5f5f5", ec="#ccc", lw=0.6))
+
+    plt.savefig(OUT_DIR / "fig9_method_family_tree.png", bbox_inches="tight")
+    plt.close()
+    print(f"  wrote {OUT_DIR / 'fig9_method_family_tree.png'}")
+
+
 def main():
     print(f"Generating figures into {OUT_DIR}/")
     fig_pareto_swebench()
@@ -956,6 +1112,7 @@ def main():
     fig_compaction_wins()
     fig_vision()
     fig_methods_panels()
+    fig_method_family_tree()
     print("Done.")
 
 
