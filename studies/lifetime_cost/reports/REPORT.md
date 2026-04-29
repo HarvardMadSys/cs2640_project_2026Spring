@@ -40,6 +40,10 @@ The negative result is the headline, but several findings are positive and publi
 
 **4. Compaction wins below an agent-quality threshold.** Phase C v6 Qwen3-30B-A3B with eager triggering: `smart_evict` 2/4 resolved at $0.065 vs `none` 0/4 at ∞. The mechanism: compaction prevents catastrophic failure modes (false-submit at step 2, context overflow at step 80). This is a clean *when does compaction matter* finding — single-seed and fragile, but it nicely brackets the Haiku-strong-agent negative result.
 
+**Bonus: Phase D v1 also showed a Pareto win** at small N (4 SWE-bench Lite tasks, Haiku, single seed): `consumption_evict` resolved **3/4 at $1.03/res** vs `none`'s **2/4 at $1.20/res** — *more resolved AND cheaper*. The result didn't fully replicate at N=10 (mechanism: cliff cost amortization is task-dependent and the small sample caught a favorable mix), but on this slice it is a real Pareto-improvement and is the original signal that motivated the action-graph supersession family.
+
+![Where compaction does win — Pareto wins at small N](figures/fig7_compaction_wins.png)
+
 **5. Phase A measurement findings are independently citeable.**
    - **3 importance proxies near-zero correlated.** Citation count, embedding similarity, and post-rotated attention from later tokens — pairwise Spearman near zero on real Hermes Agent Reasoning Traces. *No single signal is sufficient; AdaptiveCache must triangulate.*
    - **Position primacy invariant Qwen3 0.6B → 8B.** First-10% tokens carry 500–1500× more attention mass than the rest, holding across model size. Empirical anchor for the *pinned-prefix-zone* design.

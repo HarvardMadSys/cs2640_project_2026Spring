@@ -500,6 +500,105 @@ def fig_project_arc():
 
 # ---------------------------------------------------------------------------
 
+def fig_compaction_wins():
+    """Two single-seed N=4 cells where compaction Pareto-dominates `none`.
+
+    Left: Phase D v1 (Haiku, N=4 SWE-bench Lite). consumption_evict 3/4
+    resolved at lower $/res than none, AND smart_evict 2/4 at 29% lower
+    $/res than none → both on the Pareto frontier above none.
+
+    Right: Phase C v6 (Qwen3-30B-A3B, N=4 same tasks). At weaker agent
+    quality, none scores 0/4 (catastrophic failure modes); smart_evict
+    2/4 — compaction prevents the failure modes.
+    """
+    import csv
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6.2),
+                                   gridspec_kw={"wspace": 0.30})
+
+    # ---- LEFT PANEL: Phase D v1 (Haiku N=4) ----
+    # Source: studies/lifetime_cost/out/phase_d_v1_consumption_lazy/figures/pareto.csv
+    rows_haiku = [
+        ("none",              0.6001, 0.50),
+        ("smart_evict",       0.4253, 0.50),
+        ("consumption_evict", 0.7736, 0.75),
+    ]
+    for pol, cost_per_task, resolve in rows_haiku:
+        # Convert mean_cost_per_task → $/resolved (over 4 tasks)
+        if resolve == 0:
+            continue
+        dollars_per_res = (cost_per_task * 4) / (resolve * 4)
+        ax1.scatter(dollars_per_res, resolve, s=320,
+                    c=COLORS[pol], edgecolor="black", linewidth=1.2,
+                    zorder=3, alpha=0.95)
+        label = f"{SHORT[pol]}\n({int(resolve*4)}/4 • ${dollars_per_res:.2f}/res)"
+        ax1.annotate(label, (dollars_per_res, resolve), xytext=(10, 10),
+                     textcoords="offset points", fontsize=11, fontweight="bold",
+                     arrowprops=dict(arrowstyle="-", color="#888", lw=0.5))
+
+    none_dpr = 0.6001 * 4 / (0.5 * 4)
+    ax1.axvline(none_dpr, color=COLORS["none"], lw=1, ls="--", alpha=0.5)
+    ax1.set_xlabel("$ per resolved task (Haiku 4.5)")
+    ax1.set_ylabel("Resolve rate (loose oracle)")
+    ax1.set_title("Phase D v1 — Haiku, N=4 SWE-bench Lite\n"
+                  "consumption_evict & smart_evict both Pareto-dominate `none`",
+                  pad=12, fontsize=12, fontweight="bold")
+    ax1.set_xlim(0.6, 1.5)
+    ax1.set_ylim(0.35, 0.90)
+    ax1.grid(alpha=0.3)
+    ax1.text(0.65, 0.40,
+             "Top-left = better\n(higher resolve, lower cost)",
+             fontsize=10, style="italic", color="#444",
+             bbox=dict(boxstyle="round,pad=0.4", fc="white", ec="#bbb", lw=0.6))
+
+    # ---- RIGHT PANEL: Phase C v6 Qwen eager (Qwen3-30B-A3B N=4) ----
+    # Phase C v6 — bar chart instead, since cost-vs-resolve is hard to read
+    # when none is at ∞ and three policies cluster at similar cost.
+    rows_qwen = [
+        ("none",              0.0256, 0, "$∞"),
+        ("prefix_preserving", 0.0260, 1, "$0.104"),
+        ("llm_reorganizer",   0.0285, 1, "$0.114"),
+        ("smart_evict",       0.0324, 2, "$0.065"),
+    ]
+    pols = [r[0] for r in rows_qwen]
+    n_res = [r[2] for r in rows_qwen]
+    cost_str = [r[3] for r in rows_qwen]
+    bar_colors = [COLORS[p] for p in pols]
+
+    x = np.arange(len(pols))
+    bars = ax2.bar(x, n_res, color=bar_colors, edgecolor="black", linewidth=0.7, width=0.6)
+    for xi, n, c in zip(x, n_res, cost_str):
+        if n == 0:
+            ax2.text(xi, 0.05, "0/4\n" + c + "/res",
+                     ha="center", fontsize=11, fontweight="bold", color="#a00")
+        else:
+            ax2.text(xi, n + 0.08, f"{n}/4\n{c}/res",
+                     ha="center", fontsize=11, fontweight="bold")
+
+    ax2.set_xticks(x)
+    ax2.set_xticklabels([SHORT[p] for p in pols], rotation=15, ha="right", fontsize=11)
+    ax2.set_ylabel("# tasks resolved (out of 4)")
+    ax2.set_ylim(0, 3.2)
+    ax2.set_title("Phase C v6 — Qwen3-30B-A3B, N=4 same tasks\n"
+                  "Below agent-quality threshold: compaction PREVENTS catastrophic failure",
+                  pad=12, fontsize=12, fontweight="bold")
+    ax2.grid(alpha=0.3, axis="y")
+    ax2.text(1.5, 2.7,
+             "`none`'s 0/4 isn't a fluke:\n"
+             "• false-submit at step 2 (temp=0.5)\n"
+             "• context overflow at step 80\n"
+             "Compaction breaks both loops.",
+             fontsize=10, style="italic", color="#444", ha="center",
+             bbox=dict(boxstyle="round,pad=0.4", fc="white", ec="#bbb", lw=0.6))
+
+    fig.suptitle("Where compaction DOES win — single-seed Pareto wins at small N",
+                 fontsize=14, fontweight="bold", y=1.02)
+
+    plt.savefig(OUT_DIR / "fig7_compaction_wins.png", bbox_inches="tight")
+    plt.close()
+    print(f"  wrote {OUT_DIR / 'fig7_compaction_wins.png'}")
+
+
 def main():
     print(f"Generating figures into {OUT_DIR}/")
     fig_pareto_swebench()
@@ -508,6 +607,7 @@ def main():
     fig_chain_firing()
     fig_cliff_amplification()
     fig_project_arc()
+    fig_compaction_wins()
     print("Done.")
 
 
