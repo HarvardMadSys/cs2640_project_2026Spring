@@ -46,11 +46,13 @@ from studies.lifetime_cost.paper2.adapters.memento_vllm import MementoVLLMModel
 from studies.lifetime_cost.paper2.policy.memento_policy import MementoPolicy
 
 
-MODEL = "Qwen/Qwen3-4B-Instruct-2507"
-TARGET_DOC_TOKENS = 20_000  # ~80KB doc — small enough to iterate fast
-N_NEEDLES = 3
+MODEL = os.environ.get("PAPER2_MODEL", "Qwen/Qwen3-4B-Instruct-2507")
+TARGET_DOC_TOKENS = int(os.environ.get("PAPER2_DOC_TOKENS", "20000"))
+N_NEEDLES = int(os.environ.get("PAPER2_NEEDLES", "3"))
 MAX_TASKS = 1
 MAX_COMPLETION = 512
+GPU_MEM_UTIL = float(os.environ.get("PAPER2_GPU_UTIL", "0.4"))
+MAX_MODEL_LEN = int(os.environ.get("PAPER2_MAX_LEN", "32000"))
 
 
 def _summary(label, traj, wall_total_ms, model):
@@ -71,8 +73,8 @@ def run_one(label, *, masking: bool, with_policy: bool, task):
     print(f"\n--- starting {label} ---")
     model = MementoVLLMModel(
         model_name=MODEL,
-        gpu_memory_utilization=0.4,
-        max_model_len=32_000,
+        gpu_memory_utilization=GPU_MEM_UTIL,
+        max_model_len=MAX_MODEL_LEN,
         masking_enabled=masking,
         debug_masking=False,
     )
