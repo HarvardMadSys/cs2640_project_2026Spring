@@ -142,6 +142,45 @@ For consumption-rule design: τ-bench tools (`find_user_id_by_name_zip`, `update
 
 **Implication for Paper 1:** retail single-customer is the wrong workload for this study — same as airline. To evaluate compaction at customer-service tool benchmarks, we need either (a) a multi-customer chain harness extension or (b) longer per-customer scenarios. Defer.
 
+### Phase E v3/v4 — τ-bench retail multi-customer CHAIN (built the harness, ran chain_size 5 and 10)
+
+Extended `pipeline/benchmarks/taubench.py` with a `chain_size` knob (`_ChainedEnv`). The chain Task wraps N envs into one logical session, forwards tool calls to the active env, auto-advances on the user-sim's `###STOP###` signal, and reports mean per-customer reward. Smoke verified end-to-end advancement (3 customers, 36 steps, max_p 21K). Two production runs:
+
+**v3 — chain_size=5, 2 chains × 4 policies = 8 trajectories:**
+
+| Policy | Resolved | Comps | Mean steps | Max prompt | $/chain |
+|---|---|---|---|---|---|
+| `none` | 1/2 | 0 | 52.5 | 27,783 | $0.182 |
+| `smart_evict` | 2/2 | 0 | 49.5 | 32,237 | $0.204 |
+| `consumption_evict` | 1/2 | 0 | 41.5 | 22,987 | $0.133 |
+| `consumption_evict_outline` | 1/2 | 0 | 54.0 | 28,668 | $0.205 |
+
+**v4 — chain_size=10, 1 chain × 4 policies = 4 trajectories:**
+
+| Policy | Resolved | Comps | Mean steps | Max prompt | $/chain |
+|---|---|---|---|---|---|
+| `none` | 0/1 | 0 | 114 | **54,322** | $0.614 |
+| `smart_evict` | 0/1 | 0 | 23 (early die) | 11,607 | $0.051 |
+| `consumption_evict` | 0/1 | 0 | 115 | **36,026** | $0.393 |
+| `consumption_evict_outline` | 0/1 | 0 | 73 | 33,901 | $0.291 |
+
+**The headline finding: 0 compactions across all 4 policies even at chain_size=10 where max_p well exceeds the trigger threshold.** Specifically:
+- `none` reached 54K (above the 29.75K trigger); `none` is identity, so this is expected.
+- `consumption_evict` reached 36K (above trigger) — but its **coding-specific supersession rules** (`read_file`→`edit_file`, `search`→`read_file` with shared path, `run_tests` cascade, etc.) **do not match retail tools** (`find_user_id_by_name_zip`, `get_order_details`, `exchange_delivered_order_items`). Result: 0 obs ever tagged as consumed → no fire even past the trigger. Same for `_outline` (same rules).
+- `smart_evict` died early at step 23 from a temperature=0.5 give-up loop (the agent emitted empty content + no tool calls; the runner treats that as session-end). Bad luck, not policy effect — but instructive that strong agents can fail multi-customer chains stochastically.
+- All 4 chains failed at chain_size=10 (mean reward < 0.99) — solving 10 consecutive customers perfectly is extremely demanding. Compaction is not the bottleneck here; *correctness* is.
+
+**Why the supersession rules don't transfer:** retail's tool semantics are fundamentally different from coding. Retail "writes" (`update_address`, `cancel_pending_order`, `exchange_delivered_order_items`) consume earlier "reads" (`get_user_details`, `get_order_details`) — but only when they share an entity id, and only after a customer-end boundary makes the prior read truly stale (mid-customer it's still active state). To make `consumption_evict` work on retail, we'd need:
+
+1. A **generic verb-prefix rule**: `update_*`/`cancel_*`/`exchange_*` consumes earlier `find_*`/`get_*`/`list_*` with a shared id-arg.
+2. A **customer-boundary rule**: at the end of every customer (handoff event in chain mode), all prior tool obs from that customer become consumed (the conversation moved on).
+
+The customer-boundary rule is particularly clean: in chain mode, a customer's `###STOP###` is a hard, semantically meaningful boundary where ~all of the customer's tool calls are dispensable for serving the next customer. This would tag potentially the entire prior customer's tool obs (~5-15K tokens) per handoff, giving compaction a clean drop signal.
+
+**Implication for the paper:** action-graph supersession's `consumption_evict` isn't a one-shot policy — it's a *family* parameterized by per-domain rules. The rules we wrote are SWE-bench-tuned. The clean abstraction that *would* generalize is **boundary-aware supersession**: any clearly-marked end-of-subtask event (customer hangs up; coding task submitted; sub-agent returns) is a moment where the entire bygone subtask's obs become consumed. Worth implementing as `phase_f_boundary_supersession` if we keep pursuing this direction.
+
+**For the paper (negative-result framing):** the chain experiment is a clean replication of "rules don't transfer" — and it's a *constructive* negative result because it directly motivates the boundary-aware variant as the natural fix.
+
 **The win is not just "less context bloat" — it is a path-divergence effect.** Compaction at the right moment changed *what the agent decided to look at next*, and that downstream decision is what found the bug. This is mechanistically distinct from "compaction reduces tokens to fit budget" — the budget was not yet the bottleneck for `none`, which finished in only 26 steps without ever overflowing. The mechanism is closer to **clearing working memory at a decision point**, which the agent uses to broaden its search rather than re-summarize what it already saw.
 
 **Implication for Paper 2 (action-graph supersession):** the placeholder-design knob is its own research dimension. "How much structural hint to leave behind" trades off:
