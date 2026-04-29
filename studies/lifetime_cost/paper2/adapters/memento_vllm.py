@@ -60,22 +60,55 @@ def wrap_tool_message_for_masking(obs: str, memento: Optional[str]) -> str:
     return body
 
 
-def transform_messages(messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Replace each tool message with a user message that includes a
-    Memento summary block when `memento` is present.
+def wrap_tool_message_inlined(obs: str, memento: Optional[str]) -> str:
+    """Render an older tool message as PLAIN text (no markers).
 
-    Tool messages without `memento` go through as plain user messages
-    wrapping the obs in `<tool_response>...</tool_response>` (still a
-    "block" to the masker, just no summary → no compaction)."""
+    For the last-only recipe: every earlier tool message in a multi-turn
+    conversation gets rendered as a plain user message containing only the
+    memento text (the obs is already evicted from KV by a prior turn's
+    compaction, so there's no need to re-mark it). This avoids cascading
+    re-compaction in the engine.
+
+    Falls back to the obs itself if no memento was generated yet.
+    """
+    if memento:
+        return f"[tool_response, evicted, memento]\n{memento}"
+    return f"<tool_response>\n{obs}\n</tool_response>"
+
+
+def transform_messages(
+    messages: List[Dict[str, Any]],
+    *,
+    last_only_masking: bool = True,
+) -> List[Dict[str, Any]]:
+    """Replace each tool message with a user message ready for the engine.
+
+    With `last_only_masking=True` (default), only the LAST tool message
+    in the conversation gets block + summary markers; earlier ones are
+    inlined as plain text (memento-only when available). This matches the
+    measured-good multi-turn recipe: each chat() call fires at most one
+    compaction → no cascading rewinds → ~12% overhead vs ~395%.
+
+    With `last_only_masking=False`, every tool message that has a memento
+    field gets full markers. Useful for ablations and unit testing.
+    """
+    last_tool_idx = -1
+    if last_only_masking:
+        for i, m in enumerate(messages):
+            if m.get("role") == "tool":
+                last_tool_idx = i
+
     out: List[Dict[str, Any]] = []
-    for m in messages:
+    for i, m in enumerate(messages):
         if m.get("role") != "tool":
             out.append(m)
             continue
-        body = wrap_tool_message_for_masking(
-            obs=m.get("content", ""),
-            memento=m.get("memento"),
-        )
+        obs = m.get("content", "")
+        memento = m.get("memento")
+        if last_only_masking and i != last_tool_idx:
+            body = wrap_tool_message_inlined(obs=obs, memento=memento)
+        else:
+            body = wrap_tool_message_for_masking(obs=obs, memento=memento)
         out.append({"role": "user", "content": body})
     return out
 
@@ -100,6 +133,7 @@ class MementoVLLMModel(ChatModel):
         keep_last_n_blocks: int = 0,
         compact_on_summary_end: bool = True,
         restart_mode: bool = True,
+        last_only_masking: bool = True,
         debug_masking: bool = False,
         **kwargs,
     ):
@@ -107,6 +141,7 @@ class MementoVLLMModel(ChatModel):
         self._default_max_new_tokens = max_new_tokens
         self._default_temperature = temperature
         self._masking_enabled = masking_enabled
+        self._last_only_masking = last_only_masking
 
         if model_name not in MementoVLLMModel._tokenizer_cache:
             from transformers import AutoTokenizer
@@ -115,6 +150,8 @@ class MementoVLLMModel(ChatModel):
             )
         self._tokenizer = MementoVLLMModel._tokenizer_cache[model_name]
 
+        # last_only_masking is a render-time concern; doesn't change the
+        # engine config so it stays out of the cache_key.
         cache_key = (
             model_name, dtype, gpu_memory_utilization, max_model_len,
             enable_prefix_caching, masking_enabled, keep_last_n_blocks,
@@ -167,7 +204,7 @@ class MementoVLLMModel(ChatModel):
         msgs = list(messages)
         if system is not None:
             msgs = [{"role": "system", "content": system}] + msgs
-        msgs = transform_messages(msgs)
+        msgs = transform_messages(msgs, last_only_masking=self._last_only_masking)
 
         kwargs: Dict[str, Any] = {"add_generation_prompt": True, "tokenize": False}
         if tools:
