@@ -5,6 +5,7 @@
 #define XXH_INLINE_ALL
 #include "xxhash.h"
 
+#include "hash_table.h"
 #include "hazard.h"
 #include "memory_pool.h"
 #include "store.h"
@@ -12,8 +13,6 @@
 namespace sas {
 
 namespace {
-
-constexpr size_t NODE_POOL_CAPACITY = 512;
 
 thread_local memory_pool<hash_node, NODE_POOL_CAPACITY> node_pool_;
 
@@ -252,7 +251,9 @@ void free_table(hash_table* table) {
     delete table;
 }
 
-void init_node_pool() noexcept { (void)node_pool_; }
+void init_node_pool() noexcept {
+    node_pool_.prefill([] { return new hash_node({}, 0, nullptr); });
+}
 
 } // namespace impl
 

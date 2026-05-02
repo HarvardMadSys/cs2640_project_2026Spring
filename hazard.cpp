@@ -2,8 +2,8 @@
 #include <cassert>
 #include <vector>
 
+#include "hash_table.h"
 #include "hazard.h"
-#include "store.h"
 
 namespace sas {
 

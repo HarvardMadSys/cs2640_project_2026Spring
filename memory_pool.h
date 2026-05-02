@@ -13,15 +13,19 @@ template <typename T, size_t Capacity> class memory_pool {
         }
     }
 
-    T* acquire() noexcept {
-        return size_ > 0 ? storage_[--size_] : nullptr;
-    }
+    T* acquire() noexcept { return size_ > 0 ? storage_[--size_] : nullptr; }
 
     void release(T* p) noexcept {
         if (size_ < Capacity) {
             storage_[size_++] = p;
         } else {
             delete p;
+        }
+    }
+
+    template <typename Factory> void prefill(Factory&& f) {
+        while (size_ < Capacity) {
+            release(f());
         }
     }
 

@@ -18,6 +18,8 @@ struct object_handle {
 
 static_assert(sizeof(object_handle) <= 64UL);
 
+inline constexpr size_t HANDLE_POOL_CAPACITY = 1024;
+
 namespace impl {
 
 void drop_handle(object_handle* handle);

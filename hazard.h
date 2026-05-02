@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "handle.h"
-#include "store.h"
+#include "hash_table.h"
 #include "tagged_ptr.h"
 
 namespace sas {

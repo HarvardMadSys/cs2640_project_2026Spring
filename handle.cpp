@@ -1,6 +1,5 @@
 #include <atomic>
 #include <cassert>
-#include <cstddef>
 
 #include "handle.h"
 #include "memory_pool.h"
@@ -9,16 +8,16 @@ namespace sas::impl {
 
 namespace {
 
-constexpr size_t POOL_CAPACITY = 512;
-
-thread_local memory_pool<object_handle, POOL_CAPACITY> pool;
+thread_local memory_pool<object_handle, HANDLE_POOL_CAPACITY> pool;
 
 } // namespace
 
-void init_pool() noexcept { (void)pool; }
+void init_pool() noexcept {
+    pool.prefill([] { return new object_handle(nullptr, nullptr); });
+}
 
 handle_owner make_handle(void* value, dtor_fn dtor) {
-    if (auto* h = pool.acquire()) {
+    if (auto* h = pool.acquire()) [[likely]] {
         h->value = value;
         h->dtor = dtor;
         h->refcount.store(1, std::memory_order_relaxed);
