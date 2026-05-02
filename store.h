@@ -2,7 +2,6 @@
 
 #include <atomic>
 #include <memory>
-#include <mutex>
 #include <string_view>
 
 #include "handle.h"
@@ -21,10 +20,12 @@ class object_store {
     void put(std::string_view key, void* value, dtor_fn dtor);
 
   private:
-    void resize(hash_table* expected);
+    void trigger_resize(hash_table* old);
+    void help_migrate_one(hash_table* old, hash_table* next);
+    void migrate_bucket(hash_table* old, hash_table* next, size_t idx);
+    void try_complete_resize(hash_table* old, hash_table* next);
 
     std::atomic<hash_table*> table_;
-    std::mutex resize_mutex_;
 };
 
 extern std::unique_ptr<object_store> g_store;

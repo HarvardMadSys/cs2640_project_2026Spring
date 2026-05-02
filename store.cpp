@@ -1,6 +1,5 @@
 #include <atomic>
 #include <cassert>
-#include <thread>
 
 #define XXH_INLINE_ALL
 #include "xxhash.h"
@@ -27,7 +26,7 @@ size_t next_power_of_two(size_t n) {
 size_t hash(std::string_view s) { return XXH3_64bits(s.data(), s.size()); }
 
 hash_node* make_node(std::string_view key, size_t hval, object_handle* h) {
-    if (auto* n = node_pool_.acquire()) {
+    if (auto* n = node_pool_.acquire()) [[likely]] {
         n->key.assign(key.data(), key.size());
         n->hash = hval;
         n->handle.store(tagged_ptr<object_handle>(h),
@@ -40,6 +39,21 @@ hash_node* make_node(std::string_view key, size_t hval, object_handle* h) {
 
 void free_node(hash_node* n) noexcept { node_pool_.release(n); }
 
+void drain_bucket(atomic_tagged_ptr<hash_node>& bucket, bool close_handles) {
+    auto curr = bucket.load(std::memory_order_relaxed).ptr();
+    while (curr) {
+        if (close_handles) {
+            auto h = curr->handle.load(std::memory_order_relaxed);
+            if (h.ptr()) {
+                impl::drop_handle(h.ptr());
+            }
+        }
+        auto* next = curr->next.load(std::memory_order_relaxed).ptr();
+        free_node(curr);
+        curr = next;
+    }
+}
+
 } // namespace
 
 object_store::object_store(size_t initial_capacity) {
@@ -49,50 +63,61 @@ object_store::object_store(size_t initial_capacity) {
 
 object_store::~object_store() {
     hash_table* t = table_.load(std::memory_order_relaxed);
+    hash_table* next = t->next_table.load(std::memory_order_relaxed);
+
     for (size_t i = 0; i < t->capacity; ++i) {
-        auto curr = t->buckets[i].load(std::memory_order_relaxed);
-        while (curr) {
-            auto h = curr->handle.load(std::memory_order_relaxed);
-            if (h) {
-                assert(h->refcount.load(std::memory_order_relaxed) == 1);
-                close(h.ptr());
-            }
-            auto next = curr->next.load(std::memory_order_relaxed);
-            free_node(curr.ptr());
-            curr = next;
-        }
+        drain_bucket(t->buckets[i], /*close_handles*/ true);
     }
     delete[] t->buckets;
     delete t;
+
+    if (next) {
+        for (size_t i = 0; i < next->capacity; ++i) {
+            drain_bucket(next->buckets[i], /*close_handles*/ false);
+        }
+        delete[] next->buckets;
+        delete next;
+    }
 }
 
 object_handle* object_store::get(std::string_view key) {
     auto& state = hazard_thread_state::get();
-    object_handle* result = nullptr;
-
-    hash_table* table = state.acquire_table(table_);
-    if (!table) {
-        return nullptr;
-    }
-
     size_t hval = hash(key);
-    size_t idx = hval & (table->capacity - 1);
-    auto curr = table->buckets[idx].load(std::memory_order_acquire);
 
-    while (curr) {
-        if (curr->hash == hval && curr->key == key) {
-            result = g_domain->protect(curr->handle, state.node());
-            if (result) {
-                result->refcount.fetch_add(1, std::memory_order_relaxed);
-            }
-            break;
+    while (true) {
+        hash_table* table = state.acquire_table(table_);
+        if (!table) [[unlikely]] {
+            return nullptr;
         }
-        curr = curr->next.load(std::memory_order_acquire);
+
+        if (auto* next = table->next_table.load(std::memory_order_acquire))
+            [[unlikely]] {
+            help_migrate_one(table, next);
+            try_complete_resize(table, next);
+            continue;
+        }
+
+        size_t idx = hval & (table->capacity - 1);
+        auto curr = table->buckets[idx].load(std::memory_order_acquire);
+        if (curr.is_frozen()) [[unlikely]] {
+            continue;
+        }
+
+        object_handle* result = nullptr;
+        while (curr) {
+            if (curr->hash == hval && curr->key == key) {
+                result = g_domain->protect(curr->handle, state.node());
+                if (result) {
+                    result->refcount.fetch_add(1, std::memory_order_relaxed);
+                }
+                break;
+            }
+            curr = curr->next.load(std::memory_order_acquire);
+        }
+
+        g_domain->unprotect<object_handle>(state.node());
+        return result;
     }
-
-    g_domain->unprotect<object_handle>(state.node());
-
-    return result;
 }
 
 void object_store::close(object_handle* handle) { impl::drop_handle(handle); }
@@ -100,16 +125,22 @@ void object_store::close(object_handle* handle) { impl::drop_handle(handle); }
 void object_store::put(std::string_view key, void* value, dtor_fn dtor) {
     auto& state = hazard_thread_state::get();
     auto new_handle = impl::make_handle(value, dtor);
+    size_t hval = hash(key);
 
     while (true) {
         auto* table = state.acquire_table(table_);
-        size_t hval = hash(key);
+        if (auto* next = table->next_table.load(std::memory_order_acquire))
+            [[unlikely]] {
+            help_migrate_one(table, next);
+            try_complete_resize(table, next);
+            continue;
+        }
+
         size_t idx = hval & (table->capacity - 1);
         auto& bucket = table->buckets[idx];
 
         auto head = bucket.load(std::memory_order_acquire);
-        if (head.is_frozen()) {
-            std::this_thread::yield();
+        if (head.is_frozen()) [[unlikely]] {
             continue;
         }
 
@@ -120,7 +151,7 @@ void object_store::put(std::string_view key, void* value, dtor_fn dtor) {
             if (curr->hash == hval && curr->key == key) {
                 auto old_handle = curr->handle.load(std::memory_order_acquire);
                 while (true) {
-                    if (old_handle.is_frozen()) {
+                    if (old_handle.is_frozen()) [[unlikely]] {
                         retry_table = true;
                         break;
                     }
@@ -141,8 +172,7 @@ void object_store::put(std::string_view key, void* value, dtor_fn dtor) {
             curr = curr->next.load(std::memory_order_acquire).ptr();
         }
 
-        if (retry_table) {
-            std::this_thread::yield();
+        if (retry_table) [[unlikely]] {
             continue;
         }
 
@@ -160,7 +190,8 @@ void object_store::put(std::string_view key, void* value, dtor_fn dtor) {
                                  1;
 
             bool needs_resize = false;
-            if (shard_count * hash_table::NUM_SHARDS >= table->capacity) {
+            if (shard_count * hash_table::NUM_SHARDS >= table->capacity)
+                [[unlikely]] {
                 size_t total = 0;
                 for (size_t i = 0; i < hash_table::NUM_SHARDS; ++i) {
                     total += table->shards[i].v.load(std::memory_order_relaxed);
@@ -168,8 +199,8 @@ void object_store::put(std::string_view key, void* value, dtor_fn dtor) {
                 needs_resize = total >= table->capacity;
             }
 
-            if (needs_resize) {
-                resize(table);
+            if (needs_resize) [[unlikely]] {
+                trigger_resize(table);
             }
             return;
         }
@@ -178,61 +209,94 @@ void object_store::put(std::string_view key, void* value, dtor_fn dtor) {
     }
 }
 
-void object_store::resize(hash_table* expected) {
-    std::lock_guard<std::mutex> lock(resize_mutex_);
-    hash_table* old_table = table_.load(std::memory_order_relaxed);
-    if (old_table != expected) {
+void object_store::trigger_resize(hash_table* old) {
+    if (old->next_table.load(std::memory_order_acquire) != nullptr) {
         return;
     }
 
-    size_t new_cap = old_table->capacity * 2;
-    hash_table* new_table = new hash_table(new_cap);
+    auto* candidate = new hash_table(old->capacity * 2);
 
-    for (size_t i = 0; i < old_table->capacity; ++i) {
-        auto head = old_table->buckets[i].load(std::memory_order_acquire);
-        while (!head.is_frozen()) {
-            if (old_table->buckets[i].compare_exchange_weak(head,
-                                                            head.freeze())) {
+    hash_table* expected = nullptr;
+    if (!old->next_table.compare_exchange_strong(expected, candidate,
+                                                 std::memory_order_acq_rel,
+                                                 std::memory_order_acquire)) {
+        delete[] candidate->buckets;
+        delete candidate;
+    }
+}
+
+void object_store::help_migrate_one(hash_table* old, hash_table* next) {
+    constexpr size_t CHUNK = 64;
+    size_t start =
+        old->migration_cursor.fetch_add(CHUNK, std::memory_order_acq_rel);
+    if (start >= old->capacity) {
+        return;
+    }
+    size_t end = std::min(start + CHUNK, old->capacity);
+    for (size_t i = start; i < end; ++i) {
+        migrate_bucket(old, next, i);
+    }
+    old->migration_done.fetch_add(end - start, std::memory_order_acq_rel);
+}
+
+void object_store::migrate_bucket(hash_table* old, hash_table* next,
+                                  size_t idx) {
+    auto& src = old->buckets[idx];
+    auto head = src.load(std::memory_order_acquire);
+    while (!head.is_frozen()) {
+        if (src.compare_exchange_weak(head, head.freeze(),
+                                      std::memory_order_acq_rel,
+                                      std::memory_order_acquire)) {
+            break;
+        }
+    }
+
+    hash_node* curr = head.ptr();
+    while (curr) {
+        auto h = curr->handle.load(std::memory_order_acquire);
+        while (!h.is_frozen()) {
+            if (curr->handle.compare_exchange_weak(h, h.freeze(),
+                                                   std::memory_order_acq_rel,
+                                                   std::memory_order_acquire)) {
                 break;
             }
         }
 
-        hash_node* curr = head.ptr();
-        while (curr) {
-            auto h = curr->handle.load(std::memory_order_acquire);
-            while (!h.is_frozen()) {
-                if (curr->handle.compare_exchange_weak(h, h.freeze())) {
+        if (h.ptr()) {
+            size_t new_idx = curr->hash & (next->capacity - 1);
+            auto* copy = make_node(curr->key, curr->hash, h.ptr());
+
+            while (true) {
+                auto next_head =
+                    next->buckets[new_idx].load(std::memory_order_acquire);
+                copy->next.store(next_head, std::memory_order_relaxed);
+                if (next->buckets[new_idx].compare_exchange_weak(
+                        next_head, copy, std::memory_order_release,
+                        std::memory_order_acquire)) {
                     break;
                 }
             }
 
-            hash_node* copy = make_node(curr->key, curr->hash, h.ptr());
-            size_t new_idx = copy->hash & (new_cap - 1);
-
-            copy->next.store(
-                new_table->buckets[new_idx].load(std::memory_order_relaxed),
-                std::memory_order_relaxed);
-            new_table->buckets[new_idx].store(copy, std::memory_order_relaxed);
-
-            curr = curr->next.load(std::memory_order_relaxed).ptr();
+            size_t shard_idx = curr->hash & hash_table::SHARD_MASK;
+            next->shards[shard_idx].v.fetch_add(1, std::memory_order_relaxed);
         }
+
+        curr = curr->next.load(std::memory_order_relaxed).ptr();
+    }
+}
+
+void object_store::try_complete_resize(hash_table* old, hash_table* next) {
+    if (old->migration_done.load(std::memory_order_acquire) < old->capacity) {
+        return;
     }
 
-    size_t total = 0;
-    for (size_t i = 0; i < hash_table::NUM_SHARDS; ++i) {
-        total += old_table->shards[i].v.load(std::memory_order_relaxed);
+    hash_table* expected = old;
+    if (table_.compare_exchange_strong(expected, next,
+                                       std::memory_order_acq_rel,
+                                       std::memory_order_acquire)) {
+        auto& state = hazard_thread_state::get();
+        state.retire(old);
     }
-    size_t base = total / hash_table::NUM_SHARDS;
-    size_t rem = total % hash_table::NUM_SHARDS;
-    for (size_t i = 0; i < hash_table::NUM_SHARDS; ++i) {
-        new_table->shards[i].v.store(base + (i < rem ? 1 : 0),
-                                     std::memory_order_relaxed);
-    }
-
-    table_.store(new_table, std::memory_order_release);
-
-    auto& state = hazard_thread_state::get();
-    state.retire(old_table);
 }
 
 namespace impl {

@@ -32,6 +32,9 @@ struct hash_table {
 
     size_t capacity;
     atomic_tagged_ptr<hash_node>* buckets;
+    std::atomic<hash_table*> next_table{nullptr};
+    std::atomic<size_t> migration_cursor{0};
+    std::atomic<size_t> migration_done{0};
     std::array<count_shard, NUM_SHARDS> shards;
 
     explicit hash_table(size_t c) : capacity(c) {
