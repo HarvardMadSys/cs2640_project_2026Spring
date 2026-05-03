@@ -207,7 +207,7 @@ index db7a4d2..f0d6014 100644
      # block masking compactions. These requests will do prefill only,
      # allowing compaction to run before the first decode token.
 diff --git a/vllm/vllm/v1/core/sched/scheduler.py b/vllm/vllm/v1/core/sched/scheduler.py
-index 6b0d8fe..7fd67a1 100644
+index 6b0d8fe..5be9cfe 100644
 --- a/vllm/vllm/v1/core/sched/scheduler.py
 +++ b/vllm/vllm/v1/core/sched/scheduler.py
 @@ -185,10 +185,30 @@ class Scheduler(SchedulerInterface):
@@ -322,7 +322,7 @@ index 6b0d8fe..7fd67a1 100644
                      )
                      if (self.block_masking_config is not None and
                          self.block_masking_config.debug):
-@@ -1759,11 +1824,168 @@ class Scheduler(SchedulerInterface):
+@@ -1759,11 +1824,176 @@ class Scheduler(SchedulerInterface):
                  merged.append((start, end))
          return merged
  
@@ -476,7 +476,15 @@ index 6b0d8fe..7fd67a1 100644
 +                tokens = list(request.all_token_ids[start_position:end_position])
 +                if tokens:
 +                    from vllm.v1.core.block_masking.memento_store import compute_obs_id
-+                    return compute_obs_id(tokens)
++                    obs_id = compute_obs_id(tokens)
++                    # Phase 4e diag: log token range length + first/last
++                    # token IDs so we can compare to what the adapter
++                    # tokenizes and figure out hash mismatches.
++                    print(f"[v4e-id] span=[{start_position},{end_position}) "
++                          f"len={len(tokens)} first={tokens[:3]} "
++                          f"last={tokens[-3:]} → {obs_id}",
++                          flush=True)
++                    return obs_id
 +            except Exception:
 +                pass
 +        # Fallback: legacy ID encoding
@@ -491,7 +499,7 @@ index 6b0d8fe..7fd67a1 100644
      ) -> SpanRemovalResult:
          """Mask a span of tokens and compact the KV cache in one step.
  
-@@ -1776,6 +1998,11 @@ class Scheduler(SchedulerInterface):
+@@ -1776,6 +2006,11 @@ class Scheduler(SchedulerInterface):
              request_id: The request ID.
              start_position: Start logical position (inclusive).
              end_position: End logical position (exclusive).
@@ -503,7 +511,7 @@ index 6b0d8fe..7fd67a1 100644
  
          Returns:
              SpanRemovalResult with success status, tokens removed, and
-@@ -1854,20 +2081,107 @@ class Scheduler(SchedulerInterface):
+@@ -1854,20 +2089,107 @@ class Scheduler(SchedulerInterface):
              request.logical_to_physical(p) for p in active_logical
          ]
  

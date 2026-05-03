@@ -126,20 +126,31 @@ class MementoVLLMModel(ChatModel):
         """Phase 4e: tell the engine to skip masking the named obs on the
         next compaction. Returns the obs_id (so the caller can verify).
 
-        The bridge: tokenize the obs (same way the engine sees it inside
-        the marker'd prompt), compute its content hash (same algorithm
-        as `_auto_memento_id`), append to the recall queue file. The
-        scheduler subprocess drains the file mid-compaction and skips
-        adding to `request.masked_block_ids` for that obs_id.
+        Mirrors the engine's content-hash exactly. The renderer wraps
+        the obs as `<tool_response>\\n{obs}\\n</tool_response>...` —
+        the engine's compaction span is the entire `<tool_response>…
+        </tool_response>` token range (inclusive of the markers; the
+        `mask_delimiters=False` flag controls attention masking of the
+        markers, not whether they appear in the captured span). We
+        tokenize the same wrapper so adapter and engine produce the
+        same content hash.
+
+        Returns None if tokenization fails or imports are unavailable.
         """
         try:
             from vllm.v1.core.block_masking import compute_obs_id, queue_recall
         except Exception:
             return None
-        token_ids = self._tokenizer(obs_text, add_special_tokens=False).input_ids
+        # Match the engine's compaction span: include both delimiters.
+        wrapped = f"<tool_response>\n{obs_text}\n</tool_response>"
+        token_ids = self._tokenizer(wrapped, add_special_tokens=False).input_ids
         if not token_ids:
             return None
         obs_id = compute_obs_id(token_ids)
+        # Phase 4e diag: log so we can compare to engine's [v4e-id] line.
+        print(f"[v4e-adapter-id] len={len(token_ids)} first={token_ids[:3]} "
+              f"last={token_ids[-3:]} → {obs_id}",
+              flush=True)
         queue_recall(obs_id)
         return obs_id
 
