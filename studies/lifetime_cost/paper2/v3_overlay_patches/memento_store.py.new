@@ -41,23 +41,41 @@ ENGINE_STATS: dict[str, int] = {
 }
 
 
-def _dump_engine_stats() -> None:
-    """Write ENGINE_STATS to ENGINE_STATS_PATH (env var). atexit hook."""
-    path = os.environ.get("PAPER2_ENGINE_STATS_PATH")
+def dump_engine_stats(path: Optional[str] = None) -> None:
+    """Write ENGINE_STATS as a JSON snapshot to {path}.{pid}.
+
+    Overwrite-style — each process writes its own pid-suffixed file every
+    time. Reader tallies all *.json snapshots in the run dir. Called
+    inline after every counter increment so the file is on disk before
+    volume.commit() — atexit is unreliable under Modal's SIGKILL teardown.
+    """
+    if path is None:
+        path = os.environ.get("PAPER2_ENGINE_STATS_PATH")
     if not path:
         return
     try:
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        # Tag with pid so multi-proc deploys don't clobber each other.
+        per_pid_path = f"{path}.{os.getpid()}"
         out = {"pid": os.getpid(), **ENGINE_STATS}
-        # Append-style write so each process gets its own line.
-        with open(path, "a") as f:
-            f.write(json.dumps(out) + "\n")
+        # Atomic write: serialize to a temp then rename.
+        tmp = per_pid_path + ".tmp"
+        with open(tmp, "w") as f:
+            f.write(json.dumps(out))
+        os.replace(tmp, per_pid_path)
     except Exception:  # pragma: no cover — diagnostic only
         pass
 
 
-atexit.register(_dump_engine_stats)
+def bump(key: str, n: int = 1) -> None:
+    """Increment ENGINE_STATS[key] and persist immediately."""
+    ENGINE_STATS[key] = ENGINE_STATS.get(key, 0) + n
+    dump_engine_stats()
+
+
+# Backward-compat alias.
+_dump_engine_stats = dump_engine_stats
+
+atexit.register(dump_engine_stats)
 
 
 @dataclass

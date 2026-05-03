@@ -77,7 +77,72 @@ embedding-append          2    20 Fals       3      11    57.1  |   87.5   v4 -3
    hard for Qwen3-30B-A3B at T=0.6 within max_steps=20. Need to
    broaden the task set for any meaningful resolve-rate A/B.
 
-## Diagnostic gap
+## Probe results (Phase 4d-diag, run 1777840765)
+
+After yesterday's bake we couldn't tell whether the v4 path actually
+fired in the worker subprocess (worker stdout went silent post-load).
+Added `ENGINE_STATS` counters to `memento_store.py` with inline
+`bump()` writes (file-per-pid jsonl), then ran one cell to verify.
+
+**The first probe (run 1777840028) returned ZERO counters and zero
+stats files on the volume.** Investigation of the trajectory JSON
+revealed the cause: `last_only_masking=True` (the adapter default)
+puts markers ONLY on the LAST tool message per chat(). But the LAST
+tool message is always the freshly-returned tool result — never has a
+memento attached yet. So markers were never in the prompt → engine
+never fired compaction → all v4 plumbing was bypassed.
+
+This means **yesterday's "v4 attmask" bake (run 1777836299, the
+aggregate table above) was running v3 physical-compaction-with-extra-
+config-flags, NOT v4 KV-mask.** The wall_s comparison was apples-to-apples
+identical to the v3 baseline because the engine took the SAME path in
+both. The "embedding-append v4 -14.8s / -30.4s" observation is
+therefore noise, not a real v4 win.
+
+**Fix:** `last_only_masking=False` when `attention_mask_mode=True`.
+Under attmask, per-call compaction is cheap (refcount pin + filter,
+no physical KV move), so the "addendum tax" concern that motivated
+last_only_masking doesn't apply.
+
+**Re-probe (run 1777840765, 1 cell, off variant, seed=0):** stats file
+landed on volume:
+
+```json
+{
+  "compactions_seen": 1,
+  "captures_built": 1,
+  "pins_applied": 18,
+  "mask_short_circuits": 1,
+  "block_table_filters": 1,
+  "block_ids_filtered": 18,
+  "kv_captures_executed": 1
+}
+```
+
+All four v4 phases fired:
+* Phase 1B: 18 blocks captured GPU→CPU (28 MB stashed)
+* Phase 4a: 18 blocks refcount-pinned in block_pool
+* Phase 4b: physical compaction skipped (short-circuit fired)
+* Phase 4c: 18 blocks compacted out of `input_batch.block_table`
+
+Worker stdout also resurfaced under this config — `[v3-pin]`,
+`[v4-mask]`, `[v3-capture]` all visible in Modal logs. Probably the
+`last_only_masking=True` path simply never reached the print sites
+(no compaction at all), which is why the previous bake's stdout was
+empty for these tags.
+
+## Outstanding work
+
+* Re-run the full 5-variant × 3-seed bake with `last_only_masking=False`
+  in attmask mode for an actual v4-vs-v3 wall comparison. The
+  "+15-30s" deltas in the table above are NOT v4-vs-v3 — they're
+  v3-vs-v3-with-different-noise.
+* Phase 4e (recall via `unmask_blocks_for_recall`) is the headline
+  experiment. Needs a token-level convention for the policy to keep
+  the prompt with markers stable across turns, then trigger
+  `Scheduler.unmask_blocks_for_recall` at the right step.
+
+## (original) Diagnostic gap
 
 The worker-side print statements (`[v3-pin]`, `[v4-mask]`, `[v3-capture]`)
 that fired in the smoke (`smoke_v4_mask.py`) did NOT appear in the bake

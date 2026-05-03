@@ -235,6 +235,14 @@ def main():
         # otherwise mask_token_span has no capture_specs and Phase 4b
         # short-circuit can't fire.
         auto_capture_mementos=ATTENTION_MASK_MODE,
+        # Phase 4d-diag: under last_only_masking=True the renderer puts
+        # markers only on the LAST tool message — but the last tool msg
+        # is always fresh (no memento yet), so markers are never in the
+        # prompt and the engine never fires compaction. Under
+        # attention_mask_mode the per-call compaction is cheap (refcount
+        # pin + filter, no physical KV move), so we render markers on
+        # every memento'd tool message to actually exercise the v4 path.
+        last_only_masking=not ATTENTION_MASK_MODE,
     )
 
     # Run order: seed outermost (so within a seed, all variants see the

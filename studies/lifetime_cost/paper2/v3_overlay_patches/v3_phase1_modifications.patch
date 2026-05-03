@@ -577,7 +577,7 @@ index 6b0d8fe..ec99df6 100644
          # Now merge the new span into compacted_spans.
          request.compacted_spans = self._merge_spans(
 diff --git a/vllm/vllm/v1/core/single_type_kv_cache_manager.py b/vllm/vllm/v1/core/single_type_kv_cache_manager.py
-index de7ce2e..9b29f46 100644
+index de7ce2e..ff7f972 100644
 --- a/vllm/vllm/v1/core/single_type_kv_cache_manager.py
 +++ b/vllm/vllm/v1/core/single_type_kv_cache_manager.py
 @@ -304,7 +304,9 @@ class SingleTypeKVCacheManager(ABC):
@@ -591,7 +591,7 @@ index de7ce2e..9b29f46 100644
          """
          Physically compact KV cache by copying active tokens to contiguous slots.
  
-@@ -322,17 +324,66 @@ class SingleTypeKVCacheManager(ABC):
+@@ -322,17 +324,65 @@ class SingleTypeKVCacheManager(ABC):
                  that are active. The caller (scheduler) is responsible for
                  converting logical positions to physical positions via
                  request.logical_to_physical().
@@ -613,11 +613,10 @@ index de7ce2e..9b29f46 100644
 +        """
 +        # Phase 4d-diag: bump engine-stats counter so we can prove
 +        # compact_kv_cache actually fires inside the worker subprocess
-+        # (worker stdout is unreliable under V1; ENGINE_STATS gets
-+        # dumped to disk via atexit).
++        # (worker stdout is unreliable under V1; bump() writes inline).
 +        try:
-+            from vllm.v1.core.block_masking.memento_store import ENGINE_STATS
-+            ENGINE_STATS["compactions_seen"] += 1
++            from vllm.v1.core.block_masking.memento_store import bump as _bump
++            _bump("compactions_seen")
 +        except Exception:
 +            pass
 +
@@ -663,7 +662,7 @@ index de7ce2e..9b29f46 100644
  
          # Build copy plan: list of (src_slot, dst_slot) pairs
          # where src_slot is the current physical location of an active token
-@@ -368,11 +419,66 @@ class SingleTypeKVCacheManager(ABC):
+@@ -368,11 +418,64 @@ class SingleTypeKVCacheManager(ABC):
          # Truncate the blocks list
          del blocks[blocks_needed:]
  
@@ -676,19 +675,17 @@ index de7ce2e..9b29f46 100644
 +        pinned_block_ids: set[int] = set()
 +        if capture_operations:
 +            try:
-+                from vllm.v1.core.block_masking.memento_store import ENGINE_STATS
-+                ENGINE_STATS["captures_built"] += len(capture_operations)
++                from vllm.v1.core.block_masking.memento_store import bump as _bump
++                _bump("captures_built", len(capture_operations))
 +            except Exception:
-+                pass
++                _bump = None
 +            for op in capture_operations:
 +                pinned_block_ids.update(op.src_block_ids)
 +            for bid in pinned_block_ids:
 +                if 0 <= bid < len(self.block_pool.blocks):
 +                    self.block_pool.blocks[bid].ref_cnt += 1
-+            try:
-+                ENGINE_STATS["pins_applied"] += len(pinned_block_ids)
-+            except Exception:
-+                pass
++            if _bump is not None:
++                _bump("pins_applied", len(pinned_block_ids))
 +            print(f"[v3-pin] pinned {len(pinned_block_ids)} GPU blocks "
 +                  f"(refcount++) for memento_id(s)="
 +                  f"{[op.memento_id for op in capture_operations]}",
@@ -707,8 +704,8 @@ index de7ce2e..9b29f46 100644
 +        # is built — it consults masked_block_ids and emits a filtered list.
 +        if attention_mask_mode and capture_operations:
 +            try:
-+                from vllm.v1.core.block_masking.memento_store import ENGINE_STATS
-+                ENGINE_STATS["mask_short_circuits"] += 1
++                from vllm.v1.core.block_masking.memento_store import bump as _bump
++                _bump("mask_short_circuits")
 +            except Exception:
 +                pass
 +            print(f"[v4-mask] attention_mask_mode=True — skipping physical "
@@ -752,7 +749,7 @@ index 09302a7..3400f96 100644
      def from_engine_core_request(
          cls,
 diff --git a/vllm/vllm/v1/worker/gpu_model_runner.py b/vllm/vllm/v1/worker/gpu_model_runner.py
-index f677b37..68f471f 100644
+index f677b37..477f211 100644
 --- a/vllm/vllm/v1/worker/gpu_model_runner.py
 +++ b/vllm/vllm/v1/worker/gpu_model_runner.py
 @@ -866,6 +866,22 @@ class GPUModelRunner(
@@ -795,9 +792,9 @@ index f677b37..68f471f 100644
 +        if getattr(scheduler_output, "block_table_filter_ops", None):
 +            import numpy as _np
 +            try:
-+                from vllm.v1.core.block_masking.memento_store import ENGINE_STATS
++                from vllm.v1.core.block_masking.memento_store import bump as _bump
 +            except Exception:
-+                ENGINE_STATS = None
++                _bump = None
 +            mgr_block_table = self.input_batch.block_table
 +            for req_id, block_ids_to_remove in (
 +                scheduler_output.block_table_filter_ops.items()
@@ -822,9 +819,9 @@ index f677b37..68f471f 100644
 +                    # Compact survivors left, preserving order.
 +                    row_np[req_index, :new_n] = live[keep_mask]
 +                    group_bt.num_blocks_per_row[req_index] = new_n
-+                    if ENGINE_STATS is not None:
-+                        ENGINE_STATS["block_table_filters"] += 1
-+                        ENGINE_STATS["block_ids_filtered"] += (n - new_n)
++                    if _bump is not None:
++                        _bump("block_table_filters")
++                        _bump("block_ids_filtered", n - new_n)
 +
          # Wait until valid_sampled_tokens_count is copied to cpu,
          # then use it to update actual num_computed_tokens of each request.
@@ -875,8 +872,8 @@ index f677b37..68f471f 100644
 +        # MementoStore.global_memento_store() in a DIFFERENT process is empty.
 +        n_ops_total = sum(len(ops) for ops in kv_capture_operations.values())
 +        try:
-+            from vllm.v1.core.block_masking.memento_store import ENGINE_STATS
-+            ENGINE_STATS["kv_captures_executed"] += n_ops_total
++            from vllm.v1.core.block_masking.memento_store import bump as _bump
++            _bump("kv_captures_executed", n_ops_total)
 +        except Exception:
 +            pass
 +        print(f"[v3-capture] _execute_kv_capture_operations: "
@@ -948,8 +945,8 @@ index f677b37..68f471f 100644
 +
 +        n_ops_total = sum(len(ops) for ops in kv_restore_operations.values())
 +        try:
-+            from vllm.v1.core.block_masking.memento_store import ENGINE_STATS
-+            ENGINE_STATS["kv_restores_executed"] += n_ops_total
++            from vllm.v1.core.block_masking.memento_store import bump as _bump
++            _bump("kv_restores_executed", n_ops_total)
 +        except Exception:
 +            pass
 +        print(f"[v3-restore] _execute_kv_restore_operations: "
