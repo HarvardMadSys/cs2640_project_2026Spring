@@ -22,13 +22,20 @@ endif()
 
 include(FetchContent)
 
+FetchContent_Declare(
+  boost
+  URL https://archives.boost.io/release/1.84.0/source/boost_1_84_0.tar.gz
+)
+FetchContent_MakeAvailable(boost)
+include_directories(${boost_SOURCE_DIR})
+
 set(MI_BUILD_TESTS OFF CACHE BOOL "Disable mimalloc tests" FORCE)
 set(MI_BUILD_SHARED OFF CACHE BOOL "Build static library" FORCE)
 set(MI_BUILD_OBJECT OFF CACHE BOOL "Disable mimalloc object build" FORCE)
 FetchContent_Declare(
     mimalloc
     GIT_REPOSITORY https://github.com/microsoft/mimalloc.git
-    GIT_TAG        v2.1.2 # Using stable v2 release
+    GIT_TAG        v2.1.2
 )
 FetchContent_MakeAvailable(mimalloc)
 
