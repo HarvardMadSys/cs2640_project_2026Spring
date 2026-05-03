@@ -1,6 +1,6 @@
 {
   "context": {
-    "date": "2026-05-02T23:56:37-06:00",
+    "date": "2026-05-03T00:13:44-06:00",
     "host_name": "node0.wolfiejk-303973.cs2640-pg0.utah.cloudlab.us",
     "executable": "bench",
     "num_cpus": 64,
@@ -32,32 +32,32 @@
         "num_sharing": 8
       }
     ],
-    "load_avg": [1.71387,1.00146,0.494629],
+    "load_avg": [6.73193,4.19678,2.52197],
     "library_version": "v1.9.1",
     "library_build_type": "release",
     "json_schema_version": 1
   },
   "benchmarks": [
     {
-      "name": "end_to_end/real_time/threads:8",
+      "name": "end_to_end/real_time/threads:16",
       "family_index": 0,
       "per_family_instance_index": 0,
-      "run_name": "end_to_end/real_time/threads:8",
+      "run_name": "end_to_end/real_time/threads:16",
       "run_type": "iteration",
       "repetitions": 1,
       "repetition_index": 0,
-      "threads": 8,
-      "iterations": 82120,
-      "real_time": 3.3636998587426613e+04,
-      "cpu_time": 3.3634266512420851e+04,
+      "threads": 16,
+      "iterations": 192240,
+      "real_time": 3.6542399869947323e+04,
+      "cpu_time": 3.6539698475863508e+04,
       "time_unit": "ns",
-      "items_per_second": 3.8053335724146902e+06,
-      "rd_p50": 1.5655797563089159e+03,
-      "rd_p99": 1.7531764591346032e+03,
-      "rd_p999": 1.9100755196797231e+03,
-      "wr_p50": 1.6508509848660465e+03,
-      "wr_p99": 2.1897651493471108e+03,
-      "wr_p999": 2.3227882658962340e+03
+      "items_per_second": 3.5027803443546663e+06,
+      "rd_p50": 3.2403219458725880e+03,
+      "rd_p99": 5.2459106871074127e+03,
+      "rd_p999": 6.8285521427757058e+03,
+      "wr_p50": 3.6564475010267543e+03,
+      "wr_p99": 5.3073062608186829e+03,
+      "wr_p999": 8.3088676422585540e+03
     }
   ]
 }
