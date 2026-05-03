@@ -1,0 +1,118 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+"""
+MementoStore — process-global side table holding obs KV captured at
+compaction time, indexed by memento_id.
+
+This is the substrate for Paper 2's KV-level recall (the "stale historical
+truth" mechanism). At compaction time, the obs blocks are copied from GPU
+to CPU pinned memory and stashed here. On recall, the policy asks the
+engine to splice them back into a future request's block table.
+
+Phase 1A scaffolding: defines the data model + a singleton accessor. The
+worker's actual GPU→CPU copy is wired in Phase 1B; until then, `stash`
+records metadata only (cpu_kv may be None).
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Optional
+
+import torch
+
+
+@dataclass
+class StoredMemento:
+    """One captured obs block group.
+
+    cpu_kv layout (when populated): a list of length num_layers. Each entry
+    is a tensor of shape [num_captured_blocks, 2, block_size, num_kv_heads,
+    head_size] (FlashInfer layout) or [2, num_captured_blocks, block_size,
+    num_kv_heads, head_size] (FlashAttention layout). Pinned host memory.
+
+    physical_block_ids are the SOURCE block ids on GPU at the moment of
+    capture — useful for debug/verification, not for recall (those blocks
+    will be freed shortly after).
+    """
+
+    memento_id: str
+    request_id: str
+    logical_range: tuple[int, int]               # [start, end) in source request
+    physical_block_ids: list[int]                # source GPU block ids at capture time
+    block_size: int
+    num_layers: int
+    cpu_kv: Optional[list[torch.Tensor]] = None  # populated by worker hook
+
+    def cpu_bytes(self) -> int:
+        if self.cpu_kv is None:
+            return 0
+        return sum(t.numel() * t.element_size() for t in self.cpu_kv)
+
+
+class MementoStore:
+    """Process-global stash. Engine and policy share via global accessor."""
+
+    def __init__(self) -> None:
+        self._store: dict[str, StoredMemento] = {}
+
+    def stash(self, memento: StoredMemento) -> None:
+        self._store[memento.memento_id] = memento
+
+    def get(self, memento_id: str) -> Optional[StoredMemento]:
+        return self._store.get(memento_id)
+
+    def evict(self, memento_id: str) -> bool:
+        return self._store.pop(memento_id, None) is not None
+
+    def memento_ids(self) -> list[str]:
+        return list(self._store.keys())
+
+    def total_cpu_bytes(self) -> int:
+        return sum(m.cpu_bytes() for m in self._store.values())
+
+    def __len__(self) -> int:
+        return len(self._store)
+
+
+_GLOBAL_STORE: Optional[MementoStore] = None
+
+
+def global_memento_store() -> MementoStore:
+    """Return the process-wide MementoStore, creating it on first call.
+
+    The store lives in whichever process this is called from. In vLLM's
+    common deployment the worker process owns the KV tensors, so the
+    worker-side store holds the CPU bytes; the scheduler-side store
+    holds metadata only. Phase 3 wires the cross-process proxy.
+    """
+    global _GLOBAL_STORE
+    if _GLOBAL_STORE is None:
+        _GLOBAL_STORE = MementoStore()
+    return _GLOBAL_STORE
+
+
+def reset_global_memento_store() -> None:
+    """Test hook — drop the singleton."""
+    global _GLOBAL_STORE
+    _GLOBAL_STORE = None
+
+
+@dataclass
+class CaptureSpec:
+    """Scheduler→manager intent: capture these positions into this memento_id."""
+
+    memento_id: str
+    physical_positions: list[int]  # positions in the SOURCE request's physical layout
+    logical_range: tuple[int, int]
+
+
+@dataclass
+class CaptureOp:
+    """Manager→worker job: copy these GPU blocks into CPU memento store."""
+
+    memento_id: str
+    request_id: str
+    src_block_ids: list[int]       # full-block captures (Phase 1: aligned only)
+    block_size: int
+    logical_range: tuple[int, int]

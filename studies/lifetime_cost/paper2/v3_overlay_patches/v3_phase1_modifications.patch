@@ -1,0 +1,491 @@
+diff --git a/vllm/vllm/config/block_masking.py b/vllm/vllm/config/block_masking.py
+index fda9f45..103fd38 100644
+--- a/vllm/vllm/config/block_masking.py
++++ b/vllm/vllm/config/block_masking.py
+@@ -121,7 +121,14 @@ class BlockMaskingConfig:
+     0 = disabled (no cap). When > 0, a logits processor will force the model
+     to generate <|block_end|> once a block reaches this many content tokens."""
+     debug: bool = False
+-    
++
++    auto_capture_mementos: bool = False
++    """Paper 2 v3 KV-level recall (Phase 1). When True, every compaction event
++    also captures the obs's GPU KV blocks into CPU pinned memory under a
++    deterministic memento_id. The store can then be queried via
++    `vllm.v1.core.block_masking.global_memento_store()` to verify capture
++    bytes and (in Phase 3) splice them back into a future request."""
++
+     # Resolved token IDs (set during initialization)
+     _block_start_id: Optional[int] = field(default=None, repr=False)
+     _block_end_id: Optional[int] = field(default=None, repr=False)
+diff --git a/vllm/vllm/v1/core/block_masking/__init__.py b/vllm/vllm/v1/core/block_masking/__init__.py
+index 37c8bbd..9afdad8 100644
+--- a/vllm/vllm/v1/core/block_masking/__init__.py
++++ b/vllm/vllm/v1/core/block_masking/__init__.py
+@@ -9,9 +9,23 @@ using vLLM's token span removal infrastructure.
+ 
+ from .tracker import BlockMaskingState, BlockInfo
+ from .processor import BlockMaskingProcessor
++from .memento_store import (
++    StoredMemento,
++    MementoStore,
++    CaptureSpec,
++    CaptureOp,
++    global_memento_store,
++    reset_global_memento_store,
++)
+ 
+ __all__ = [
+     "BlockMaskingState",
+     "BlockInfo",
+     "BlockMaskingProcessor",
++    "StoredMemento",
++    "MementoStore",
++    "CaptureSpec",
++    "CaptureOp",
++    "global_memento_store",
++    "reset_global_memento_store",
+ ]
+diff --git a/vllm/vllm/v1/core/kv_cache_coordinator.py b/vllm/vllm/v1/core/kv_cache_coordinator.py
+index d8acac0..0571b67 100644
+--- a/vllm/vllm/v1/core/kv_cache_coordinator.py
++++ b/vllm/vllm/v1/core/kv_cache_coordinator.py
+@@ -209,29 +209,33 @@ class KVCacheCoordinator(ABC):
+         self,
+         request_id: str,
+         active_physical_positions: list[int],
+-    ) -> tuple[int, list[tuple[int, int, int, int]]]:
++        capture_specs: "list | None" = None,
++    ) -> tuple[int, list[tuple[int, int, int, int]], list]:
+         """
+         Physically compact KV cache by copying active tokens to contiguous slots.
+ 
+         Args:
+             request_id: The request ID.
+             active_physical_positions: Sorted list of physical slot positions
+-                that are active. The caller is responsible for converting
+-                logical positions to physical positions.
++                that are active.
++            capture_specs: Optional list of CaptureSpec for memento capture
++                (Paper 2 v3, KV-level recall). See single_type_kv_cache_manager
++                for the contract.
+ 
+         Returns:
+-            Tuple of (total_blocks_freed, copy_operations) where copy_operations
+-            is a list of (src_block_id, src_offset, dst_block_id, dst_offset).
++            Tuple of (total_blocks_freed, copy_operations, capture_operations).
+         """
+         total_freed = 0
+         all_copy_ops: list[tuple[int, int, int, int]] = []
++        all_capture_ops: list = []
+         for manager in self.single_type_managers:
+-            freed, copy_ops = manager.compact_kv_cache(
+-                request_id, active_physical_positions
++            freed, copy_ops, capture_ops = manager.compact_kv_cache(
++                request_id, active_physical_positions, capture_specs=capture_specs,
+             )
+             total_freed += freed
+             all_copy_ops.extend(copy_ops)
+-        return total_freed, all_copy_ops
++            all_capture_ops.extend(capture_ops)
++        return total_freed, all_copy_ops, all_capture_ops
+ 
+     @abstractmethod
+     def find_longest_cache_hit(
+diff --git a/vllm/vllm/v1/core/kv_cache_manager.py b/vllm/vllm/v1/core/kv_cache_manager.py
+index 3297434..387a952 100644
+--- a/vllm/vllm/v1/core/kv_cache_manager.py
++++ b/vllm/vllm/v1/core/kv_cache_manager.py
+@@ -431,14 +431,16 @@ class KVCacheManager:
+         self,
+         request_id: str,
+         active_physical_positions: list[int],
+-    ) -> tuple[int, list[tuple[int, int, int, int]]]:
++        capture_specs: "list | None" = None,
++    ) -> tuple[int, list[tuple[int, int, int, int]], list]:
+         """
+         Physically compact KV cache by copying active tokens to contiguous slots.
+ 
+         This performs true defragmentation:
+-        1. Copies KV values from active physical positions to slots 0, 1, 2, ...
+-        2. Frees trailing blocks that are now empty
+-        3. Preserves positional encodings (caller must track position mapping)
++        1. (Optional) Captures obs blocks for Paper 2 KV-level recall
++        2. Copies KV values from active physical positions to slots 0, 1, 2, ...
++        3. Frees trailing blocks that are now empty
++        4. Preserves positional encodings (caller must track position mapping)
+ 
+         Args:
+             request_id: The request ID.
+@@ -446,11 +448,16 @@ class KVCacheManager:
+                 that are active. The caller (scheduler) is responsible for
+                 converting logical to physical positions via
+                 request.logical_to_physical().
++            capture_specs: Optional list of CaptureSpec — if set, the worker
++                will copy the named obs blocks to CPU pinned memory and stash
++                under each spec's memento_id. See block_masking.memento_store.
+ 
+         Returns:
+-            Tuple of (blocks_freed, copy_operations) where copy_operations is
+-            a list of (src_block_id, src_offset, dst_block_id, dst_offset).
++            Tuple of (blocks_freed, copy_operations, capture_operations).
++            capture_operations is a list of CaptureOp the worker must execute
++            BEFORE applying copy_operations (otherwise the obs slots will be
++            overwritten by suffix copies).
+         """
+         return self.coordinator.compact_kv_cache(
+-            request_id, active_physical_positions
++            request_id, active_physical_positions, capture_specs=capture_specs,
+         )
+diff --git a/vllm/vllm/v1/core/sched/output.py b/vllm/vllm/v1/core/sched/output.py
+index db7a4d2..6d90dc8 100644
+--- a/vllm/vllm/v1/core/sched/output.py
++++ b/vllm/vllm/v1/core/sched/output.py
+@@ -217,6 +217,13 @@ class SchedulerOutput:
+     # to physically move KV values during context compression.
+     kv_copy_operations: dict[str, list[tuple[int, int, int, int]]] | None = None
+ 
++    # req_id -> list of CaptureOp (block_masking.memento_store).
++    # Paper 2 v3 KV-level recall: the worker copies the named GPU KV blocks
++    # to CPU pinned memory under each op's memento_id BEFORE executing
++    # kv_copy_operations on the same request. None unless capture was
++    # requested via Scheduler.mask_token_span(capture_for_memento_id=...).
++    kv_capture_operations: dict[str, list] | None = None
++
+     # req_id -> tuple of num_blocks per KV cache group
+     # for block table truncation after compaction.
+     block_table_truncations: dict[str, tuple[int, ...]] | None = None
+diff --git a/vllm/vllm/v1/core/sched/scheduler.py b/vllm/vllm/v1/core/sched/scheduler.py
+index 6b0d8fe..6fa51fc 100644
+--- a/vllm/vllm/v1/core/sched/scheduler.py
++++ b/vllm/vllm/v1/core/sched/scheduler.py
+@@ -185,6 +185,14 @@ class Scheduler(SchedulerInterface):
+             str, list[tuple[int, int, int, int]]
+         ] = {}
+ 
++        # Pending KV capture operations for Paper 2 v3 KV-level recall
++        # (block_masking.memento_store.CaptureOp). The worker copies the
++        # named GPU blocks to CPU pinned memory and stashes them under the
++        # memento_id BEFORE applying pending_kv_copy_operations on the same
++        # request. Empty unless the scheduler caller passed
++        # capture_for_memento_id to mask_token_span.
++        self.pending_kv_capture_operations: dict[str, list] = {}
++
+         # Block table truncation info after KV cache compaction.
+         # Maps request_id -> tuple of num_blocks per KV cache group.
+         self.pending_block_table_truncations: dict[str, tuple[int, ...]] = {}
+@@ -773,6 +781,14 @@ class Scheduler(SchedulerInterface):
+         )
+         self.pending_block_table_truncations.clear()
+ 
++        # Get pending KV capture operations for Paper 2 v3 recall (Phase 1A).
++        kv_capture_operations = (
++            self.pending_kv_capture_operations.copy()
++            if self.pending_kv_capture_operations
++            else None
++        )
++        self.pending_kv_capture_operations.clear()
++
+         # Block masking: Detect requests with pending compactions that are
+         # about to transition from prefill to decode. These should skip
+         # sampling so compaction can run before the first decode token.
+@@ -816,6 +832,7 @@ class Scheduler(SchedulerInterface):
+             finished_req_ids=self.finished_req_ids,
+             free_encoder_mm_hashes=self.encoder_cache_manager.get_freed_mm_hashes(),
+             kv_copy_operations=kv_copy_operations,
++            kv_capture_operations=kv_capture_operations,
+             block_table_truncations=block_table_truncations,
+             skip_sampling_req_ids=skip_sampling_req_ids,
+         )
+@@ -1259,6 +1276,8 @@ class Scheduler(SchedulerInterface):
+                             request.request_id,
+                             start,
+                             end,
++                            capture_for_memento_id=self._auto_memento_id(
++                                request.request_id, start, end),
+                         )
+                         if (self.block_masking_config is not None and
+                             self.block_masking_config.debug):
+@@ -1469,6 +1488,8 @@ class Scheduler(SchedulerInterface):
+                         request.request_id,
+                         start,
+                         end,
++                        capture_for_memento_id=self._auto_memento_id(
++                            request.request_id, start, end),
+                     )
+                     if (self.block_masking_config is not None and
+                         self.block_masking_config.debug):
+@@ -1510,6 +1531,8 @@ class Scheduler(SchedulerInterface):
+                         request.request_id,
+                         start,
+                         end,
++                        capture_for_memento_id=self._auto_memento_id(
++                            request.request_id, start, end),
+                     )
+                     if (self.block_masking_config is not None and
+                         self.block_masking_config.debug):
+@@ -1759,11 +1782,27 @@ class Scheduler(SchedulerInterface):
+                 merged.append((start, end))
+         return merged
+ 
++    def _auto_memento_id(
++        self, request_id: str, start_position: int, end_position: int
++    ) -> "str | None":
++        """Phase 1 auto-capture: every compaction emits a deterministic ID.
++
++        Returns None when auto-capture is disabled. The ID encodes
++        (request_id, start, end) so the policy can reconstruct it for
++        recall lookup without out-of-band coordination.
++        """
++        if self.block_masking_config is None:
++            return None
++        if not getattr(self.block_masking_config, "auto_capture_mementos", False):
++            return None
++        return f"auto:{request_id}:{start_position}:{end_position}"
++
+     def mask_token_span(
+         self,
+         request_id: str,
+         start_position: int,
+         end_position: int,
++        capture_for_memento_id: "str | None" = None,
+     ) -> SpanRemovalResult:
+         """Mask a span of tokens and compact the KV cache in one step.
+ 
+@@ -1776,6 +1815,11 @@ class Scheduler(SchedulerInterface):
+             request_id: The request ID.
+             start_position: Start logical position (inclusive).
+             end_position: End logical position (exclusive).
++            capture_for_memento_id: Paper 2 v3 KV-level recall — when set,
++                the obs blocks being masked are captured to CPU pinned memory
++                under this memento_id BEFORE the compaction overwrites them.
++                The captured KV can be spliced into a future request via the
++                recall API (Phase 3). When None, behavior is unchanged.
+ 
+         Returns:
+             SpanRemovalResult with success status, tokens removed, and
+@@ -1854,16 +1898,38 @@ class Scheduler(SchedulerInterface):
+             request.logical_to_physical(p) for p in active_logical
+         ]
+ 
++        # Build capture spec if the caller wants this masked obs stashed
++        # under a memento_id (Paper 2 v3 KV-level recall, Phase 1A).
++        capture_specs = None
++        if capture_for_memento_id is not None:
++            from vllm.v1.core.block_masking.memento_store import CaptureSpec
++            obs_physical = [
++                request.logical_to_physical(p)
++                for p in range(start_position, end_position)
++            ]
++            capture_specs = [CaptureSpec(
++                memento_id=capture_for_memento_id,
++                physical_positions=obs_physical,
++                logical_range=(start_position, end_position),
++            )]
++
+         # Perform physical compaction in KV cache manager.
+-        blocks_freed, copy_ops = self.kv_cache_manager.compact_kv_cache(
++        blocks_freed, copy_ops, capture_ops = self.kv_cache_manager.compact_kv_cache(
+             request_id,
+             active_physical,
++            capture_specs=capture_specs,
+         )
+ 
+         # Store copy operations to be sent to worker.
+         if copy_ops:
+             self.pending_kv_copy_operations[request_id] = copy_ops
+ 
++        # Store capture operations to be sent to worker (Phase 1A — worker
++        # hook is wired in Phase 1B; until then capture_ops is recorded
++        # but not yet executed).
++        if capture_ops:
++            self.pending_kv_capture_operations[request_id] = capture_ops
++
+         # Store block table truncation info for the worker.
+         num_active = len(active_physical)
+         blocks_needed = (num_active + self.block_size - 1) // self.block_size
+diff --git a/vllm/vllm/v1/core/single_type_kv_cache_manager.py b/vllm/vllm/v1/core/single_type_kv_cache_manager.py
+index de7ce2e..f23a44f 100644
+--- a/vllm/vllm/v1/core/single_type_kv_cache_manager.py
++++ b/vllm/vllm/v1/core/single_type_kv_cache_manager.py
+@@ -304,7 +304,8 @@ class SingleTypeKVCacheManager(ABC):
+         self,
+         request_id: str,
+         active_physical_positions: list[int],
+-    ) -> tuple[int, list[tuple[int, int, int, int]]]:
++        capture_specs: "list | None" = None,
++    ) -> tuple[int, list[tuple[int, int, int, int]], list]:
+         """
+         Physically compact KV cache by copying active tokens to contiguous slots.
+ 
+@@ -322,17 +323,56 @@ class SingleTypeKVCacheManager(ABC):
+                 that are active. The caller (scheduler) is responsible for
+                 converting logical positions to physical positions via
+                 request.logical_to_physical().
++            capture_specs: Optional list of CaptureSpec (block_masking.memento_store).
++                When set, the worker will copy the GPU KV blocks containing the
++                specified physical_positions into CPU pinned memory and stash
++                them under memento_id. The capture must run BEFORE the active
++                tokens are copied down (otherwise the obs slots would be
++                overwritten with active suffix data). Phase 1 captures
++                full-block-aligned ranges only.
+ 
+         Returns:
+-            Tuple of (blocks_freed, copy_operations) where copy_operations is
+-            a list of (src_block_id, src_offset, dst_block_id, dst_offset).
++            Tuple of (blocks_freed, copy_operations, capture_operations).
++            copy_operations: list of (src_block_id, src_offset, dst_block_id, dst_offset).
++            capture_operations: list of CaptureOp (block_masking.memento_store).
+         """
+         if request_id not in self.req_to_blocks:
+-            return 0, []
++            return 0, [], []
+ 
+         blocks = self.req_to_blocks[request_id]
+         if not blocks or not active_physical_positions:
+-            return 0, []
++            return 0, [], []
++
++        # Phase 1A: build capture_ops from capture_specs FIRST so the worker
++        # can stash bytes before the compaction overwrites them. We resolve
++        # physical positions → block ids using the SOURCE layout (current
++        # blocks list, before compaction).
++        capture_operations: list = []
++        if capture_specs:
++            from vllm.v1.core.block_masking.memento_store import CaptureOp
++            for spec in capture_specs:
++                src_block_ids = []
++                seen = set()
++                for p in spec.physical_positions:
++                    block_idx = p // self.block_size
++                    if block_idx >= len(blocks):
++                        continue  # out-of-range; skip
++                    block = blocks[block_idx]
++                    if block == self._null_block:
++                        continue
++                    bid = block.block_id
++                    if bid in seen:
++                        continue
++                    seen.add(bid)
++                    src_block_ids.append(bid)
++                if src_block_ids:
++                    capture_operations.append(CaptureOp(
++                        memento_id=spec.memento_id,
++                        request_id=request_id,
++                        src_block_ids=src_block_ids,
++                        block_size=self.block_size,
++                        logical_range=spec.logical_range,
++                    ))
+ 
+         # Build copy plan: list of (src_slot, dst_slot) pairs
+         # where src_slot is the current physical location of an active token
+@@ -372,7 +412,7 @@ class SingleTypeKVCacheManager(ABC):
+         if blocks_to_free:
+             self.block_pool.free_blocks(reversed(blocks_to_free))
+ 
+-        return blocks_freed, block_level_ops
++        return blocks_freed, block_level_ops, capture_operations
+ 
+     def _get_kv_copy_ops(
+         self,
+diff --git a/vllm/vllm/v1/worker/gpu_model_runner.py b/vllm/vllm/v1/worker/gpu_model_runner.py
+index f677b37..06dfd18 100644
+--- a/vllm/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/vllm/v1/worker/gpu_model_runner.py
+@@ -866,6 +866,13 @@ class GPUModelRunner(
+         is_last_rank = get_pp_group().is_last_rank
+         req_data = scheduler_output.scheduled_cached_reqs
+ 
++        # Paper 2 v3 KV-level recall (Phase 1B): capture obs blocks to CPU
++        # pinned memory BEFORE the copy_ops below overwrite them. The
++        # capture is per-source-block-id; `kv_copy_operations` then runs
++        # to compact the surviving (active) tokens into lower slots.
++        if scheduler_output.kv_capture_operations:
++            self._execute_kv_capture_operations(scheduler_output.kv_capture_operations)
++
+         # Execute KV cache copy operations for compaction BEFORE updating block tables.
+         # These physically move KV values to compact the cache after span removal.
+         if scheduler_output.kv_copy_operations:
+@@ -1041,6 +1048,82 @@ class GPUModelRunner(
+         # Refresh batch metadata with any pending updates.
+         self.input_batch.refresh_metadata()
+ 
++    def _execute_kv_capture_operations(
++        self,
++        kv_capture_operations: dict,
++    ) -> None:
++        """Capture GPU KV blocks into CPU pinned memory under a memento_id.
++
++        Paper 2 v3 KV-level recall, Phase 1B. For each CaptureOp, slice the
++        named source block_ids out of every layer's GPU KV cache, copy them
++        to a CPU pinned tensor, and stash a StoredMemento in the global
++        process MementoStore. The store is later consulted by the recall
++        splice (Phase 3) to inject the bytes back into a future request.
++
++        Layout (must match _execute_kv_copy_operations):
++        - FlashAttention: kv_cache shape [2, num_blocks, block_size, num_kv_heads, head_size]
++        - FlashInfer:     kv_cache shape [num_blocks, 2, block_size, num_kv_heads, head_size]
++
++        We pin host memory (`pin_memory=True`) so the H2D copy on recall is
++        DMA-able and async-friendly. Per-layer capture is sequential here;
++        if a single capture-op spans many blocks it is still O(num_blocks)
++        index_select calls per layer. Acceptable at our scales (one obs ≈ a
++        few blocks; ≤20 captures per task).
++        """
++        if not self.kv_caches or not kv_capture_operations:
++            return
++
++        import torch as _torch  # local alias — module import already at top
++        from vllm.v1.core.block_masking.memento_store import (
++            StoredMemento, global_memento_store,
++        )
++
++        store = global_memento_store()
++        num_layers = len(self.kv_caches)
++
++        # Detect layout once (all layers share it).
++        first_cache = self.kv_caches[0]
++        flash_attn_layout = (first_cache.shape[0] == 2)
++
++        for req_id, ops in kv_capture_operations.items():
++            for op in ops:
++                src_block_ids = list(op.src_block_ids)
++                if not src_block_ids:
++                    continue
++                idx = _torch.tensor(src_block_ids, dtype=_torch.long,
++                                    device=first_cache.device)
++
++                cpu_kv: list[_torch.Tensor] = []
++                for kv_cache in self.kv_caches:
++                    if flash_attn_layout:
++                        # [2, num_blocks, block_size, num_kv_heads, head_size]
++                        # Slice along block dim (dim 1).
++                        gpu_slice = kv_cache.index_select(1, idx)
++                    else:
++                        # [num_blocks, 2, block_size, num_kv_heads, head_size]
++                        gpu_slice = kv_cache.index_select(0, idx)
++                    # Copy to CPU pinned memory (blocking — Phase 1B keeps it
++                    # simple; async streams come later if cost dominates).
++                    cpu_tensor = _torch.empty(
++                        gpu_slice.shape,
++                        dtype=gpu_slice.dtype,
++                        device="cpu",
++                        pin_memory=True,
++                    )
++                    cpu_tensor.copy_(gpu_slice, non_blocking=False)
++                    cpu_kv.append(cpu_tensor)
++
++                memento = StoredMemento(
++                    memento_id=op.memento_id,
++                    request_id=op.request_id,
++                    logical_range=op.logical_range,
++                    physical_block_ids=src_block_ids,
++                    block_size=op.block_size,
++                    num_layers=num_layers,
++                    cpu_kv=cpu_kv,
++                )
++                store.stash(memento)
++
+     def _execute_kv_copy_operations(
+         self,
+         kv_copy_operations: dict[str, list[tuple[int, int, int, int]]],

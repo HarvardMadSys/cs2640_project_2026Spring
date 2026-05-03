@@ -128,6 +128,7 @@ class MementoVLLMModel(ChatModel):
         *,
         max_new_tokens: int = 1024,
         temperature: float = 0.0,
+        default_seed: Optional[int] = None,
         dtype: str = "bfloat16",
         gpu_memory_utilization: float = 0.85,
         max_model_len: int = 16000,
@@ -138,11 +139,13 @@ class MementoVLLMModel(ChatModel):
         restart_mode: bool = True,
         last_only_masking: bool = True,
         debug_masking: bool = False,
+        auto_capture_mementos: bool = False,
         **kwargs,
     ):
         super().__init__(model_name=model_name, **kwargs)
         self._default_max_new_tokens = max_new_tokens
         self._default_temperature = temperature
+        self._default_seed = default_seed
         self._masking_enabled = masking_enabled
         self._last_only_masking = last_only_masking
 
@@ -158,7 +161,7 @@ class MementoVLLMModel(ChatModel):
         cache_key = (
             model_name, dtype, gpu_memory_utilization, max_model_len,
             enable_prefix_caching, masking_enabled, keep_last_n_blocks,
-            compact_on_summary_end, restart_mode,
+            compact_on_summary_end, restart_mode, auto_capture_mementos,
         )
         if cache_key not in MementoVLLMModel._engine_cache:
             os.environ.setdefault("VLLM_ATTENTION_BACKEND", "FLASHINFER")
@@ -186,6 +189,7 @@ class MementoVLLMModel(ChatModel):
                     mask_delimiters=False,  # Qwen3 style
                     compact_on_summary_end=compact_on_summary_end,
                     restart_mode=restart_mode,
+                    auto_capture_mementos=auto_capture_mementos,
                     debug=debug_masking,
                 )
             MementoVLLMModel._engine_cache[cache_key] = LLM(**engine_kwargs)
@@ -227,10 +231,13 @@ class MementoVLLMModel(ChatModel):
         cached_tokens = int(prompt_tokens * (prefix_chars / max(len(rendered), 1)))
 
         eff_temp = temperature if temperature is not None else self._default_temperature
-        sp = SamplingParams(
-            max_tokens=max_tokens or self._default_max_new_tokens,
-            temperature=eff_temp,
-        )
+        sp_kwargs: Dict[str, Any] = {
+            "max_tokens": max_tokens or self._default_max_new_tokens,
+            "temperature": eff_temp,
+        }
+        if self._default_seed is not None:
+            sp_kwargs["seed"] = self._default_seed
+        sp = SamplingParams(**sp_kwargs)
         try:
             outs = self._llm.generate(
                 prompts=[{"prompt_token_ids": prompt_token_ids}],
