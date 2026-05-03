@@ -6,7 +6,7 @@ worker._execute_kv_capture_operations → global_memento_store.
 Quick start:
 
     cd /home/vlad/adaptivecache-paper2
-    .venv-paper2/bin/modal run studies.lifetime_cost.paper2.modal_app.run_smoke_v3_capture
+    /home/vlad/adaptivecache/.venv/bin/modal run studies.lifetime_cost.paper2.modal_app.run_smoke_v3_capture
 """
 from __future__ import annotations
 

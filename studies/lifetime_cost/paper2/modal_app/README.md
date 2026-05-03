@@ -21,12 +21,12 @@ via `Secret.from_dotenv` — no separate `modal secret create` needed.
 cd /home/vlad/adaptivecache-paper2
 
 # Defaults: pytest-7490, 3 seeds, T=0.6, all 5 variants
-.venv-paper2/bin/modal run \
-  studies/lifetime_cost/paper2/modal_app/run_validate_recall.py
+/home/vlad/adaptivecache/.venv/bin/modal run \
+  studies.lifetime_cost.paper2.modal_app.run_validate_recall
 
 # Or with overrides (modal CLI args use --kebab-case)
-.venv-paper2/bin/modal run \
-  studies/lifetime_cost/paper2/modal_app/run_validate_recall.py \
+/home/vlad/adaptivecache/.venv/bin/modal run \
+  studies.lifetime_cost.paper2.modal_app.run_validate_recall \
   --instances pytest-dev__pytest-7490,pytest-dev__pytest-5413 \
   --n-seeds 3 \
   --temperature 0.6 \
@@ -40,8 +40,8 @@ hit the cache.
 ## Run the v3 capture smoke
 
 ```bash
-.venv-paper2/bin/modal run \
-  studies/lifetime_cost/paper2/modal_app/run_smoke_v3_capture.py
+/home/vlad/adaptivecache/.venv/bin/modal run \
+  studies.lifetime_cost.paper2.modal_app.run_smoke_v3_capture
 ```
 
 A pass means: capture chain fires; CPU bytes land in MementoStore.
@@ -55,7 +55,7 @@ Trajectories and the `validate_recall_summary.json` land on the
 `paper2-out-v3` volume.
 
 ```bash
-.venv-paper2/bin/modal volume get paper2-out-v3 / ./modal_out_v3
+/home/vlad/adaptivecache/.venv/bin/modal volume get paper2-out-v3 /validate_recall ./modal_out_v3
 ```
 
 ## What's in the image

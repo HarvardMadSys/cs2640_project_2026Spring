@@ -7,11 +7,11 @@ land in the persistent `paper2-out-v3` volume.
 Quick start (after `modal token new` and `modal secret create paper2-anthropic`):
 
     cd /home/vlad/adaptivecache-paper2
-    .venv-paper2/bin/modal run studies.lifetime_cost.paper2.modal_app.run_validate_recall
+    /home/vlad/adaptivecache/.venv/bin/modal run studies.lifetime_cost.paper2.modal_app.run_validate_recall
 
 Or with overrides:
 
-    .venv-paper2/bin/modal run studies.lifetime_cost.paper2.modal_app.run_validate_recall \\
+    /home/vlad/adaptivecache/.venv/bin/modal run studies.lifetime_cost.paper2.modal_app.run_validate_recall \\
         --instances pytest-dev__pytest-7490,pytest-dev__pytest-5413 \\
         --n-seeds 3 \\
         --temperature 0.6 \\
@@ -19,7 +19,7 @@ Or with overrides:
 
 After the run, fetch results to local:
 
-    .venv-paper2/bin/modal volume get paper2-out-v3 / ./modal_out_v3
+    /home/vlad/adaptivecache/.venv/bin/modal volume get paper2-out-v3 / ./modal_out_v3
 """
 from __future__ import annotations
 
