@@ -20,11 +20,41 @@ else()
     add_compile_definitions(NDEBUG)
 endif()
 
+include(FetchContent)
+
+set(MI_BUILD_TESTS OFF CACHE BOOL "Disable mimalloc tests" FORCE)
+set(MI_BUILD_SHARED OFF CACHE BOOL "Build static library" FORCE)
+set(MI_BUILD_OBJECT OFF CACHE BOOL "Disable mimalloc object build" FORCE)
+FetchContent_Declare(
+    mimalloc
+    GIT_REPOSITORY https://github.com/microsoft/mimalloc.git
+    GIT_TAG        v2.1.2 # Using stable v2 release
+)
+FetchContent_MakeAvailable(mimalloc)
+
+FetchContent_Declare(
+  googlebenchmark
+  GIT_REPOSITORY https://github.com/google/benchmark.git
+    GIT_TAG v1.9.1
+)
+set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googlebenchmark)
+
+FetchContent_Declare(
+  hdrhistogram
+  GIT_REPOSITORY https://github.com/HdrHistogram/HdrHistogram_c.git
+  GIT_TAG 0.11.8
+)
+set(HDR_HISTOGRAM_BUILD_PROGRAMS OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(hdrhistogram)
+
 file(GLOB HOST_SRCS "*.cpp")
 set(STORE_SRCS store.cpp hazard.cpp handle.cpp)
 
 add_executable(host ${HOST_SRCS})
-target_link_libraries(host PRIVATE dl pthread mimalloc)
+target_link_libraries(host PRIVATE dl pthread mimalloc-static)
 set_target_properties(host PROPERTIES ENABLE_EXPORTS TRUE)
 target_include_directories(host PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/external")
 
@@ -52,28 +82,6 @@ foreach(src IN LISTS TEST_SRCS)
     add_test(NAME "test_${name}" COMMAND host "$<TARGET_FILE:test_${name}>")
 endforeach()
 
-include(FetchContent)
-FetchContent_Declare(
-  googlebenchmark
-  GIT_REPOSITORY https://github.com/google/benchmark.git
-    GIT_TAG v1.9.1
-)
-
-set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
-set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
-set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googlebenchmark)
-
-include(FetchContent)
-FetchContent_Declare(
-  hdrhistogram
-  GIT_REPOSITORY https://github.com/HdrHistogram/HdrHistogram_c.git
-  GIT_TAG 0.11.8
-)
-
-set(HDR_HISTOGRAM_BUILD_PROGRAMS OFF CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(hdrhistogram)
-
 file(GLOB ALL_BENCH_SRCS "benchmarks/*.cpp")
 foreach(src IN LISTS ALL_BENCH_SRCS)
     get_filename_component(name ${src} NAME_WE)
@@ -85,7 +93,7 @@ foreach(src IN LISTS ALL_BENCH_SRCS)
         )
         target_link_libraries(${name} PRIVATE 
             pthread 
-            mimalloc 
+            mimalloc-static 
             benchmark::benchmark
             hdr_histogram
         )

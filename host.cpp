@@ -1,7 +1,6 @@
 #include <cstddef>
 #include <dlfcn.h>
 #include <memory>
-#include <mimalloc-new-delete.h>
 #include <print>
 #include <thread>
 #include <vector>

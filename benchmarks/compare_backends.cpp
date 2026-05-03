@@ -1,5 +1,4 @@
 #include <memory>
-#include <mimalloc-new-delete.h>
 #include <string_view>
 
 #include "benchmark.h"
