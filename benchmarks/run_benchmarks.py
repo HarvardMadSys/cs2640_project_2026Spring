@@ -48,29 +48,45 @@ DEFAULTS = {
 }
 
 SWEEPS = {
-    "num_threads": list(range(1, 17)),
-    "num_keys": [1 << k for k in range(10, 23)],
-    "read_ratio": sorted(set(
-        [round(0.05 * i, 2) for i in range(21)] + [0.99]
-    )),
-    "zipf_theta": sorted(set(
-        [round(0.1 * i, 1) for i in range(16)] + [0.99]
-    )),
+    "num_threads": [1, 2, 4, 8, 16, 32, 64],
+    "num_keys": [1 << k for k in range(10, 23, 2)],
+    "read_ratio": [0.0, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 1.0],
+    "zipf_theta": [0.0, 0.25, 0.5, 0.75, 0.99, 1.25, 1.5],
 }
 
 LOG_X_AXES = {"num_keys"}
 SCENARIO_SUFFIXES = ("fill_presized", "fill_resize")
 
 BACKEND_STYLES: dict[str, dict] = {
-    "lockfree":   {"color": "#0072B2", "marker": "o"},
-    "sharded":    {"color": "#D55E00", "marker": "s"},
-    "spinlock":   {"color": "#009E73", "marker": "^"},
-    "end_to_end": {"color": "#CC79A7", "marker": "D"},
+    "lockfree":   {"color": "#1F4E79", "marker": "o"},
+    "sharded":    {"color": "#B85450", "marker": "s"},
+    "spinlock":   {"color": "#355E3B", "marker": "^"},
+    "end_to_end": {"color": "#6B4C9A", "marker": "D"},
 }
+
+BACKEND_LABELS: dict[str, str] = {
+    "lockfree":   "Lock-free",
+    "sharded":    "Sharded",
+    "spinlock":   "Spinlock",
+    "end_to_end": "End-to-end",
+}
+
+AXIS_LABELS: dict[str, str] = {
+    "num_threads": "Threads",
+    "num_keys":    "Number of Keys",
+    "read_ratio":  "Read Ratio",
+    "zipf_theta":  "Zipfian θ",
+}
+
+OP_LABELS: dict[str, str] = {"rd": "Read", "wr": "Write"}
 
 
 def style_for(backend: str) -> dict:
     return BACKEND_STYLES.get(backend, {})
+
+
+def label_for(backend: str) -> str:
+    return BACKEND_LABELS.get(backend, backend)
 
 
 def make_build() -> None:
@@ -167,27 +183,31 @@ def configure_paper_style() -> None:
 
     mpl.rcParams.update({
         "font.family": "sans-serif",
-        "font.sans-serif": ["Helvetica", "DejaVu Sans", "Arial"],
-        "font.size": 11,
-        "axes.titlesize": 12,
-        "axes.labelsize": 11,
-        "xtick.labelsize": 10,
-        "ytick.labelsize": 10,
-        "legend.fontsize": 10,
+        "font.sans-serif": ["Liberation Sans", "Arial", "Helvetica",
+                            "DejaVu Sans"],
+        "font.size": 10,
+        "axes.titlesize": 10,
+        "axes.labelsize": 10,
+        "xtick.labelsize": 9,
+        "ytick.labelsize": 9,
+        "legend.fontsize": 9,
         "axes.prop_cycle": cycler(color=palette),
-        "lines.linewidth": 1.8,
-        "lines.markersize": 5,
+        "lines.linewidth": 1.4,
+        "lines.markersize": 4,
         "lines.markeredgewidth": 0,
-        "axes.linewidth": 0.7,
+        "axes.linewidth": 0.6,
         "axes.spines.top": False,
         "axes.spines.right": False,
-        "axes.edgecolor": "0.3",
+        "axes.edgecolor": "0.25",
+        "xtick.color": "0.25",
+        "ytick.color": "0.25",
+        "xtick.major.width": 0.6,
+        "ytick.major.width": 0.6,
         "axes.grid": True,
         "axes.axisbelow": True,
-        "grid.color": "0.9",
+        "grid.color": "0.88",
         "grid.linestyle": "-",
-        "grid.linewidth": 0.5,
-        "grid.alpha": 1.0,
+        "grid.linewidth": 0.4,
         "figure.facecolor": "white",
         "axes.facecolor": "white",
         "legend.frameon": False,
@@ -248,7 +268,7 @@ def plot_throughput(rows: list, axis: str, scenario: str,
             xs.append(v)
             ys.append(b.get("items_per_second", 0) / 1e6)
         if xs:
-            ax.plot(xs, ys, label=backend, alpha=0.92, zorder=3,
+            ax.plot(xs, ys, label=label_for(backend), alpha=0.92, zorder=3,
                     **(style_for(backend) or {"marker": "o"}))
             plotted = True
     if not plotted:
@@ -256,8 +276,8 @@ def plot_throughput(rows: list, axis: str, scenario: str,
         return
     if log_x:
         ax.set_xscale("log", base=2)
-    ax.set_xlabel(_pretty_axis(axis))
-    ax.set_ylabel("throughput (M ops / s)")
+    ax.set_xlabel(AXIS_LABELS.get(axis, axis))
+    ax.set_ylabel("Throughput (M ops/s)")
     ax.legend(loc="best")
     fig.tight_layout()
     _save(fig, out_base)
@@ -281,9 +301,9 @@ def plot_latency(rows: list, axis: str, scenario: str, backends: list[str],
             if y is None:
                 continue
             xs.append(v)
-            ys.append(y)
+            ys.append(y / 1000.0)  # ns -> µs
         if xs:
-            ax.plot(xs, ys, label=backend, alpha=0.92, zorder=3,
+            ax.plot(xs, ys, label=label_for(backend), alpha=0.92, zorder=3,
                     **(style_for(backend) or {"marker": "o"}))
             series.append((backend, ys))
     if not series:
@@ -292,21 +312,12 @@ def plot_latency(rows: list, axis: str, scenario: str, backends: list[str],
     _autocap_y(ax, series)
     if log_x:
         ax.set_xscale("log", base=2)
-    ax.set_xlabel(_pretty_axis(axis))
-    ax.set_ylabel(f"{op} {percentile} latency (ns)")
+    ax.set_xlabel(AXIS_LABELS.get(axis, axis))
+    ax.set_ylabel(f"{OP_LABELS.get(op, op)} {percentile} Latency (µs)")
     ax.legend(loc="best")
     fig.tight_layout()
     _save(fig, out_base)
     plt.close(fig)
-
-
-def _pretty_axis(axis: str) -> str:
-    return {
-        "num_threads": "threads",
-        "num_keys": "number of keys",
-        "read_ratio": "read ratio",
-        "zipf_theta": "Zipfian θ",
-    }.get(axis, axis)
 
 
 PERCENTILES = ("p50", "p99", "p999")
