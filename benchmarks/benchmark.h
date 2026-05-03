@@ -176,7 +176,7 @@ inline void run_benchmarks() {
         prog,
         const_cast<char*>("--benchmark_counters_tabular=true"),
         const_cast<char*>("--benchmark_time_unit=ns"),
-        const_cast<char*>("--benchmark_min_time=2s"),
+        const_cast<char*>("--benchmark_min_time=5s"),
         const_cast<char*>("--benchmark_out=/dev/stdout"),
         const_cast<char*>("--benchmark_out_format=json"),
     };

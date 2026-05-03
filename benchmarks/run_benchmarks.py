@@ -40,16 +40,16 @@ HOST_BIN = REPO_ROOT / "build" / "host"
 RESULTS_DIR = REPO_ROOT / "results"
 
 DEFAULTS = {
-    "num_threads": 8,
-    "num_keys": 1 << 20,
+    "num_threads": 16,
+    "num_keys": 1 << 22,
     "read_ratio": 0.5,
     "zipf_theta": 0.99,
     "seed": 2640,
 }
 
 SWEEPS = {
-    "num_threads": [1, 2, 4, 8, 16, 32, 64],
-    "num_keys": [1 << k for k in range(10, 23, 2)],
+    "num_threads": [1, 2, 4, 8, 16, 24, 32, 48, 64],
+    "num_keys": [1 << k for k in range(10, 25, 2)],
     "read_ratio": [0.0, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 1.0],
     "zipf_theta": [0.0, 0.25, 0.5, 0.75, 0.99, 1.25, 1.5],
 }
