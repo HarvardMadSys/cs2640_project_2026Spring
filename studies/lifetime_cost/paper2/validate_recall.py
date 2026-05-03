@@ -81,6 +81,13 @@ RECALL_VARIANTS = [s.strip() for s in os.environ.get(
 EMBEDDING_THRESHOLD = float(os.environ.get("PAPER2_EMBEDDING_THRESHOLD", "0.40"))
 RECALL_LOW_WATER = float(os.environ.get("PAPER2_RECALL_LOW_WATER", "0.60"))
 RECALL_COOLDOWN = int(os.environ.get("PAPER2_RECALL_COOLDOWN", "3"))
+# Phase 4d: when set to "1"/"true", build the engine with v4 attention-mask
+# mode (compactions skip physical KV move; obs blocks are pinned in
+# block_pool and filtered from the per-step block_table). All variants in
+# the run inherit this engine setting.
+ATTENTION_MASK_MODE = os.environ.get(
+    "PAPER2_ATTENTION_MASK_MODE", "0"
+).lower() in ("1", "true", "yes")
 OUT_DIR = Path(os.environ.get(
     "PAPER2_OUT_DIR",
     "/home/vlad/adaptivecache-paper2/studies/lifetime_cost/paper2/out_v0_swebench",
@@ -206,6 +213,7 @@ def main():
     print(f"variants: {RECALL_VARIANTS}")
     print(f"tasks: {[t.id for t in tasks]}")
 
+    print(f"attention_mask_mode: {ATTENTION_MASK_MODE}")
     model = MementoVLLMModel(
         model_name=MODEL,
         gpu_memory_utilization=GPU_MEM_UTIL,
@@ -213,6 +221,11 @@ def main():
         masking_enabled=True,
         debug_masking=False,
         temperature=TEMPERATURE,
+        attention_mask_mode=ATTENTION_MASK_MODE,
+        # Phase 4d: in attmask mode we want capture so blocks are pinned —
+        # otherwise mask_token_span has no capture_specs and Phase 4b
+        # short-circuit can't fire.
+        auto_capture_mementos=ATTENTION_MASK_MODE,
     )
 
     # Run order: seed outermost (so within a seed, all variants see the
