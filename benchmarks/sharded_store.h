@@ -1,16 +1,18 @@
-#define ANKERL_NANOBENCH_IMPLEMENT
+#pragma once
+
 #include <boost/unordered/concurrent_flat_map.hpp>
-#include <memory>
-#include <mimalloc-new-delete.h>
+#include <cstddef>
 #include <string>
 #include <string_view>
 
-#include "benchmark.h"
 #include "handle.h"
-#include "hazard.h"
-#include "store.h"
 
-struct rwlock_store {
+namespace sas::bench {
+
+// Sharded baseline: boost::concurrent_flat_map. The map is partitioned into a
+// fixed number of shards, each guarded independently; non-conflicting shards
+// progress in parallel.
+struct sharded_store {
     struct key_hash {
         using is_transparent = void;
         size_t operator()(std::string_view sv) const noexcept {
@@ -28,9 +30,9 @@ struct rwlock_store {
                                key_eq>
         map_;
 
-    rwlock_store() : map_(1024) {}
+    explicit sharded_store(size_t initial_capacity) : map_(initial_capacity) {}
 
-    ~rwlock_store() {
+    ~sharded_store() {
         map_.visit_all([](auto& e) { sas::impl::drop_handle(e.second); });
     }
 
@@ -61,43 +63,4 @@ struct rwlock_store {
     }
 };
 
-std::unique_ptr<sas::hazard_domain> sas::g_domain;
-std::unique_ptr<sas::object_store> sas::g_store;
-static std::unique_ptr<rwlock_store> g_rwlock;
-
-int main() {
-    auto cfg = sas::bench::load_config();
-    std::println(std::cerr, "Loaded config: {}", cfg);
-
-    sas::g_domain = std::make_unique<sas::hazard_domain>();
-    sas::g_store = std::make_unique<sas::object_store>();
-    g_rwlock = std::make_unique<rwlock_store>();
-
-    sas::bench::register_benchmarks(
-        cfg, "hazard_ptr",
-        [](std::string_view key) {
-            auto* h = sas::g_store->get(key);
-            if (h) {
-                sas::g_store->close(h);
-            }
-            return h;
-        },
-        [](std::string_view key, int* value) {
-            sas::g_store->put(key, value, nullptr);
-        });
-
-    sas::bench::register_benchmarks(
-        cfg, "rw_lock",
-        [](std::string_view key) {
-            auto* h = g_rwlock->get(key);
-            if (h) {
-                g_rwlock->close(h);
-            }
-            return h;
-        },
-        [](std::string_view key, int* value) {
-            g_rwlock->put(key, value, nullptr);
-        });
-
-    sas::bench::run_benchmarks();
-}
+} // namespace sas::bench
