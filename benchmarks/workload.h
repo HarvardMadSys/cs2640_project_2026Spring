@@ -27,8 +27,7 @@ struct bench_config {
 
 template <> struct std::formatter<sas::bench::bench_config> {
     constexpr auto parse(std::format_parse_context& ctx) { return ctx.begin(); }
-    auto format(const sas::bench::bench_config& cfg,
-                std::format_context& ctx) const {
+    auto format(const sas::bench::bench_config& cfg, auto& ctx) const {
         return std::format_to(ctx.out(),
                               "num_threads={} num_keys={} read_ratio={} "
                               "zipf_theta={} seed={}",
