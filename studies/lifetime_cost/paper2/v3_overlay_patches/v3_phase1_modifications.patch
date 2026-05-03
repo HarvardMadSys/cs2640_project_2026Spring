@@ -158,10 +158,10 @@ index 3297434..612403e 100644
 +            attention_mask_mode=attention_mask_mode,
          )
 diff --git a/vllm/vllm/v1/core/sched/output.py b/vllm/vllm/v1/core/sched/output.py
-index db7a4d2..80e5e79 100644
+index db7a4d2..f0d6014 100644
 --- a/vllm/vllm/v1/core/sched/output.py
 +++ b/vllm/vllm/v1/core/sched/output.py
-@@ -217,6 +217,21 @@ class SchedulerOutput:
+@@ -217,10 +217,34 @@ class SchedulerOutput:
      # to physically move KV values during context compression.
      kv_copy_operations: dict[str, list[tuple[int, int, int, int]]] | None = None
  
@@ -183,6 +183,19 @@ index db7a4d2..80e5e79 100644
      # req_id -> tuple of num_blocks per KV cache group
      # for block table truncation after compaction.
      block_table_truncations: dict[str, tuple[int, ...]] | None = None
+ 
++    # req_id -> list of block IDs to FILTER OUT of the request's block_table
++    # (Paper 2 v4 Phase 4c). Unlike block_table_truncations (which removes a
++    # CONTIGUOUS suffix of trailing blocks), this removes specific block IDs
++    # from arbitrary positions and compacts remaining entries left. Used in
++    # attention_mask_mode where obs blocks are pinned in block_pool but
++    # logically masked from the request's attention. The worker also adjusts
++    # compacted_tokens_cpu to keep seq_lens in sync.
++    block_table_filter_ops: dict[str, list[int]] | None = None
++
+     # Request IDs that should skip sampling this step due to pending
+     # block masking compactions. These requests will do prefill only,
+     # allowing compaction to run before the first decode token.
 diff --git a/vllm/vllm/v1/core/sched/scheduler.py b/vllm/vllm/v1/core/sched/scheduler.py
 index 6b0d8fe..c0bc657 100644
 --- a/vllm/vllm/v1/core/sched/scheduler.py
