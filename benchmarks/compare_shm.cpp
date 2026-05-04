@@ -167,10 +167,9 @@ int main() {
         std::chrono::steady_clock::duration(
             shared->measure_until_ns.load(std::memory_order_relaxed)));
 
-    sas::bench::arch_worker_loop(my_idx, cfg, *shared->work_ptr,
-                                 shared->store_ptr, shared->ops,
-                                 shared->tlb_misses, warmup_until,
-                                 measure_until);
+    sas::bench::arch_worker_loop(
+        my_idx, cfg, *shared->work_ptr, shared->store_ptr, shared->ops,
+        shared->tlb_misses, warmup_until, measure_until);
 
     int done = shared->done_counter.fetch_add(1, std::memory_order_acq_rel) + 1;
     if (done == n) {
@@ -182,12 +181,10 @@ int main() {
         }
         double secs =
             std::chrono::duration<double>(sas::bench::ARCH_DURATION).count();
-        double tlb_per_op = total_ops > 0
-                                ? double(total_tlb) / double(total_ops)
-                                : 0.0;
-        sas::bench::arch_emit_throughput_json("shm", n,
-                                              double(total_ops) / secs,
-                                              tlb_per_op);
+        double tlb_per_op =
+            total_ops > 0 ? double(total_tlb) / double(total_ops) : 0.0;
+        sas::bench::arch_emit_throughput_json(
+            "shm", n, double(total_ops) / secs, tlb_per_op);
     }
 
     if (is_leader) {

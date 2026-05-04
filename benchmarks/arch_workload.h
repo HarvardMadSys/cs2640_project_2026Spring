@@ -95,8 +95,7 @@ class perf_counter {
 };
 
 inline constexpr uint64_t DTLB_LOAD_MISS_CONFIG =
-    PERF_COUNT_HW_CACHE_DTLB |
-    (PERF_COUNT_HW_CACHE_OP_READ << 8) |
+    PERF_COUNT_HW_CACHE_DTLB | (PERF_COUNT_HW_CACHE_OP_READ << 8) |
     (PERF_COUNT_HW_CACHE_RESULT_MISS << 16);
 
 inline void
