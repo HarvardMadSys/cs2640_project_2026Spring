@@ -65,8 +65,8 @@ PLOTS: dict[str, dict] = {
     "arch": {
         "targets": ["bench_sas", "compare_shm"],
         "axes": ["num_threads"],
-        "secondary_metric": "tlb_misses_per_sec",
-        "secondary_label": "TLB misses (M/s)",
+        "secondary_metric": "tlb_misses_per_op",
+        "secondary_label": "TLB misses per op",
     },
     "client_overhead": {
         "targets": ["compare_lockfree", "bench_end_to_end"],
@@ -336,7 +336,7 @@ def plot_throughput(rows: list, axis: str, scenario: str,
             xs.append(v)
             ys.append(b.get("items_per_second", 0) / 1e6)
             if secondary_metric:
-                sec.append(b.get(secondary_metric, 0) / 1e6)
+                sec.append(b.get(secondary_metric, 0))
         if xs:
             ax.plot(xs, ys, label=label_for(series), alpha=0.92, zorder=3,
                     **(style_for(series) or {"marker": "o"}))

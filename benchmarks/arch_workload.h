@@ -141,15 +141,15 @@ arch_worker_loop(int idx, const bench_config& cfg, const steady_workload& work,
 }
 
 inline void arch_emit_throughput_json(const char* mode, int n, double ips,
-                                      double tlb_per_sec) {
+                                      double tlb_per_op) {
     std::println(std::cout,
                  "{{\n  \"context\": {{}},\n  \"benchmarks\": [\n"
                  "    {{\"name\":\"{}/real_time/threads:{}\","
                  "\"run_type\":\"iteration\",\"iterations\":1,"
                  "\"items_per_second\":{},"
-                 "\"tlb_misses_per_sec\":{}}}\n"
+                 "\"tlb_misses_per_op\":{}}}\n"
                  "  ]\n}}",
-                 mode, n, ips, tlb_per_sec);
+                 mode, n, ips, tlb_per_op);
 }
 
 } // namespace sas::bench

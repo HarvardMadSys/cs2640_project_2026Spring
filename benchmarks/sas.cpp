@@ -81,8 +81,11 @@ extern "C" void entry(int idx) {
         }
         double secs =
             std::chrono::duration<double>(sas::bench::ARCH_DURATION).count();
+        double tlb_per_op = total_ops > 0
+                                ? double(total_tlb) / double(total_ops)
+                                : 0.0;
         sas::bench::arch_emit_throughput_json("sas", g_cfg.num_threads,
                                               double(total_ops) / secs,
-                                              double(total_tlb) / secs);
+                                              tlb_per_op);
     }
 }
