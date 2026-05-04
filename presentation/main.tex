@@ -308,7 +308,7 @@
             \item Only microbenchmarks for now; will compare with Lightning on
             YCSB.
         \end{itemize}
-        \item Measurement: 5\,s timed window, 2\,s warmup, sampled per-op
+        \item Measurement: 5s warmup, 10s timed window, sampled per-op
         \texttt{rdtsc} (1-of-128 ops).
 		\item Hardware: AMD EPYC 7452 (32 cores @ 2.35 GHz), 125 GB memory, 128
         MB L3.
@@ -398,10 +398,10 @@
     \begin{columns}[T, onlytextwidth]
         \column{0.46\textwidth}\centering
             \includegraphics[width=\linewidth]{arch/num_threads/mixed_throughput.png}\\
-            {\scriptsize\itshape Throughput + TLB misses vs. threads}
+            {\scriptsize\itshape Throughput + L2 TLB misses vs. threads}
         \column{0.46\textwidth}\centering
             \includegraphics[width=\linewidth]{arch/num_keys/mixed_throughput.png}\\
-            {\scriptsize\itshape Throughput + TLB misses vs. working set}
+            {\scriptsize\itshape Throughput + L2 TLB misses vs. working set}
     \end{columns}
 \end{frame}
 
