@@ -1,0 +1,12 @@
+{
+  "context": {},
+  "benchmarks": [
+    {
+      "name": "sas/real_time/threads:8",
+      "run_type": "iteration",
+      "iterations": 1,
+      "items_per_second": 17733427.2,
+      "tlb_misses_per_op": 2.887567790618612
+    }
+  ]
+}
