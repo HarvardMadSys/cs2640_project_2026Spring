@@ -64,7 +64,7 @@ PLOTS: dict[str, dict] = {
     },
     "arch": {
         "targets": ["bench_sas", "compare_shm"],
-        "axes": ["num_threads"],
+        "axes": ["num_threads", "num_keys"],
         "secondary_metric": "tlb_misses_per_op",
         "secondary_label": "TLB misses per op",
     },

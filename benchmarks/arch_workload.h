@@ -7,7 +7,6 @@
 #include <linux/perf_event.h>
 #include <mutex>
 #include <print>
-#include <sched.h>
 #include <string_view>
 #include <sys/ioctl.h>
 #include <sys/syscall.h>
@@ -22,17 +21,6 @@ inline constexpr std::chrono::seconds ARCH_DURATION{5};
 inline constexpr std::chrono::seconds ARCH_WARMUP{2};
 inline constexpr int ARCH_MAX_WORKERS = 64;
 inline constexpr int ARCH_CLOCK_CHECK_BATCH = 1024;
-
-inline void arch_pin_to_cpu(int idx) {
-    long ncpu = sysconf(_SC_NPROCESSORS_ONLN);
-    if (ncpu <= 0) {
-        return;
-    }
-    cpu_set_t set;
-    CPU_ZERO(&set);
-    CPU_SET(idx % int(ncpu), &set);
-    sched_setaffinity(0, sizeof(set), &set);
-}
 
 class perf_counter {
   public:
@@ -104,8 +92,6 @@ arch_worker_loop(int idx, const bench_config& cfg, const steady_workload& work,
                  std::atomic<int64_t>* tlb_counters,
                  std::chrono::steady_clock::time_point warmup_until,
                  std::chrono::steady_clock::time_point measure_until) {
-    arch_pin_to_cpu(idx);
-
     bench_config local_cfg = cfg;
     local_cfg.read_ratio = 1.0;
     steady_rng rng(local_cfg, idx);

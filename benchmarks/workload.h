@@ -7,13 +7,26 @@
 #include <format>
 #include <iostream>
 #include <random>
+#include <sched.h>
 #include <string>
 #include <string_view>
+#include <unistd.h>
 #include <vector>
 
 #include "zipfian_int_distribution.h"
 
 namespace sas::bench {
+
+inline void pin_to_cpu(int idx) {
+    long ncpu = sysconf(_SC_NPROCESSORS_ONLN);
+    if (ncpu <= 0) {
+        return;
+    }
+    cpu_set_t set;
+    CPU_ZERO(&set);
+    CPU_SET(idx % int(ncpu), &set);
+    sched_setaffinity(0, sizeof(set), &set);
+}
 
 struct bench_config {
     int num_threads = 8;

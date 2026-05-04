@@ -46,6 +46,7 @@ template <typename GetFn, typename PutFn>
 void mixed_benchmark(benchmark::State& state, const bench_config& cfg,
                      steady_workload& workload, latency_hist& read_hist,
                      latency_hist& write_hist, GetFn get, PutFn put) {
+    pin_to_cpu(state.thread_index());
     if (state.thread_index() == 0) {
         read_hist.reset_locked();
         write_hist.reset_locked();
@@ -88,6 +89,7 @@ void fill_benchmark(benchmark::State& state, const bench_config& cfg,
                     size_t initial_capacity, fill_keys& keys,
                     latency_hist& write_hist, CreateFn create,
                     DestroyFn destroy, PutFn put) {
+    pin_to_cpu(state.thread_index());
     if (state.thread_index() == 0) {
         write_hist.reset_locked();
     }
