@@ -5,8 +5,8 @@
       "name": "shm/real_time/threads:24",
       "run_type": "iteration",
       "iterations": 1,
-      "items_per_second": 45999308.8,
-      "tlb_misses_per_op": 3.039885734109118
+      "items_per_second": 46001561.6,
+      "page_walks_per_op": 0.20878458830406313
     }
   ]
 }

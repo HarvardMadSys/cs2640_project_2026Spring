@@ -5,8 +5,8 @@
       "name": "sas/real_time/threads:32",
       "run_type": "iteration",
       "iterations": 1,
-      "items_per_second": 62796390.4,
-      "tlb_misses_per_op": 2.920380267589393
+      "items_per_second": 62708940.8,
+      "page_walks_per_op": 0.199501904200557
     }
   ]
 }
