@@ -17,8 +17,8 @@
 
 namespace sas::bench {
 
-inline constexpr std::chrono::seconds ARCH_DURATION{5};
-inline constexpr std::chrono::seconds ARCH_WARMUP{2};
+inline constexpr std::chrono::seconds ARCH_DURATION{10};
+inline constexpr std::chrono::seconds ARCH_WARMUP{5};
 inline constexpr int ARCH_MAX_WORKERS = 64;
 inline constexpr int ARCH_CLOCK_CHECK_BATCH = 1024;
 

@@ -14,7 +14,7 @@ namespace sas::bench {
 
 namespace {
 
-constexpr int WARMUP_OPS = 10000;
+constexpr int WARMUP_OPS = 1000000;
 constexpr int LATENCY_SAMPLE_OPS = 128;
 
 template <typename Op>
@@ -175,7 +175,7 @@ inline void run_benchmarks() {
         prog,
         const_cast<char*>("--benchmark_counters_tabular=true"),
         const_cast<char*>("--benchmark_time_unit=ns"),
-        const_cast<char*>("--benchmark_min_time=5s"),
+        const_cast<char*>("--benchmark_min_time=10s"),
         const_cast<char*>("--benchmark_out=/dev/stdout"),
         const_cast<char*>("--benchmark_out_format=json"),
     };

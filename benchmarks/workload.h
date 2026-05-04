@@ -24,7 +24,7 @@ inline void pin_to_cpu(int idx) {
     }
     cpu_set_t set;
     CPU_ZERO(&set);
-    CPU_SET(idx % int(ncpu), &set);
+    CPU_SET((idx * 2) % int(ncpu), &set);
     sched_setaffinity(0, sizeof(set), &set);
 }
 
