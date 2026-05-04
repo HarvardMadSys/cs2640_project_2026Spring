@@ -65,8 +65,8 @@ PLOTS: dict[str, dict] = {
     "arch": {
         "targets": ["bench_sas", "compare_shm"],
         "axes": ["num_threads", "num_keys"],
-        "secondary_metric": "tlb_misses_per_op",
-        "secondary_label": "TLB misses per op",
+        "secondary_metric": "page_walks_per_op",
+        "secondary_label": "Page walks per op",
     },
     "client_overhead": {
         "targets": ["compare_lockfree", "bench_end_to_end"],

@@ -82,9 +82,8 @@ class perf_counter {
     int fd_ = -1;
 };
 
-inline constexpr uint64_t DTLB_LOAD_MISS_CONFIG =
-    PERF_COUNT_HW_CACHE_DTLB | (PERF_COUNT_HW_CACHE_OP_READ << 8) |
-    (PERF_COUNT_HW_CACHE_RESULT_MISS << 16);
+inline constexpr uint64_t DTLB_PAGE_WALK_CONFIG =
+    0x046ULL | (0x02ULL << 8);
 
 inline void
 arch_worker_loop(int idx, const bench_config& cfg, const steady_workload& work,
@@ -113,7 +112,7 @@ arch_worker_loop(int idx, const bench_config& cfg, const steady_workload& work,
 
     run_until(warmup_until);
 
-    perf_counter tlb(PERF_TYPE_HW_CACHE, DTLB_LOAD_MISS_CONFIG);
+    perf_counter tlb(PERF_TYPE_RAW, DTLB_PAGE_WALK_CONFIG);
     tlb.reset();
     tlb.enable();
     int64_t ops = run_until(measure_until);
@@ -132,7 +131,7 @@ inline void arch_emit_throughput_json(const char* mode, int n, double ips,
                  "    {{\"name\":\"{}/real_time/threads:{}\","
                  "\"run_type\":\"iteration\",\"iterations\":1,"
                  "\"items_per_second\":{},"
-                 "\"tlb_misses_per_op\":{}}}\n"
+                 "\"page_walks_per_op\":{}}}\n"
                  "  ]\n}}",
                  mode, n, ips, tlb_per_op);
 }
