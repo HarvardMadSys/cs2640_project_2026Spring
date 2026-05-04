@@ -7,8 +7,10 @@
 cd /local/repository
 sudo ./benchmarks/run_all.sh
 ```
+### NOTES:
+Some path names may not work since the repository was restructured for submission after the benchmarks were tested.
 
-Note: some path names may not work since the repository was restructured for submission after the benchmarks were tested.
+The git history in the submission may also be messed up. I originally worked in [https://github.com/PerpetualOwl/cs2640-final-project](https://github.com/PerpetualOwl/cs2640-final-project).
 
 # Project Repository Overview
 This project implements a comprehensive performance benchmarking framework for next-generation NVMe SSDs, focusing on Zoned Namespaces (ZNS) and Flexible Data Placement (FDP). The repository is structured to support both bare-metal experimentation on CloudLab and high-fidelity QEMU emulation.
