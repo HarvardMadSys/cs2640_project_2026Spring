@@ -1,6 +1,6 @@
 {
   "context": {
-    "date": "2026-05-03T18:41:59-06:00",
+    "date": "2026-05-03T22:47:28-06:00",
     "host_name": "node0.wolfiejk-303973.cs2640-pg0.utah.cloudlab.us",
     "executable": "bench",
     "num_cpus": 64,
@@ -33,9 +33,9 @@
       }
     ],
     "load_avg": [
-      5.58496,
-      8.27588,
-      5.65674
+      8.54443,
+      10.1182,
+      7.12695
     ],
     "library_version": "v1.9.1",
     "library_build_type": "release",
@@ -51,17 +51,17 @@
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 16,
-      "iterations": 13805952,
-      "real_time": 521.853164999037,
-      "cpu_time": 521.8161258274692,
+      "iterations": 14501376,
+      "real_time": 484.7934187102074,
+      "cpu_time": 484.7530520551981,
       "time_unit": "ns",
-      "items_per_second": 1916247.8395658394,
+      "items_per_second": 2062734.2727970595,
       "rd_p50": 0.0,
       "rd_p99": 0.0,
       "rd_p999": 0.0,
-      "wr_p50": 2885.588079423331,
-      "wr_p99": 14114.141220630901,
-      "wr_p999": 17961.591993195347
+      "wr_p50": 2564.967242131349,
+      "wr_p99": 13629.79933451712,
+      "wr_p999": 17156.629292447724
     },
     {
       "name": "lockfree_fill_presized/real_time/threads:16",
@@ -73,13 +73,13 @@
       "repetition_index": 0,
       "threads": 16,
       "iterations": 96,
-      "real_time": 80795787.34289801,
-      "cpu_time": 80788166.56250001,
+      "real_time": 79285958.4166763,
+      "cpu_time": 79276677.12500001,
       "time_unit": "ns",
-      "items_per_second": 3244525.5949726515,
-      "wr_p50": 484.34220718453065,
-      "wr_p99": 9775.526519653979,
-      "wr_p999": 15874.1452974423
+      "items_per_second": 3306310.540163225,
+      "wr_p50": 641.2418105328372,
+      "wr_p99": 9618.627157992563,
+      "wr_p999": 16037.866984709575
     },
     {
       "name": "lockfree_fill_resize/real_time/threads:16",
@@ -90,14 +90,14 @@
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 16,
-      "iterations": 32,
-      "real_time": 215546468.34147206,
-      "cpu_time": 215518118.40625,
+      "iterations": 48,
+      "real_time": 195946556.4159473,
+      "cpu_time": 195922003.18750003,
       "time_unit": "ns",
-      "items_per_second": 1216183.2296166755,
-      "wr_p50": 3042.4876676662075,
-      "wr_p99": 34483.80080729299,
-      "wr_p999": 74540.94785782207
+      "items_per_second": 1337834.1768024315,
+      "wr_p50": 2885.588147397767,
+      "wr_p99": 15069.182547521668,
+      "wr_p999": 62043.556029746316
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "context": {
-    "date": "2026-05-03T18:38:26-06:00",
+    "date": "2026-05-03T22:42:55-06:00",
     "host_name": "node0.wolfiejk-303973.cs2640-pg0.utah.cloudlab.us",
     "executable": "bench",
     "num_cpus": 64,
@@ -33,9 +33,9 @@
       }
     ],
     "load_avg": [
-      13.7695,
-      11.3271,
-      5.74561
+      9.66943,
+      11.0864,
+      6.34814
     ],
     "library_version": "v1.9.1",
     "library_build_type": "release",
@@ -51,17 +51,17 @@
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 16,
-      "iterations": 18082208,
-      "real_time": 380.4588647593462,
-      "cpu_time": 380.4276994269727,
+      "iterations": 20687008,
+      "real_time": 331.712074745545,
+      "cpu_time": 331.6863605408767,
       "time_unit": "ns",
-      "items_per_second": 2628405.046186887,
-      "rd_p50": 2885.5872697181107,
-      "rd_p99": 7374.278578168506,
-      "rd_p999": 10259.865847886616,
-      "wr_p50": 804.9628790230192,
-      "wr_p99": 10096.144584356512,
-      "wr_p999": 193075.12173719067
+      "items_per_second": 3014662.643098223,
+      "rd_p50": 2721.8653318341385,
+      "rd_p99": 5771.173109603212,
+      "rd_p999": 8179.2394307497025,
+      "wr_p50": 804.9626795900459,
+      "wr_p99": 8656.759664404817,
+      "wr_p999": 181723.73577626472
     },
     {
       "name": "lockfree_fill_presized/real_time/threads:16",
@@ -72,14 +72,14 @@
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 16,
-      "iterations": 4720,
-      "real_time": 1446629.7832614607,
-      "cpu_time": 1446476.2868644074,
+      "iterations": 5104,
+      "real_time": 1388991.4180311004,
+      "cpu_time": 1388856.4527821324,
       "time_unit": "ns",
-      "items_per_second": 2831408.593541792,
-      "wr_p50": 484.34207127656214,
-      "wr_p99": 7851.79893013131,
-      "wr_p999": 26938.969570016125
+      "items_per_second": 2948902.309134561,
+      "wr_p50": 484.3419512787566,
+      "wr_p99": 7374.27675115966,
+      "wr_p999": 25970.27899321446
     },
     {
       "name": "lockfree_fill_resize/real_time/threads:16",
@@ -90,14 +90,14 @@
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 16,
-      "iterations": 1760,
-      "real_time": 3802061.77210725,
-      "cpu_time": 3801691.3261363683,
+      "iterations": 2128,
+      "real_time": 3137293.119923692,
+      "cpu_time": 3136926.459586466,
       "time_unit": "ns",
-      "items_per_second": 1077310.2189052121,
-      "wr_p50": 2885.5872697181107,
-      "wr_p99": 31918.82466905682,
-      "wr_p999": 3981694.3073328524
+      "items_per_second": 1305584.0954063057,
+      "wr_p50": 2244.3450981790265,
+      "wr_p99": 23732.755612659075,
+      "wr_p999": 4075996.7452804353
     }
   ]
 }
