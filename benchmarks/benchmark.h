@@ -1,6 +1,7 @@
 #pragma once
 
 #include <benchmark/benchmark.h>
+#include <chrono>
 #include <cstdint>
 #include <hdr/hdr_histogram.h>
 #include <memory>
@@ -14,7 +15,8 @@ namespace sas::bench {
 
 namespace {
 
-constexpr int WARMUP_OPS = 1000000;
+constexpr std::chrono::seconds WARMUP_DURATION{5};
+constexpr int WARMUP_BATCH = 1024;
 constexpr int LATENCY_SAMPLE_OPS = 128;
 
 template <typename Op>
@@ -32,12 +34,15 @@ inline void maybe_time(int& counter, hdr_histogram* hist, Op&& op) {
 
 template <typename GetFn, typename PutFn>
 void warmup(steady_workload& workload, steady_rng& rng, GetFn get, PutFn put) {
-    for (int i = 0; i < WARMUP_OPS; ++i) {
-        int k = rng.next_key();
-        if (rng.is_read()) {
-            auto _ = get(workload.sv[k]);
-        } else {
-            put(workload.sv[k], &workload.values[k]);
+    auto deadline = std::chrono::steady_clock::now() + WARMUP_DURATION;
+    while (std::chrono::steady_clock::now() < deadline) {
+        for (int i = 0; i < WARMUP_BATCH; ++i) {
+            int k = rng.next_key();
+            if (rng.is_read()) {
+                auto _ = get(workload.sv[k]);
+            } else {
+                put(workload.sv[k], &workload.values[k]);
+            }
         }
     }
 }
