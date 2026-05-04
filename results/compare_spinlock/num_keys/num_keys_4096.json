@@ -1,0 +1,67 @@
+{
+  "context": {
+    "date": "2026-05-04T01:52:24-06:00",
+    "host_name": "node0.wolfiejk-303973.cs2640-pg0.utah.cloudlab.us",
+    "executable": "bench",
+    "num_cpus": 64,
+    "mhz_per_cpu": 2346,
+    "cpu_scaling_enabled": false,
+    "caches": [
+      {
+        "type": "Data",
+        "level": 1,
+        "size": 32768,
+        "num_sharing": 2
+      },
+      {
+        "type": "Instruction",
+        "level": 1,
+        "size": 32768,
+        "num_sharing": 2
+      },
+      {
+        "type": "Unified",
+        "level": 2,
+        "size": 524288,
+        "num_sharing": 2
+      },
+      {
+        "type": "Unified",
+        "level": 3,
+        "size": 16777216,
+        "num_sharing": 8
+      }
+    ],
+    "load_avg": [
+      15.4663,
+      14.2905,
+      19.9819
+    ],
+    "library_version": "v1.9.1",
+    "library_build_type": "release",
+    "json_schema_version": 1
+  },
+  "benchmarks": [
+    {
+      "name": "spinlock/real_time/threads:16",
+      "family_index": 0,
+      "per_family_instance_index": 0,
+      "run_name": "spinlock/real_time/threads:16",
+      "run_type": "iteration",
+      "repetitions": 1,
+      "repetition_index": 0,
+      "threads": 16,
+      "iterations": 592320,
+      "real_time": 23554.173681546617,
+      "cpu_time": 23552.52831408698,
+      "time_unit": "ns",
+      "items_per_second": 42455.32080726077,
+      "rd_p50": 37676.35080684826,
+      "rd_p99": 7676991.361444297,
+      "rd_p999": 11442143.336626014,
+      "wr_p50": 38331.23577470223,
+      "wr_p99": 7264850.421674874,
+      "wr_p999": 11204638.388284305
+    }
+  ]
+}
