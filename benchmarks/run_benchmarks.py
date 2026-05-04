@@ -1,26 +1,17 @@
 #!/usr/bin/env python3
-"""Sweep parameters of every benchmark target.
+"""Sweep parameters of every benchmark target and produce comparison plots.
 
-Two kinds of targets are discovered in build/benchmarks/:
-  - compare_*  (standalone executable): run directly.
-  - bench_*.so (plugin):                run via build/host.
+Each binary in build/benchmarks/ emits a single google-benchmark JSON to
+stdout. The script sweeps each binary across configured axes, caches one
+JSON per (target, axis, sweep_value) under results/<target>/, then renders
+plots declared in PLOTS by overlaying series from multiple targets.
 
-Each target reads a config (`key=value` lines) from stdin and writes
-google-benchmark JSON to stdout (and a human-readable table to stderr); see
-benchmarks/benchmark.h::run_benchmarks().
-
-For each target, this script sweeps `num_threads`, `num_keys`, `read_ratio`,
-and `zipf_theta` (others fixed at defaults). Bench names follow the
-convention "<backend>" for the steady-state mixed scenario and
-"<backend>_<scenario>" for everything else; the script groups names by
-scenario suffix and produces one plot per (target, axis, scenario, metric).
-Output goes to benchmarks/results/<target>/<axis>/<scenario>_<metric>.{png,pdf}.
-
-Usage (from any directory):
-    .venv/bin/python benchmarks/run_benchmarks.py
-    .venv/bin/python benchmarks/run_benchmarks.py --rerun
-    .venv/bin/python benchmarks/run_benchmarks.py --target compare_backends
-    .venv/bin/python benchmarks/run_benchmarks.py --skip read_ratio zipf_theta
+Usage:
+    ./benchmarks/run_benchmarks.py
+    ./benchmarks/run_benchmarks.py --rerun
+    ./benchmarks/run_benchmarks.py --target compare_lockfree
+    ./benchmarks/run_benchmarks.py --plot arch
+    ./benchmarks/run_benchmarks.py --skip read_ratio zipf_theta
 """
 
 from __future__ import annotations
@@ -33,6 +24,9 @@ import subprocess
 import sys
 from collections import defaultdict
 from pathlib import Path
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from cycler import cycler
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BUILD_BENCH_DIR = REPO_ROOT / "build" / "benchmarks"
@@ -57,18 +51,45 @@ SWEEPS = {
 LOG_X_AXES = {"num_keys"}
 SCENARIO_SUFFIXES = ("fill_presized", "fill_resize")
 
-BACKEND_STYLES: dict[str, dict] = {
+TARGETS: dict[str, dict] = {
+    "bench_sas":   {"pattern": "host_n_copies"},
+    "compare_shm": {"pattern": "n_parallel",
+                    "shm_path": "/dev/shm/sas_compare_shm"},
+}
+
+PLOTS: dict[str, dict] = {
+    "backends": {
+        "targets": ["compare_lockfree", "compare_sharded", "compare_spinlock"],
+        "axes": ["num_threads", "num_keys", "read_ratio", "zipf_theta"],
+    },
+    "arch": {
+        "targets": ["bench_sas", "compare_shm"],
+        "axes": ["num_threads"],
+        "secondary_metric": "tlb_misses_per_sec",
+        "secondary_label": "TLB misses (M/s)",
+    },
+    "client_overhead": {
+        "targets": ["compare_lockfree", "bench_end_to_end"],
+        "axes": ["num_threads", "num_keys", "read_ratio", "zipf_theta"],
+    },
+}
+
+SERIES_STYLES: dict[str, dict] = {
     "lockfree":   {"color": "#1F4E79", "marker": "o"},
     "sharded":    {"color": "#B85450", "marker": "s"},
     "spinlock":   {"color": "#355E3B", "marker": "^"},
     "end_to_end": {"color": "#6B4C9A", "marker": "D"},
+    "sas":        {"color": "#1F4E79", "marker": "o"},
+    "shm":        {"color": "#B85450", "marker": "s"},
 }
 
-BACKEND_LABELS: dict[str, str] = {
+SERIES_LABELS: dict[str, str] = {
     "lockfree":   "Lock-free",
     "sharded":    "Sharded",
     "spinlock":   "Spinlock",
     "end_to_end": "End-to-end",
+    "sas":        "SAS",
+    "shm":        "SHM",
 }
 
 AXIS_LABELS: dict[str, str] = {
@@ -79,14 +100,15 @@ AXIS_LABELS: dict[str, str] = {
 }
 
 OP_LABELS: dict[str, str] = {"rd": "Read", "wr": "Write"}
+PERCENTILES = ("p50", "p99", "p999")
 
 
-def style_for(backend: str) -> dict:
-    return BACKEND_STYLES.get(backend, {})
+def style_for(series: str) -> dict:
+    return SERIES_STYLES.get(series, {})
 
 
-def label_for(backend: str) -> str:
-    return BACKEND_LABELS.get(backend, backend)
+def label_for(series: str) -> str:
+    return SERIES_LABELS.get(series, series)
 
 
 def make_build() -> None:
@@ -97,53 +119,116 @@ def make_build() -> None:
     )
 
 
-def discover_targets() -> list[tuple[str, list[str]]]:
-    """Return [(name, cmd_argv), ...] for every benchmark target."""
-    targets = []
+def discover_targets() -> list[str]:
     if not BUILD_BENCH_DIR.exists():
-        return targets
+        return []
+    out = []
     for p in sorted(BUILD_BENCH_DIR.iterdir()):
         if (p.name.startswith("compare_") and p.is_file()
                 and not p.suffix and os.access(p, os.X_OK)):
-            targets.append((p.name, [str(p)]))
+            out.append(p.name)
         elif p.name.startswith("bench_") and p.suffix == ".so":
-            if not HOST_BIN.exists():
-                continue
-            targets.append((p.stem, [str(HOST_BIN), str(p)]))
-    return targets
+            if HOST_BIN.exists():
+                out.append(p.stem)
+    return out
 
 
-def run_target(cmd: list[str], cfg: dict, out_path: Path) -> dict:
-    """Run a target with cfg piped to stdin, save JSON to out_path."""
-    if not out_path.exists():
-        config_text = "\n".join(f"{k}={v}" for k, v in cfg.items()) + "\n"
-        with out_path.open("w") as f:
-            subprocess.run(
-                cmd, input=config_text, stdout=f,
-                stderr=subprocess.DEVNULL, text=True, check=True,
-            )
-    with out_path.open() as f:
-        return json.load(f)
+def pattern_for(target: str) -> str:
+    if target in TARGETS:
+        return TARGETS[target].get("pattern", "auto")
+    return "single" if target.startswith("compare_") else "plugin_single"
 
 
-def sweep_target(name: str, cmd: list[str],
-                 axis: str, values: list) -> list[tuple]:
-    sweep_dir = RESULTS_DIR / name / axis
+def target_path(target: str) -> Path:
+    if target.startswith("bench_"):
+        return BUILD_BENCH_DIR / f"{target}.so"
+    return BUILD_BENCH_DIR / target
+
+
+def exec_single(target: str, cfg: dict) -> dict:
+    config_text = "\n".join(f"{k}={v}" for k, v in cfg.items()) + "\n"
+    r = subprocess.run([str(target_path(target))], input=config_text,
+                       stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                       text=True, check=True)
+    return json.loads(r.stdout) if r.stdout.strip() else {"benchmarks": []}
+
+
+def exec_plugin_single(target: str, cfg: dict) -> dict:
+    config_text = "\n".join(f"{k}={v}" for k, v in cfg.items()) + "\n"
+    r = subprocess.run([str(HOST_BIN), str(target_path(target))],
+                       input=config_text, stdout=subprocess.PIPE,
+                       stderr=subprocess.DEVNULL, text=True, check=True)
+    return json.loads(r.stdout) if r.stdout.strip() else {"benchmarks": []}
+
+
+def exec_host_n_copies(target: str, cfg: dict) -> dict:
+    n = cfg["num_threads"]
+    config_text = "\n".join(f"{k}={v}" for k, v in cfg.items()) + "\n"
+    cmd = [str(HOST_BIN)] + [str(target_path(target))] * n
+    r = subprocess.run(cmd, input=config_text, stdout=subprocess.PIPE,
+                       stderr=subprocess.DEVNULL, text=True, check=True)
+    return json.loads(r.stdout) if r.stdout.strip() else {"benchmarks": []}
+
+
+def exec_n_parallel(target: str, cfg: dict) -> dict:
+    n = cfg["num_threads"]
+    config_text = "\n".join(f"{k}={v}" for k, v in cfg.items()) + "\n"
+    shm_path = TARGETS.get(target, {}).get("shm_path")
+    if shm_path:
+        try:
+            os.remove(shm_path)
+        except FileNotFoundError:
+            pass
+    procs = []
+    for _ in range(n):
+        p = subprocess.Popen([str(target_path(target))],
+                             stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                             stderr=subprocess.DEVNULL, text=True)
+        procs.append(p)
+    for p in procs:
+        p.stdin.write(config_text)
+        p.stdin.close()
+    benches = []
+    for p in procs:
+        out = p.stdout.read()
+        p.wait()
+        if out.strip():
+            benches.extend(json.loads(out)["benchmarks"])
+    return {"context": {}, "benchmarks": benches}
+
+
+EXECUTORS = {
+    "single":         exec_single,
+    "plugin_single":  exec_plugin_single,
+    "host_n_copies":  exec_host_n_copies,
+    "n_parallel":     exec_n_parallel,
+}
+
+
+def run_target_at_value(target: str, axis: str, value, out_path: Path) -> dict:
+    if out_path.exists():
+        return json.loads(out_path.read_text())
+    cfg = {**DEFAULTS, axis: value}
+    result = EXECUTORS[pattern_for(target)](target, cfg)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(result, indent=2))
+    return result
+
+
+def sweep_target(target: str, axis: str, values: list) -> list[tuple]:
+    sweep_dir = RESULTS_DIR / target / axis
     sweep_dir.mkdir(parents=True, exist_ok=True)
-    print(f"[sweep] {name} :: {axis} = {values}", file=sys.stderr)
+    print(f"[sweep] {target} :: {axis} = {values}", file=sys.stderr)
     rows = []
     for v in values:
-        cfg = {**DEFAULTS, axis: v}
         out_path = sweep_dir / f"{axis}_{v}.json"
         cached = "cached" if out_path.exists() else "running"
         print(f"  {cached:>7}  {axis}={v}", file=sys.stderr)
-        rows.append((v, run_target(cmd, cfg, out_path)))
+        rows.append((v, run_target_at_value(target, axis, v, out_path)))
     return rows
 
 
 def split_bench_name(name: str) -> tuple[str, str]:
-    """'lockfree' → ('lockfree', 'mixed'); 'lockfree_fill_resize' →
-    ('lockfree', 'fill_resize')."""
     for sc in SCENARIO_SUFFIXES:
         suffix = "_" + sc
         if name.endswith(suffix):
@@ -151,16 +236,24 @@ def split_bench_name(name: str) -> tuple[str, str]:
     return name, "mixed"
 
 
+def merge_rows(per_target_rows: dict[str, list[tuple]]) -> list[tuple]:
+    by_value: dict[object, dict] = {}
+    for _, rows in per_target_rows.items():
+        for v, result in rows:
+            by_value.setdefault(v, {"context": {}, "benchmarks": []})
+            by_value[v]["benchmarks"].extend(result.get("benchmarks", []))
+    return [(v, by_value[v]) for v in sorted(by_value)]
+
+
 def collect_grouped(rows: list) -> dict[str, list[str]]:
-    """Map scenario -> sorted list of distinct backend labels seen."""
     groups: dict[str, set[str]] = defaultdict(set)
     for _, result in rows:
         for b in result.get("benchmarks", []):
             if b.get("run_type") != "iteration":
                 continue
             base = b["name"].split("/", 1)[0]
-            backend, scenario = split_bench_name(base)
-            groups[scenario].add(backend)
+            series, scenario = split_bench_name(base)
+            groups[scenario].add(series)
     return {sc: sorted(s) for sc, s in groups.items()}
 
 
@@ -172,12 +265,8 @@ def find_bench(result: dict, base_name: str) -> dict | None:
     return None
 
 
-def configure_paper_style() -> None:
-    """Set matplotlib rcParams for paper figures."""
-    import matplotlib as mpl
-    from cycler import cycler
-
-    palette = [s["color"] for s in BACKEND_STYLES.values()] + [
+def configure_style() -> None:
+    palette = [s["color"] for s in SERIES_STYLES.values()] + [
         "#F0E442", "#56B4E9", "#999999",
     ]
 
@@ -229,48 +318,31 @@ def _save(fig, base: Path) -> None:
     print(f"  wrote {out.relative_to(REPO_ROOT)}", file=sys.stderr)
 
 
-def _autocap_y(ax, series: list[tuple[str, list[float]]],
-               outlier_factor: float = 5.0,
-               headroom: float = 1.3) -> None:
-    """When one series's max is `outlier_factor`+ x larger than the next, cap
-    the y-axis at `headroom` x the next-largest's max so the smaller series
-    are visible. Annotate which series got clipped.
-    """
-    series_maxes = sorted(((label, max(ys)) for label, ys in series),
-                          key=lambda t: t[1])
-    if len(series_maxes) < 2:
-        return
-    _, top_max = series_maxes[-1]
-    _, next_max = series_maxes[-2]
-    if top_max <= outlier_factor * next_max:
-        return
-    cap = headroom * next_max
-    ax.set_ylim(0, cap)
-    clipped = [label for label, m in series_maxes if m > cap]
-    ax.text(0.98, 0.96, f"clipped: {', '.join(clipped)}",
-            transform=ax.transAxes, ha="right", va="top",
-            fontsize=8, style="italic", color="dimgray")
-
-
 def plot_throughput(rows: list, axis: str, scenario: str,
-                    backends: list[str], out_base: Path,
-                    log_x: bool = False) -> None:
-    import matplotlib.pyplot as plt
+                    series_list: list[str], out_base: Path,
+                    log_x: bool = False,
+                    secondary_metric: str | None = None,
+                    secondary_label: str | None = None) -> None:
     fig, ax = plt.subplots()
     plotted = False
-    for backend in backends:
-        bench_name = backend if scenario == "mixed" else f"{backend}_{scenario}"
-        xs, ys = [], []
+    secondary_data: list[tuple[str, list, list]] = []
+    for series in series_list:
+        bench_name = series if scenario == "mixed" else f"{series}_{scenario}"
+        xs, ys, sec = [], [], []
         for v, result in rows:
             b = find_bench(result, bench_name)
             if b is None:
                 continue
             xs.append(v)
             ys.append(b.get("items_per_second", 0) / 1e6)
+            if secondary_metric:
+                sec.append(b.get(secondary_metric, 0) / 1e6)
         if xs:
-            ax.plot(xs, ys, label=label_for(backend), alpha=0.92, zorder=3,
-                    **(style_for(backend) or {"marker": "o"}))
+            ax.plot(xs, ys, label=label_for(series), alpha=0.92, zorder=3,
+                    **(style_for(series) or {"marker": "o"}))
             plotted = True
+            if secondary_metric and any(s > 0 for s in sec):
+                secondary_data.append((series, xs, sec))
     if not plotted:
         plt.close(fig)
         return
@@ -278,20 +350,33 @@ def plot_throughput(rows: list, axis: str, scenario: str,
         ax.set_xscale("log", base=2)
     ax.set_xlabel(AXIS_LABELS.get(axis, axis))
     ax.set_ylabel("Throughput (M ops/s)")
+
+    if secondary_data:
+        ax2 = ax.twinx()
+        ax2.spines["right"].set_visible(True)
+        ax2.spines["top"].set_visible(False)
+        for series, xs, sec in secondary_data:
+            base_style = style_for(series) or {"marker": "o"}
+            sec_style = {**base_style, "marker": "x", "linestyle": "--"}
+            ax2.plot(xs, sec, alpha=0.7, zorder=2, **sec_style)
+        ax2.set_ylabel(secondary_label or secondary_metric)
+        ax2.tick_params(axis="y", colors="0.25")
+        ax2.spines["right"].set_color("0.25")
+        ax2.spines["right"].set_linewidth(0.6)
+
     ax.legend(loc="best")
     fig.tight_layout()
     _save(fig, out_base)
     plt.close(fig)
 
 
-def plot_latency(rows: list, axis: str, scenario: str, backends: list[str],
+def plot_latency(rows: list, axis: str, scenario: str, series_list: list[str],
                  op: str, percentile: str, out_base: Path,
                  log_x: bool = False) -> None:
-    import matplotlib.pyplot as plt
     fig, ax = plt.subplots()
-    series: list[tuple[str, list[float]]] = []
-    for backend in backends:
-        bench_name = backend if scenario == "mixed" else f"{backend}_{scenario}"
+    plotted = False
+    for series in series_list:
+        bench_name = series if scenario == "mixed" else f"{series}_{scenario}"
         xs, ys = [], []
         for v, result in rows:
             b = find_bench(result, bench_name)
@@ -301,15 +386,15 @@ def plot_latency(rows: list, axis: str, scenario: str, backends: list[str],
             if y is None:
                 continue
             xs.append(v)
-            ys.append(y / 1000.0)  # ns -> µs
+            ys.append(y / 1000.0)
         if xs:
-            ax.plot(xs, ys, label=label_for(backend), alpha=0.92, zorder=3,
-                    **(style_for(backend) or {"marker": "o"}))
-            series.append((backend, ys))
-    if not series:
+            ax.plot(xs, ys, label=label_for(series), alpha=0.92, zorder=3,
+                    **(style_for(series) or {"marker": "o"}))
+            plotted = True
+    if not plotted:
         plt.close(fig)
         return
-    _autocap_y(ax, series)
+    ax.set_yscale("log")
     if log_x:
         ax.set_xscale("log", base=2)
     ax.set_xlabel(AXIS_LABELS.get(axis, axis))
@@ -320,22 +405,28 @@ def plot_latency(rows: list, axis: str, scenario: str, backends: list[str],
     plt.close(fig)
 
 
-PERCENTILES = ("p50", "p99", "p999")
-
-
-def run_sweep(name: str, cmd: list[str], axis: str, values: list) -> None:
-    rows = sweep_target(name, cmd, axis, values)
-    sweep_dir = RESULTS_DIR / name / axis
+def render_plot(plot_key: str, plot_spec: dict, axis: str,
+                per_target_rows: dict[str, list[tuple]]) -> None:
+    rows = merge_rows({t: per_target_rows[t] for t in plot_spec["targets"]
+                       if t in per_target_rows})
+    if not rows:
+        return
+    plot_dir = RESULTS_DIR / plot_key / axis
+    plot_dir.mkdir(parents=True, exist_ok=True)
     log_x = axis in LOG_X_AXES
 
     grouped = collect_grouped(rows)
-    for scenario, backends in grouped.items():
-        plot_throughput(rows, axis, scenario, backends,
-                        sweep_dir / f"{scenario}_throughput", log_x=log_x)
+    sec_metric = plot_spec.get("secondary_metric")
+    sec_label = plot_spec.get("secondary_label")
+    for scenario, series_list in grouped.items():
+        plot_throughput(rows, axis, scenario, series_list,
+                        plot_dir / f"{scenario}_throughput", log_x=log_x,
+                        secondary_metric=sec_metric,
+                        secondary_label=sec_label)
         for op in ("rd", "wr"):
             for pct in PERCENTILES:
-                plot_latency(rows, axis, scenario, backends, op, pct,
-                             sweep_dir / f"{scenario}_{op}_{pct}",
+                plot_latency(rows, axis, scenario, series_list, op, pct,
+                             plot_dir / f"{scenario}_{op}_{pct}",
                              log_x=log_x)
 
 
@@ -351,6 +442,9 @@ def main() -> None:
     parser.add_argument("--target", nargs="+", default=None,
                         help="Only run targets whose name contains any of "
                              "these substrings.")
+    parser.add_argument("--plot", nargs="+", default=None,
+                        help="Only render plots whose key matches one of "
+                             "these names.")
     parser.add_argument("--skip", nargs="+", default=[],
                         choices=list(SWEEPS),
                         help="Sweep axes to skip.")
@@ -359,25 +453,53 @@ def main() -> None:
     if not args.no_build:
         make_build()
 
-    targets = discover_targets()
-    if args.target:
-        targets = [t for t in targets
-                   if any(s in t[0] for s in args.target)]
-    if not targets:
-        sys.exit("No benchmark targets found in build/benchmarks/.")
-
     if args.rerun and RESULTS_DIR.exists():
         shutil.rmtree(RESULTS_DIR)
 
-    configure_paper_style()
+    for spec in TARGETS.values():
+        shm_path = spec.get("shm_path")
+        if shm_path:
+            try:
+                os.remove(shm_path)
+            except FileNotFoundError:
+                pass
 
-    print(f"[targets] {[n for n, _ in targets]}", file=sys.stderr)
+    available = discover_targets()
+    plot_specs = ({k: v for k, v in PLOTS.items() if k in args.plot}
+                  if args.plot else PLOTS)
+    needed = {t for spec in plot_specs.values() for t in spec["targets"]}
+    targets = [t for t in available if t in needed]
+    if args.target:
+        targets = [t for t in targets if any(s in t for s in args.target)]
+    if not targets:
+        sys.exit(f"No matching targets in {BUILD_BENCH_DIR}.")
+
+    configure_style()
+    print(f"[targets] {targets}", file=sys.stderr)
+    print(f"[plots]   {sorted(plot_specs)}", file=sys.stderr)
+
+    per_target_per_axis: dict[str, dict[str, list[tuple]]] = defaultdict(dict)
     for axis, values in SWEEPS.items():
         if axis in args.skip:
             print(f"[skip] sweep {axis}", file=sys.stderr)
             continue
-        for name, cmd in targets:
-            run_sweep(name, cmd, axis, values)
+        if not any(axis in spec["axes"] for spec in plot_specs.values()):
+            continue
+        for target in targets:
+            if not any(target in spec["targets"] and axis in spec["axes"]
+                       for spec in plot_specs.values()):
+                continue
+            per_target_per_axis[target][axis] = sweep_target(target, axis,
+                                                             values)
+
+    for plot_key, spec in plot_specs.items():
+        for axis in spec["axes"]:
+            if axis in args.skip:
+                continue
+            render_plot(plot_key, spec, axis,
+                        {t: per_target_per_axis[t][axis]
+                         for t in spec["targets"]
+                         if axis in per_target_per_axis.get(t, {})})
 
 
 if __name__ == "__main__":

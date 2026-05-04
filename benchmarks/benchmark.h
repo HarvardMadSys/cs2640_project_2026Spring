@@ -1,7 +1,5 @@
 #pragma once
 
-#include <algorithm>
-#include <array>
 #include <benchmark/benchmark.h>
 #include <cstdint>
 #include <hdr/hdr_histogram.h>
@@ -16,8 +14,21 @@ namespace sas::bench {
 
 namespace {
 
-constexpr int BATCH_OPS = 128;
 constexpr int WARMUP_OPS = 10000;
+constexpr int LATENCY_SAMPLE_OPS = 128;
+
+template <typename Op>
+inline void maybe_time(int& counter, hdr_histogram* hist, Op&& op) {
+    if (++counter >= LATENCY_SAMPLE_OPS) {
+        counter = 0;
+        uint64_t t0 = rdtsc_start();
+        op();
+        uint64_t t1 = rdtsc_end();
+        insert_local_hist(hist, t1 - t0);
+    } else {
+        op();
+    }
+}
 
 template <typename GetFn, typename PutFn>
 void warmup(steady_workload& workload, steady_rng& rng, GetFn get, PutFn put) {
@@ -44,31 +55,22 @@ void mixed_benchmark(benchmark::State& state, const bench_config& cfg,
     steady_rng rng(cfg, state.thread_index());
     hdr_histogram* local_read = new_local_hist();
     hdr_histogram* local_write = new_local_hist();
+    int read_sample = 0;
+    int write_sample = 0;
 
     warmup(workload, rng, get, put);
 
-    std::array<int, BATCH_OPS> idx;
     int64_t total_ops = 0;
     for (auto _ : state) {
-        for (int j = 0; j < BATCH_OPS; ++j) {
-            idx[j] = rng.next_key();
-        }
+        int key = rng.next_key();
         if (!rng.is_read()) {
-            uint64_t t0 = rdtsc_start();
-            for (int j = 0; j < BATCH_OPS; ++j) {
-                put(workload.sv[idx[j]], &workload.values[idx[j]]);
-            }
-            uint64_t t1 = rdtsc_end();
-            insert_local_hist(local_write, (t1 - t0) / BATCH_OPS);
+            maybe_time(write_sample, local_write,
+                       [&] { put(workload.sv[key], &workload.values[key]); });
         } else {
-            uint64_t t0 = rdtsc_start();
-            for (int j = 0; j < BATCH_OPS; ++j) {
-                auto _ = get(workload.sv[idx[j]]);
-            }
-            uint64_t t1 = rdtsc_end();
-            insert_local_hist(local_read, (t1 - t0) / BATCH_OPS);
+            maybe_time(read_sample, local_read,
+                       [&] { auto _ = get(workload.sv[key]); });
         }
-        total_ops += BATCH_OPS;
+        total_ops++;
     }
 
     read_hist.merge(local_read);
@@ -93,6 +95,7 @@ void fill_benchmark(benchmark::State& state, const bench_config& cfg,
 
     fill_partition p(keys.sv.size(), state.thread_index(), cfg.num_threads);
     hdr_histogram* local_write = new_local_hist();
+    int write_sample = 0;
     int64_t total_ops = 0;
 
     for (auto _ : state) {
@@ -103,15 +106,9 @@ void fill_benchmark(benchmark::State& state, const bench_config& cfg,
         keys.sync.arrive_and_wait();
         state.ResumeTiming();
 
-        for (size_t i = p.start; i < p.end; i += BATCH_OPS) {
-            size_t e = std::min(i + BATCH_OPS, p.end);
-            size_t bs = e - i;
-            uint64_t t0 = rdtsc_start();
-            for (size_t j = i; j < e; ++j) {
-                put(keys.sv[j], &keys.values[j]);
-            }
-            uint64_t t1 = rdtsc_end();
-            insert_local_hist(local_write, (t1 - t0) / bs);
+        for (size_t i = p.start; i < p.end; ++i) {
+            maybe_time(write_sample, local_write,
+                       [&] { put(keys.sv[i], &keys.values[i]); });
         }
         total_ops += static_cast<int64_t>(p.end - p.start);
 
