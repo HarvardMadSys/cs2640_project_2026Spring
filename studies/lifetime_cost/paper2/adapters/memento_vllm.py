@@ -198,6 +198,7 @@ class MementoVLLMModel(ChatModel):
         debug_masking: bool = False,
         auto_capture_mementos: bool = False,
         attention_mask_mode: bool = False,
+        pin_captured_blocks: bool = True,
         **kwargs,
     ):
         super().__init__(model_name=model_name, **kwargs)
@@ -220,7 +221,7 @@ class MementoVLLMModel(ChatModel):
             model_name, dtype, gpu_memory_utilization, max_model_len,
             enable_prefix_caching, masking_enabled, keep_last_n_blocks,
             compact_on_summary_end, restart_mode, auto_capture_mementos,
-            attention_mask_mode,
+            attention_mask_mode, pin_captured_blocks,
         )
         if cache_key not in MementoVLLMModel._engine_cache:
             os.environ.setdefault("VLLM_ATTENTION_BACKEND", "FLASHINFER")
@@ -250,6 +251,7 @@ class MementoVLLMModel(ChatModel):
                     restart_mode=restart_mode,
                     auto_capture_mementos=auto_capture_mementos,
                     attention_mask_mode=attention_mask_mode,
+                    pin_captured_blocks=pin_captured_blocks,
                     debug=debug_masking,
                 )
             MementoVLLMModel._engine_cache[cache_key] = LLM(**engine_kwargs)

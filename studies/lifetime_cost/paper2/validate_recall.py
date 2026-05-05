@@ -93,6 +93,14 @@ HARD_BUDGET_TOKENS = int(os.environ.get("PAPER2_HARD_BUDGET_TOKENS", "30000"))
 ATTENTION_MASK_MODE = os.environ.get(
     "PAPER2_ATTENTION_MASK_MODE", "0"
 ).lower() in ("1", "true", "yes")
+# v8: when False, captured obs KV blocks free naturally on physical
+# compaction (under attention_mask_mode=False) instead of being refcount-
+# pinned in GPU. The CPU-pinned capture (Phase 1A) is the durable backup;
+# recall path can hit vLLM's content-hash prefix cache OR queue_kv_restore
+# to copy CPU→GPU. Default True matches v3/v4 behavior.
+PIN_CAPTURED_BLOCKS = os.environ.get(
+    "PAPER2_PIN_CAPTURED_BLOCKS", "1"
+).lower() in ("1", "true", "yes")
 OUT_DIR = Path(os.environ.get(
     "PAPER2_OUT_DIR",
     "/home/vlad/adaptivecache-paper2/studies/lifetime_cost/paper2/out_v0_swebench",
