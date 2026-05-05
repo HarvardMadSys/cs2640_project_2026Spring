@@ -75,6 +75,8 @@ MAX_MODEL_LEN = int(os.environ.get("PAPER2_MAX_LEN", "65000"))
 TEMPERATURE = float(os.environ.get("PAPER2_TEMPERATURE", "0.6"))
 N_SEEDS = int(os.environ.get("PAPER2_N_SEEDS", "1"))
 SEED_BASE = int(os.environ.get("PAPER2_SEED_BASE", "0"))
+# When set, override the variant grammar's automatic seed sweep; useful
+# for filling in partial data from a previous bake that timed out.
 RECALL_VARIANTS = [s.strip() for s in os.environ.get(
     "PAPER2_RECALL_VARIANTS", "off,lru,embedding"
 ).split(",") if s.strip()]

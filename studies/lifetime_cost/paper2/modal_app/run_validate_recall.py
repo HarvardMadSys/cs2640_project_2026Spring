@@ -45,7 +45,7 @@ except Exception:
     gpu="H100",
     image=image,
     volumes=standard_volumes(),
-    timeout=60 * 90,  # 90 min cap for a 3-seed × 5-variant × 1-task bake
+    timeout=60 * 180,  # 3 hour cap (recall-heavy bakes can be slow)
     secrets=[secret],
 )
 def run_validate_recall(
@@ -59,6 +59,8 @@ def run_validate_recall(
     attention_mask_mode: bool = False,
     budget_tokens: int = 24_000,
     hard_budget_tokens: int = 30_000,
+    recall_low_water: float = 0.60,
+    no_pin: bool = False,
 ) -> dict:
     """Run validate_recall.py inside the Modal container, return summary dict."""
     import json
@@ -88,6 +90,11 @@ def run_validate_recall(
     os.environ["PAPER2_ATTENTION_MASK_MODE"] = "1" if attention_mask_mode else "0"
     os.environ["PAPER2_BUDGET_TOKENS"] = str(budget_tokens)
     os.environ["PAPER2_HARD_BUDGET_TOKENS"] = str(hard_budget_tokens)
+    os.environ["PAPER2_RECALL_LOW_WATER"] = str(recall_low_water)
+    if no_pin:
+        os.environ["PAPER2_NO_PIN"] = "1"
+    else:
+        os.environ.pop("PAPER2_NO_PIN", None)
 
     print(f"[modal] run_id={run_id}")
     print(f"[modal] instances={instances}")
@@ -131,6 +138,8 @@ def main(
     attention_mask_mode: bool = False,
     budget_tokens: int = 24_000,
     hard_budget_tokens: int = 30_000,
+    recall_low_water: float = 0.60,
+    no_pin: bool = False,
 ):
     """CLI entrypoint — `modal run` calls this."""
     result = run_validate_recall.remote(
@@ -142,6 +151,8 @@ def main(
         attention_mask_mode=attention_mask_mode,
         budget_tokens=budget_tokens,
         hard_budget_tokens=hard_budget_tokens,
+        recall_low_water=recall_low_water,
+        no_pin=no_pin,
     )
     print()
     print("=" * 70)
