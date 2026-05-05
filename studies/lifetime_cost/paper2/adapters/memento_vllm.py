@@ -45,24 +45,35 @@ SUMMARY_START_STR = "<|fim_prefix|>"
 SUMMARY_END_STR = "<|fim_middle|>"
 
 
-def wrap_tool_message_for_masking(obs: str, memento: Optional[str]) -> str:
+def wrap_tool_message_for_masking(
+    obs: str, memento: Optional[str], *, always_wrap: bool = False
+) -> str:
     """Render tool obs + optional memento as a single user-role payload.
 
     With memento: full block + summary markers. Engine sees block_start..
     block_end..summary_start..summary_end and fires compaction.
 
-    Without memento: plain text with no special tokens. The engine sees
-    no block at all — no markers, no bookkeeping. Use this path when the
-    obs is small enough that masking isn't worth it.
+    Without memento: by default plain text with no special tokens (so the
+    engine doesn't track phantom blocks in non-masking modes). Pass
+    `always_wrap=True` for v4 attention_mask_mode runs — the markers stay
+    around the obs from the start, and adding a memento later only appends
+    `<|fim_prefix|>{memento}<|fim_middle|>` to the suffix instead of
+    transforming the message's whole structure. That reshape is the source
+    of the prefix-cache cliff (Phase 6 smoke showed 99% → 28% hit at the
+    chat after the first compaction); keeping markers always avoids it.
     """
     if memento:
         return (
             f"<tool_response>\n{obs}\n</tool_response>"
             f"{SUMMARY_START_STR}{memento}{SUMMARY_END_STR}"
         )
-    # No memento → no markers (avoid Qwen3 tokenizing <tool_response> as the
-    # special 151665 token, which would make the engine track a phantom block
-    # that never fires compaction but still consumes processor cycles).
+    if always_wrap:
+        # Markers present from the start; engine sees the block boundary.
+        # No summary markers yet → engine doesn't compact this turn (it
+        # waits for `<|fim_middle|>` to fire). Position-stable across the
+        # eventual transition to mementoed.
+        return f"<tool_response>\n{obs}\n</tool_response>"
+    # No memento + no always_wrap → plain text, no special tokens.
     return f"[tool_response]\n{obs}"
 
 
@@ -93,7 +104,16 @@ def transform_messages(
     compaction → no cascading rewinds → ~12% overhead vs ~395%.
 
     With `last_only_masking=False`, every tool message that has a memento
-    field gets full markers. Useful for ablations and unit testing.
+    field gets full markers, EXCEPT messages flagged `_obs_dropped` which
+    render as memento-only (no obs). This is the Phase 7 drop-and-restore
+    path: a freshly-mementoed tool gets full markers + obs for one chat
+    (so the engine captures and pins the obs's KV blocks), then the policy
+    flips `_obs_dropped=True` so subsequent chats render only the memento
+    (no carry cost). On recall, the policy clears `_obs_dropped`; the obs
+    re-appears at its original position and vLLM's content-hash prefix
+    cache finds the pinned blocks → no re-prefill. Suffix's K vectors
+    were baked at compacted positions and end up reused at original-layout
+    positions — slight RoPE-phase mismatch, accepted.
     """
     last_tool_idx = -1
     if last_only_masking:
@@ -108,7 +128,12 @@ def transform_messages(
             continue
         obs = m.get("content", "")
         memento = m.get("memento")
-        if last_only_masking and i != last_tool_idx:
+        if m.get("_obs_dropped") and memento:
+            # Phase 7: stale memento — drop the obs, render summary only.
+            # The obs's KV blocks are still pinned in the block pool from
+            # the chat that originally captured them.
+            body = wrap_tool_message_inlined(obs=obs, memento=memento)
+        elif last_only_masking and i != last_tool_idx:
             body = wrap_tool_message_inlined(obs=obs, memento=memento)
         else:
             body = wrap_tool_message_for_masking(obs=obs, memento=memento)

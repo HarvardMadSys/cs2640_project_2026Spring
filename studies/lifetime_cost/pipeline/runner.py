@@ -172,6 +172,16 @@ def run_task(
         )
         wall_ms = int((time.perf_counter() - t0) * 1000)
 
+        # Phase 7: any tool message that was freshly mementoed BEFORE this
+        # chat just had its full obs sent through the engine, which (under
+        # attention_mask_mode) captured + pinned its KV blocks. Flip the
+        # flag so the next chat renders this msg as memento-only — the
+        # carry cost is gone, the pinned KV survives in the block pool.
+        for m in messages:
+            if m.get("_freshly_mementoed"):
+                m["_freshly_mementoed"] = False
+                m["_obs_dropped"] = True
+
         # Record assistant message
         asst_msg_dict = {"role": "assistant", "content": resp.content or ""}
         if resp.tool_calls:

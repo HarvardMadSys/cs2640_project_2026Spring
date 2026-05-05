@@ -89,9 +89,10 @@ class MementoPolicy(CompactionPolicy):
             recall_strategy, **(recall_strategy_kwargs or {})
         )
         self._recall_query_window = recall_query_window
-        if recall_mode not in ("inplace", "append", "attmask"):
+        if recall_mode not in ("inplace", "append", "attmask", "drop"):
             raise ValueError(
-                f"recall_mode must be 'inplace' | 'append' | 'attmask', got {recall_mode!r}"
+                f"recall_mode must be 'inplace' | 'append' | 'attmask' | 'drop', "
+                f"got {recall_mode!r}"
             )
         self._recall_mode = recall_mode
         # Phase 4e: attmask mode stages obs_text payloads here. The runner
@@ -265,6 +266,15 @@ class MementoPolicy(CompactionPolicy):
                     self._recall_table[mem_id] = msg["content"]
                     msg["memento_id"] = mem_id
                 msg["memento"] = text
+                # Phase 7: when in `drop` recall mode, the obs needs to be
+                # rendered with markers ONE more time so the engine can
+                # capture+pin its KV. After that capture chat, the runner
+                # flips `_obs_dropped=True` and subsequent renders drop the
+                # obs. Mark this msg as "fresh" so the renderer keeps obs
+                # visible for the next chat only.
+                if self._recall_mode == "drop":
+                    msg["_freshly_mementoed"] = True
+                    msg["_obs_dropped"] = False
                 # Phase 6: compress the matching assistant message too.
                 # The asst turn that issued this tool_call carries reasoning
                 # text + tool_calls JSON — typically 50-300 tokens of
@@ -376,6 +386,19 @@ class MementoPolicy(CompactionPolicy):
             obs = msg.get("content") or ""
             if obs:
                 self._pending_attmask_recalls.append(obs)
+            msg["recalled_step"] = ctx.step
+            new_messages = messages
+        elif self._recall_mode == "drop":
+            # Phase 7: un-drop the obs so the next render shows it again at
+            # its original chronological position. The obs's KV blocks are
+            # still pinned in the block pool from the chat that originally
+            # captured them; vLLM's content-hash prefix cache should match
+            # them when the obs tokens reappear in the prompt → no
+            # re-prefill of the obs. Suffix tokens stay at their compacted
+            # positions in the cache; on this chat they end up at original-
+            # layout positions → small RoPE-phase mismatch (the "slight
+            # correctness" tradeoff we're accepting).
+            msg["_obs_dropped"] = False
             msg["recalled_step"] = ctx.step
             new_messages = messages
         else:
