@@ -213,7 +213,15 @@ class MementoPolicy(CompactionPolicy):
         # 3. Generate mementos in oldest-first order, until projected context
         #    falls below target_ratio * budget. Each generated memento
         #    "saves" roughly (obs_tokens - memento_tokens) ≈ 90% of obs size.
+        # Phase 6: cap to ONE memento per maybe_compact call. The Phase 5
+        # smoke surfaced a cache cliff (99% → 27% prefix-cache hit) when
+        # five mementos got generated in a single burst — every memento
+        # inserted in the middle of the prompt shifts every suffix token,
+        # invalidating prefix cache past it. Generating one at a time lets
+        # subsequent chats absorb the new memento gracefully (the next
+        # chat's prompt is a clean superset of the prior, suffix-only tax).
         target = int(self._target_ratio * ctx.budget)
+        max_per_call = 1
         t0 = time.perf_counter()
         in_toks_total = 0
         out_toks_total = 0
@@ -224,6 +232,8 @@ class MementoPolicy(CompactionPolicy):
 
         for i in candidates:
             if projected_total < target:
+                break
+            if n_fired >= max_per_call:
                 break
             msg = messages[i]
             # Round-trip shortcut: if this msg was recalled (memento cleared
@@ -255,6 +265,14 @@ class MementoPolicy(CompactionPolicy):
                     self._recall_table[mem_id] = msg["content"]
                     msg["memento_id"] = mem_id
                 msg["memento"] = text
+                # Phase 6: compress the matching assistant message too.
+                # The asst turn that issued this tool_call carries reasoning
+                # text + tool_calls JSON — typically 50-300 tokens of
+                # scaffolding that's redundant once the tool obs is
+                # summarized. We replace it with a one-line ref. The chat
+                # template still renders an asst turn, just without bulky
+                # content/tool_calls.
+                _compact_paired_asst(messages, i)
             bytes_tagged += len(msg["content"])
             n_fired += 1
             # Project size reduction: obs goes from ~len/4 tokens to
@@ -485,3 +503,63 @@ def _trace_tool_call(
                 fn = tc.get("function") or {}
                 return fn.get("name", "unknown"), fn.get("arguments") or {}
     return "unknown", {}
+
+
+def _compact_paired_asst(
+    messages: List[Dict[str, Any]], tool_msg_idx: int
+) -> None:
+    """Phase 6: collapse the assistant turn that issued the tool call whose
+    obs we just memento'd. Replace bulky reasoning text + tool_calls JSON
+    with a tiny `[step compacted: tool=name(args_brief)]` ref. Idempotent —
+    skips messages already marked `_step_compacted`.
+
+    The matching asst is found by scanning backwards for an assistant
+    message with a tool_call whose `id` matches the tool message's
+    `tool_call_id`. If found, we keep `tool_calls` (chat templates need it
+    to maintain the call → response linkage when rendering Qwen3-style
+    `<tool_call>...</tool_call>`) but strip its `arguments` and reasoning
+    text down to a brief ref. The bulk content (often 50-300 tokens) goes
+    away; the structural pairing stays intact.
+    """
+    import json as _json
+    target_id = messages[tool_msg_idx].get("tool_call_id")
+    for j in range(tool_msg_idx - 1, -1, -1):
+        m = messages[j]
+        if m.get("role") != "assistant":
+            continue
+        tcs = m.get("tool_calls") or []
+        match = None
+        for tc in tcs:
+            if tc.get("id") == target_id:
+                match = tc
+                break
+        if match is None:
+            continue
+        if m.get("_step_compacted"):
+            return
+        fn = match.get("function") or {}
+        tool_name = fn.get("name", "unknown")
+        # Brief args ref: keep keys + truncated values so the agent can
+        # remember "I called read_file on path=foo.py" without paying for
+        # the full args. For most agent tools args are small anyway.
+        raw_args = fn.get("arguments")
+        if isinstance(raw_args, str):
+            try:
+                args = _json.loads(raw_args)
+            except Exception:
+                args = {"_raw": raw_args[:80]}
+        elif isinstance(raw_args, dict):
+            args = raw_args
+        else:
+            args = {}
+        brief = {k: (v[:60] + "…" if isinstance(v, str) and len(v) > 60 else v)
+                 for k, v in args.items()}
+        m["content"] = f"[step compacted: {tool_name}({_json.dumps(brief, ensure_ascii=False)})]"
+        # Replace this tool_call's arguments with the brief, preserve id+name
+        # so the chat template still renders a coherent <tool_call>.
+        match["function"] = {
+            "name": tool_name,
+            "arguments": _json.dumps(brief, ensure_ascii=False),
+        }
+        m["_step_compacted"] = True
+        return

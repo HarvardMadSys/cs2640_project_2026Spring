@@ -88,21 +88,22 @@ def test_compaction_tags_memento():
 
     tokenizer = get_tokenizer("tiktoken:cl100k_base")
     big_obs = "X" * 4000  # 4KB, comfortably above min_obs_chars=500
+    asst_thinking = "Long reasoning text " * 50  # ~1KB asst content
 
-    # Build messages: system, user, assistant_with_tool_call, tool_obs (big), tool_obs (big), user
+    # Build messages: system, user, asst_with_tool_call, tool_obs (big), ...
     msgs = [
         {"role": "system", "content": "sys"},
         {"role": "user", "content": "u1"},
-        {"role": "assistant", "tool_calls": [
-            {"id": "c1", "function": {"name": "read", "arguments": {}}}
+        {"role": "assistant", "content": asst_thinking, "tool_calls": [
+            {"id": "c1", "function": {"name": "read", "arguments": {"path": "foo.py"}}}
         ]},
         {"role": "tool", "tool_call_id": "c1", "content": big_obs},
-        {"role": "assistant", "tool_calls": [
-            {"id": "c2", "function": {"name": "read", "arguments": {}}}
+        {"role": "assistant", "content": asst_thinking, "tool_calls": [
+            {"id": "c2", "function": {"name": "read", "arguments": {"path": "bar.py"}}}
         ]},
         {"role": "tool", "tool_call_id": "c2", "content": big_obs},
-        {"role": "assistant", "tool_calls": [
-            {"id": "c3", "function": {"name": "read", "arguments": {}}}
+        {"role": "assistant", "content": asst_thinking, "tool_calls": [
+            {"id": "c3", "function": {"name": "read", "arguments": {"path": "baz.py"}}}
         ]},
         {"role": "tool", "tool_call_id": "c3", "content": big_obs},
         {"role": "user", "content": "u2"},
@@ -113,7 +114,7 @@ def test_compaction_tags_memento():
         recall_tool_enabled=True,
         # Force trigger: tiny budget so estimated tokens > trigger.
         trigger_ratio=0.01,
-        target_ratio=0.001,  # Force fire on all candidates
+        target_ratio=0.001,  # Force fire as much as policy allows
         writer=_stub_writer(),
     )
     ctx = CompactionContext(step=0, budget=100, hard_budget=200,
@@ -121,16 +122,59 @@ def test_compaction_tags_memento():
     out, evt = p.maybe_compact(msgs, ctx)
     assert evt is not None, "compaction should have fired"
 
-    # Two of the three big tool msgs should be memento'd (last 2 are kept,
-    # so msg[3] gets tagged; recent_skip=2 means we skip last 2 tool msgs).
+    # Phase 6 cap: only ONE memento per call (not the burst of 3 the prior
+    # design would fire under target_ratio=0.001).
     tool_msgs = [m for m in out if m.get("role") == "tool"]
     tagged = [m for m in tool_msgs if m.get("memento")]
-    assert len(tagged) >= 1, "at least one tool msg should be memento'd"
-    for m in tagged:
-        assert m["memento"].startswith("[memento_id=mem-"), m["memento"][:50]
-        assert "memento_id" in m
-        # Round-trip via the recall table
-        assert p._recall_table[m["memento_id"]] == big_obs
+    assert len(tagged) == 1, f"phase 6 cap: expect exactly 1 tagged, got {len(tagged)}"
+    m = tagged[0]
+    assert m["memento"].startswith("[memento_id=mem-"), m["memento"][:50]
+    assert "memento_id" in m
+    assert p._recall_table[m["memento_id"]] == big_obs
+
+    # Phase 6: the asst that issued this tool_call should also be compacted —
+    # bulky reasoning collapsed to a brief ref.
+    target_id = m["tool_call_id"]
+    paired_asst = next(
+        m2 for m2 in out
+        if m2.get("role") == "assistant"
+        and any(tc.get("id") == target_id for tc in (m2.get("tool_calls") or []))
+    )
+    assert paired_asst.get("_step_compacted") is True
+    assert "[step compacted:" in (paired_asst.get("content") or "")
+    assert len(paired_asst["content"]) < 200, "asst content should be brief now"
+    # Other asst turns should NOT be touched.
+    untouched = [m2 for m2 in out
+                 if m2.get("role") == "assistant" and not m2.get("_step_compacted")]
+    for m2 in untouched:
+        assert m2.get("content") == asst_thinking, "untouched asst should keep its content"
+
+
+def test_phase6_one_per_call():
+    """Phase 6: even with many candidates, only one memento fires per call."""
+    from studies.lifetime_cost.pipeline.policies.base import CompactionContext
+    from studies.lifetime_cost.pipeline.tokenization import get_tokenizer
+
+    tokenizer = get_tokenizer("tiktoken:cl100k_base")
+    big = "X" * 4000
+
+    msgs = [{"role": "system", "content": "s"}]
+    for k in range(8):
+        msgs.append({"role": "assistant", "content": "thinking",
+                     "tool_calls": [{"id": f"c{k}",
+                                     "function": {"name": "read", "arguments": {}}}]})
+        msgs.append({"role": "tool", "tool_call_id": f"c{k}", "content": big})
+
+    p = MementoPolicy(
+        min_obs_chars=300, recall_tool_enabled=False,
+        trigger_ratio=0.01, target_ratio=0.001,
+        writer=_stub_writer(),
+    )
+    ctx = CompactionContext(step=0, budget=100, hard_budget=200,
+                            tokenizer=tokenizer, summarizer=lambda x: ("", 0, 0, 0))
+    out, evt = p.maybe_compact(msgs, ctx)
+    tagged = [m for m in out if m.get("role") == "tool" and m.get("memento")]
+    assert len(tagged) == 1, f"phase 6 cap: expect 1, got {len(tagged)}"
 
 
 if __name__ == "__main__":
@@ -140,4 +184,5 @@ if __name__ == "__main__":
     test_recall_handler_unknown_id()
     test_recall_handler_missing_id()
     test_compaction_tags_memento()
-    print("OK — all 6 tests passed")
+    test_phase6_one_per_call()
+    print("OK — all 7 tests passed")
