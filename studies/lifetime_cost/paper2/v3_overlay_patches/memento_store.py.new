@@ -39,6 +39,8 @@ ENGINE_STATS: dict[str, int] = {
     "kv_captures_executed": 0,    # worker did GPU→CPU copy
     "kv_restores_executed": 0,    # worker did CPU→GPU copy
     "recalls_via_unmask": 0,      # Phase 4e: obs_id consumed from recall queue
+    "dual_key_inserts": 0,        # Phase 8: cached block dual-keyed under
+                                   # additional chain hash (transparent compaction)
 }
 
 
@@ -239,6 +241,75 @@ def drain_kv_restore_requests() -> list[str]:
 def reset_kv_restore_queue() -> None:
     """Test hook: drop the kv-restore queue file."""
     path = _kv_restore_queue_path()
+    if os.path.exists(path):
+        try:
+            os.remove(path)
+        except Exception:
+            pass
+
+
+_DUAL_KEY_QUEUE_PATH_DEFAULT = "/tmp/paper2_dual_key_queue.jsonl"
+
+
+def _dual_key_queue_path() -> str:
+    return os.environ.get(
+        "PAPER2_DUAL_KEY_QUEUE_PATH", _DUAL_KEY_QUEUE_PATH_DEFAULT
+    )
+
+
+def queue_dual_key_request(
+    compacted_tokens: list[int],
+    recall_tokens: list[int],
+) -> None:
+    """Phase 8: append a dual-key request.
+
+    Adapter writes (compacted_tokens, recall_tokens) before a chat()
+    that contains an `lru-inplace` recall. The engine subprocess drains
+    this on each `add_request` call and dual-keys cached suffix blocks
+    so vLLM's prefix-cache lookup finds them under the recall-prompt's
+    chain hash too. Pure metadata operation — no data movement.
+    """
+    path = _dual_key_queue_path()
+    try:
+        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+        with open(path, "a") as f:
+            f.write(json.dumps({
+                "compacted": compacted_tokens,
+                "recall": recall_tokens,
+            }) + "\n")
+    except Exception:
+        pass
+
+
+def drain_dual_key_requests() -> "list[tuple[list[int], list[int]]]":
+    """Consume + return all queued (compacted, recall) token pairs."""
+    path = _dual_key_queue_path()
+    if not os.path.exists(path):
+        return []
+    out: "list[tuple[list[int], list[int]]]" = []
+    try:
+        with open(path) as f:
+            for line in f:
+                try:
+                    rec = json.loads(line)
+                except Exception:
+                    continue
+                c = rec.get("compacted")
+                r = rec.get("recall")
+                if c is not None and r is not None:
+                    out.append((list(c), list(r)))
+    except Exception:
+        return []
+    try:
+        os.remove(path)
+    except Exception:
+        pass
+    return out
+
+
+def reset_dual_key_queue() -> None:
+    """Test hook: drop the dual-key queue file."""
+    path = _dual_key_queue_path()
     if os.path.exists(path):
         try:
             os.remove(path)

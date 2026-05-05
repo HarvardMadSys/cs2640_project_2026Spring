@@ -301,6 +301,14 @@ class MementoVLLMModel(ChatModel):
             MementoVLLMModel._engine_cache[cache_key] = LLM(**engine_kwargs)
         self._llm = MementoVLLMModel._engine_cache[cache_key]
         self._prev_rendered: str = ""
+        # Phase 8: remember the previous chat's prompt tokens so we can
+        # diff against the next chat's prompt and queue dual-key requests
+        # for cached blocks whose chain hash shifted between layouts.
+        self._prev_prompt_token_ids: List[int] = []
+        # Toggleable so tests / smokes can disable. Default on; the dual-
+        # key drain is a no-op when the queue is empty so the cost is just
+        # one tokenization of the new prompt + a quick compare.
+        self._dual_key_enabled: bool = True
 
     def chat(
         self,
@@ -336,6 +344,26 @@ class MementoVLLMModel(ChatModel):
         prompt_tokens = len(prompt_token_ids)
         cached_tokens = int(prompt_tokens * (prefix_chars / max(len(rendered), 1)))
 
+        # Phase 8: if the previous chat's prompt and this chat's prompt
+        # differ in the middle (compaction modified the rendered structure),
+        # queue a dual-key request so the engine inserts the previously-
+        # cached suffix blocks under the NEW chain hashes too. vLLM's
+        # allocate_slots will then find them on this chat — no re-prefill.
+        if (
+            self._dual_key_enabled
+            and self._prev_prompt_token_ids
+            and prompt_token_ids != self._prev_prompt_token_ids
+        ):
+            try:
+                from vllm.v1.core.block_masking.memento_store import (
+                    queue_dual_key_request,
+                )
+                queue_dual_key_request(
+                    self._prev_prompt_token_ids, prompt_token_ids
+                )
+            except Exception:
+                pass
+
         eff_temp = temperature if temperature is not None else self._default_temperature
         sp_kwargs: Dict[str, Any] = {
             "max_tokens": max_tokens or self._default_max_new_tokens,
@@ -354,6 +382,7 @@ class MementoVLLMModel(ChatModel):
             if "longer than the maximum" not in str(e):
                 raise
             self._prev_rendered = rendered
+            self._prev_prompt_token_ids = list(prompt_token_ids)
             return ChatResponse(
                 content="[context overflow: prompt exceeded model max_model_len; ending task]",
                 tool_calls=None,
@@ -384,6 +413,9 @@ class MementoVLLMModel(ChatModel):
 
         text = TOOL_CALL_RE.sub("", completion_text).strip()
         self._prev_rendered = rendered + completion_text
+        # Phase 8: remember the prompt tokens we just sent so the next chat
+        # can diff against them and queue dual-key for the cache.
+        self._prev_prompt_token_ids = list(prompt_token_ids)
 
         return ChatResponse(
             content=text,

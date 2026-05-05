@@ -214,7 +214,7 @@ index db7a4d2..f0d6014 100644
      # block masking compactions. These requests will do prefill only,
      # allowing compaction to run before the first decode token.
 diff --git a/vllm/vllm/v1/core/sched/scheduler.py b/vllm/vllm/v1/core/sched/scheduler.py
-index 6b0d8fe..e7febf8 100644
+index 6b0d8fe..f1c1319 100644
 --- a/vllm/vllm/v1/core/sched/scheduler.py
 +++ b/vllm/vllm/v1/core/sched/scheduler.py
 @@ -185,10 +185,30 @@ class Scheduler(SchedulerInterface):
@@ -363,7 +363,45 @@ index 6b0d8fe..e7febf8 100644
                      )
                      if (self.block_masking_config is not None and
                          self.block_masking_config.debug):
-@@ -1759,11 +1851,220 @@ class Scheduler(SchedulerInterface):
+@@ -1598,7 +1690,7 @@ class Scheduler(SchedulerInterface):
+     def add_request(self, request: Request) -> None:
+         self.waiting.add_request(request)
+         self.requests[request.request_id] = request
+-        
++
+         # Initialize block masking state if enabled
+         if self.block_masking_processor is not None:
+             request.block_masking_state = self.block_masking_processor.create_state()
+@@ -1608,6 +1700,28 @@ class Scheduler(SchedulerInterface):
+                     request.block_masking_state,
+                     request.prompt_token_ids,
+                 )
++
++        # Phase 8: drain dual-key requests. For each (compacted_tokens,
++        # recall_tokens) pair the adapter staged before this chat, dual-key
++        # the suffix's existing cached blocks under the recall-prompt's
++        # chain hash so vLLM's prefix-cache lookup finds them on the
++        # recall chat. Pure metadata operation — no data movement.
++        # Suffix's K vectors retain their compacted-position RoPE bake-in;
++        # they end up at original-layout positions on recall (slight
++        # correctness loss, accepted).
++        try:
++            from vllm.v1.core.block_masking.memento_store import (
++                drain_dual_key_requests as _drain_dk,
++            )
++            pending_dk = _drain_dk()
++        except Exception:
++            pending_dk = []
++        if pending_dk:
++            try:
++                self._dual_key_blocks_for_recall(pending_dk)
++            except Exception as e:
++                print(f"[v8-dual-key-err] {type(e).__name__}: {e}",
++                      flush=True)
+         
+         if self.log_stats:
+             request.record_event(EngineCoreEventType.QUEUED)
+@@ -1759,11 +1873,304 @@ class Scheduler(SchedulerInterface):
                  merged.append((start, end))
          return merged
  
@@ -443,6 +481,90 @@ index 6b0d8fe..e7febf8 100644
 +        m.gpu_pinned_block_ids = None
 +        return True, (f"released {released_count} pinned blocks "
 +                      f"({len(freed_to_queue)} returned to free queue)")
++
++    def _compute_chain_hashes(self, token_ids: list[int]) -> list:
++        """Phase 8: chain-hash a token sequence into a list of BlockHash.
++        Mirrors vllm.v1.core.kv_cache_utils.get_request_block_hasher's
++        logic for plain text (no extra_keys for multimodal/LoRA). Used
++        to dual-key existing cached blocks under the recall-prompt's
++        chain hash so vLLM's allocate_slots finds them.
++        """
++        from vllm.v1.core.kv_cache_utils import (
++            hash_block_tokens, NONE_HASH, get_hash_fn_by_name,
++        )
++        hash_fn = get_hash_fn_by_name(
++            self.cache_config.prefix_caching_hash_algo
++        )
++        block_size = self.block_size
++        parent = NONE_HASH
++        out = []
++        n = len(token_ids)
++        for i in range(0, n - block_size + 1, block_size):
++            block_tokens = tuple(token_ids[i:i + block_size])
++            h = hash_block_tokens(hash_fn, parent, block_tokens, None)
++            out.append(h)
++            parent = h
++        return out
++
++    def _dual_key_blocks_for_recall(
++        self,
++        pending: list,  # list[tuple[list[int], list[int]]]
++    ) -> None:
++        """Phase 8: dual-key cached blocks under recall-prompt chain hashes.
++
++        For each (compacted_tokens, recall_tokens) pair: walk both block-by-
++        block; where compacted_hash[i] != recall_hash[i] AND a block exists
++        in cache under compacted_hash[i] (and not yet under recall_hash[i]),
++        insert it under recall_hash[i] too.
++
++        Pure metadata operation — no KV bytes move. The block's K vectors
++        retain their original RoPE bake-in; on the recall chat the request's
++        allocate_slots finds them via cache hit, no re-prefill. Suffix RoPE
++        ends up off by `m` (obs's token count) — slight correctness loss.
++        """
++        from vllm.v1.core.kv_cache_utils import BlockHashWithGroupId
++        block_pool = self.kv_cache_manager.block_pool
++        try:
++            kv_groups = self.kv_cache_config.kv_cache_groups
++        except Exception:
++            kv_groups = []
++        # For models with a single attention type (Qwen3 etc.) there's
++        # one group. Use group_id=0; multi-group models would need
++        # per-group dual-keying which we don't tackle here.
++        group_ids = list(range(max(1, len(kv_groups)))) if kv_groups else [0]
++
++        total_inserted = 0
++        for compacted_tokens, recall_tokens in pending:
++            comp_hashes = self._compute_chain_hashes(compacted_tokens)
++            recl_hashes = self._compute_chain_hashes(recall_tokens)
++            n_compare = min(len(comp_hashes), len(recl_hashes))
++            for i in range(n_compare):
++                if comp_hashes[i] == recl_hashes[i]:
++                    continue
++                for gid in group_ids:
++                    comp_key = BlockHashWithGroupId(comp_hashes[i], gid)
++                    recl_key = BlockHashWithGroupId(recl_hashes[i], gid)
++                    block = block_pool.cached_block_hash_to_block.get_one_block(
++                        comp_key
++                    )
++                    if block is None:
++                        continue
++                    # Don't double-insert if already there.
++                    if block_pool.cached_block_hash_to_block.get_one_block(
++                        recl_key
++                    ) is not None:
++                        continue
++                    block_pool.cached_block_hash_to_block.insert(recl_key, block)
++                    total_inserted += 1
++        if total_inserted:
++            try:
++                from vllm.v1.core.block_masking.memento_store import bump as _bump
++                _bump("dual_key_inserts", total_inserted)
++            except Exception:
++                pass
++            print(f"[v8-dual-key] inserted {total_inserted} blocks under "
++                  f"recall chain hashes ({len(pending)} pairs processed)",
++                  flush=True)
 +
 +    def queue_kv_restore(
 +        self,
@@ -584,7 +706,7 @@ index 6b0d8fe..e7febf8 100644
      ) -> SpanRemovalResult:
          """Mask a span of tokens and compact the KV cache in one step.
  
-@@ -1776,6 +2077,11 @@ class Scheduler(SchedulerInterface):
+@@ -1776,6 +2183,11 @@ class Scheduler(SchedulerInterface):
              request_id: The request ID.
              start_position: Start logical position (inclusive).
              end_position: End logical position (exclusive).
@@ -596,7 +718,7 @@ index 6b0d8fe..e7febf8 100644
  
          Returns:
              SpanRemovalResult with success status, tokens removed, and
-@@ -1854,20 +2160,107 @@ class Scheduler(SchedulerInterface):
+@@ -1854,20 +2266,107 @@ class Scheduler(SchedulerInterface):
              request.logical_to_physical(p) for p in active_logical
          ]
  

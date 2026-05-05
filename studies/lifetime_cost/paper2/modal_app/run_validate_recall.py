@@ -73,6 +73,13 @@ def run_validate_recall(
     sys.path.insert(0, REPO)
     os.chdir(REPO)
 
+    # Phase 8: pin PYTHONHASHSEED so adapter (main proc) and engine
+    # (subprocess) compute identical NONE_HASH and chain block hashes.
+    # vLLM's init_none_hash falls back to os.urandom(32) when this is
+    # unset → mismatched NONE_HASH across procs → dual-key inserts
+    # would never hit. This MUST be set BEFORE any vLLM import.
+    os.environ["PYTHONHASHSEED"] = "1"
+
     # Per-run output dir on the persistent volume.
     run_id = int(time.time())
     out_dir = Path(f"/scratch/out/validate_recall/{run_id}")
@@ -140,6 +147,7 @@ def main(
     hard_budget_tokens: int = 30_000,
     recall_low_water: float = 0.60,
     no_pin: bool = False,
+    max_model_len: int = 65_000,
 ):
     """CLI entrypoint — `modal run` calls this."""
     result = run_validate_recall.remote(
@@ -153,6 +161,7 @@ def main(
         hard_budget_tokens=hard_budget_tokens,
         recall_low_water=recall_low_water,
         no_pin=no_pin,
+        max_model_len=max_model_len,
     )
     print()
     print("=" * 70)
