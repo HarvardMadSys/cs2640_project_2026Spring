@@ -147,6 +147,37 @@ class MementoVLLMModel(ChatModel):
     _engine_cache: Dict[Tuple, Any] = {}
     _tokenizer_cache: Dict[str, Any] = {}
 
+    def queue_kv_restore(self, obs_text: str) -> Optional[str]:
+        """Phase 3c: trigger CPU→GPU KV restore + block_table splice on the
+        next chat's request.
+
+        Hashes the obs (matching the engine's compute_obs_id), writes the
+        memento_id to the kv_restore queue file. The scheduler picks it up
+        when the next request transitions to RUNNING and calls its own
+        queue_kv_restore() to allocate fresh GPU blocks, schedule the
+        worker copy, and splice the new blocks into req_to_blocks at the
+        obs's original logical_range[0]//block_size.
+
+        Returns the obs_id (so the caller can verify), or None on failure.
+        """
+        try:
+            from vllm.v1.core.block_masking import compute_obs_id
+            from vllm.v1.core.block_masking.memento_store import (
+                queue_kv_restore_request,
+            )
+        except Exception:
+            return None
+        wrapped = f"<tool_response>\n{obs_text}\n</tool_response>"
+        token_ids = self._tokenizer(wrapped, add_special_tokens=False).input_ids
+        if not token_ids:
+            return None
+        obs_id = compute_obs_id(token_ids)
+        print(f"[v3c-adapter-kv-restore] len={len(token_ids)} first={token_ids[:3]} "
+              f"last={token_ids[-3:]} → {obs_id}",
+              flush=True)
+        queue_kv_restore_request(obs_id)
+        return obs_id
+
     def queue_recall(self, obs_text: str) -> Optional[str]:
         """Phase 4e: tell the engine to skip masking the named obs on the
         next compaction. Returns the obs_id (so the caller can verify).

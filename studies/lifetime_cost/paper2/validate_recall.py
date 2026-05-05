@@ -123,7 +123,7 @@ def _build_policy(variant: str) -> MementoPolicy:
         base, mode = variant.split("-", 1)
     else:
         base, mode = variant, "inplace"
-    if mode not in ("inplace", "append", "attmask", "drop"):
+    if mode not in ("inplace", "append", "attmask", "drop", "kvrestore"):
         raise ValueError(f"unknown recall mode in variant {variant!r}: {mode!r}")
 
     if base == "off":

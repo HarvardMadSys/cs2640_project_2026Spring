@@ -89,10 +89,10 @@ class MementoPolicy(CompactionPolicy):
             recall_strategy, **(recall_strategy_kwargs or {})
         )
         self._recall_query_window = recall_query_window
-        if recall_mode not in ("inplace", "append", "attmask", "drop"):
+        if recall_mode not in ("inplace", "append", "attmask", "drop", "kvrestore"):
             raise ValueError(
-                f"recall_mode must be 'inplace' | 'append' | 'attmask' | 'drop', "
-                f"got {recall_mode!r}"
+                f"recall_mode must be 'inplace' | 'append' | 'attmask' | "
+                f"'drop' | 'kvrestore', got {recall_mode!r}"
             )
         self._recall_mode = recall_mode
         # Phase 4e: attmask mode stages obs_text payloads here. The runner
@@ -101,6 +101,14 @@ class MementoPolicy(CompactionPolicy):
         # IPC file. The engine then skips masking for that obs on its
         # next compaction so attention can read it back.
         self._pending_attmask_recalls: List[str] = []
+        # Phase 3c: kvrestore mode stages obs_text payloads here. Runner
+        # drains and calls model.queue_kv_restore(obs_text), which hashes
+        # the obs and writes to the engine's kv_restore queue. The
+        # scheduler picks it up at the next request's transition to
+        # RUNNING, allocates fresh GPU blocks, queues a worker CPU→GPU
+        # copy, and splices the blocks into req_to_blocks at the obs's
+        # original logical position.
+        self._pending_kvrestore_recalls: List[str] = []
         self._writer = writer or HaikuMementoWriter(
             model=memento_model, max_obs_chars=max_obs_chars
         )
@@ -395,6 +403,22 @@ class MementoPolicy(CompactionPolicy):
             obs = msg.get("content") or ""
             if obs:
                 self._pending_attmask_recalls.append(obs)
+            msg["recalled_step"] = ctx.step
+            new_messages = messages
+        elif self._recall_mode == "kvrestore":
+            # Phase 3c: clear memento so the renderer puts the full obs
+            # back at original position on the next chat. Stage the obs_text
+            # for the runner to push into the engine's kv_restore queue.
+            # The scheduler will splice the captured KV from CPU into the
+            # new request's block_table at the obs's original logical
+            # position; vLLM's prefill should then SKIP those positions
+            # (covered) and the suffix's K vectors stay at compacted
+            # positions (slight RoPE-phase mismatch, accepted).
+            obs = msg.get("content") or ""
+            if obs:
+                self._pending_kvrestore_recalls.append(obs)
+            msg["prior_memento"] = msg.get("memento")
+            msg["memento"] = None
             msg["recalled_step"] = ctx.step
             new_messages = messages
         elif self._recall_mode == "drop":

@@ -168,6 +168,73 @@ def reset_recall_queue() -> None:
             pass
 
 
+_KV_RESTORE_QUEUE_PATH_DEFAULT = "/tmp/paper2_kv_restore_queue.jsonl"
+
+
+def _kv_restore_queue_path() -> str:
+    return os.environ.get(
+        "PAPER2_KV_RESTORE_QUEUE_PATH", _KV_RESTORE_QUEUE_PATH_DEFAULT
+    )
+
+
+def queue_kv_restore_request(memento_id: str) -> None:
+    """Phase 3c: append a memento_id to the kv-restore queue.
+
+    Adapter writes (main proc); scheduler reads (engine proc) when the
+    next chat()'s request is about to start. The scheduler then calls
+    its own queue_kv_restore(request_id, memento_id) to allocate fresh
+    GPU blocks, queue a worker KVRestoreOp (CPU→GPU copy), and splice
+    the new blocks into req_to_blocks at the obs's original logical
+    position. Cross-process file IPC mirrors queue_recall/consume_recall.
+    """
+    path = _kv_restore_queue_path()
+    try:
+        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+        with open(path, "a") as f:
+            f.write(json.dumps({"memento_id": memento_id}) + "\n")
+    except Exception:
+        pass
+
+
+def drain_kv_restore_requests() -> list[str]:
+    """Consume + return all queued memento_ids. Empties the queue.
+
+    Called by the scheduler at request-add time so each new request gets
+    the pending restores applied before forward runs.
+    """
+    path = _kv_restore_queue_path()
+    if not os.path.exists(path):
+        return []
+    out: list[str] = []
+    try:
+        with open(path) as f:
+            for line in f:
+                try:
+                    rec = json.loads(line)
+                except Exception:
+                    continue
+                mid = rec.get("memento_id")
+                if mid:
+                    out.append(mid)
+    except Exception:
+        return []
+    try:
+        os.remove(path)
+    except Exception:
+        pass
+    return out
+
+
+def reset_kv_restore_queue() -> None:
+    """Test hook: drop the kv-restore queue file."""
+    path = _kv_restore_queue_path()
+    if os.path.exists(path):
+        try:
+            os.remove(path)
+        except Exception:
+            pass
+
+
 # Backward-compat alias.
 _dump_engine_stats = dump_engine_stats
 

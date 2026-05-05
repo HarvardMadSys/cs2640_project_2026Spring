@@ -214,7 +214,7 @@ index db7a4d2..f0d6014 100644
      # block masking compactions. These requests will do prefill only,
      # allowing compaction to run before the first decode token.
 diff --git a/vllm/vllm/v1/core/sched/scheduler.py b/vllm/vllm/v1/core/sched/scheduler.py
-index 6b0d8fe..5be9cfe 100644
+index 6b0d8fe..e7febf8 100644
 --- a/vllm/vllm/v1/core/sched/scheduler.py
 +++ b/vllm/vllm/v1/core/sched/scheduler.py
 @@ -185,10 +185,30 @@ class Scheduler(SchedulerInterface):
@@ -248,7 +248,41 @@ index 6b0d8fe..5be9cfe 100644
  
          # KV Connector: requests in process of async KV loading or recving
          self.finished_recving_kv_req_ids: set[str] = set()
-@@ -773,6 +793,42 @@ class Scheduler(SchedulerInterface):
+@@ -677,6 +697,33 @@ class Scheduler(SchedulerInterface):
+                 token_budget -= num_new_tokens
+                 request.status = RequestStatus.RUNNING
+                 request.num_computed_tokens = num_computed_tokens
++
++                # Phase 3c: drain any pending kv_restore intents queued by the
++                # adapter (cross-process file IPC). For each, splice captured
++                # KV from CPU into this request's block_table at the obs's
++                # original logical position, queue the worker copy, and bump
++                # num_computed_tokens to claim those positions are computed
++                # (so prefill skips them).
++                if self.block_masking_config is not None and getattr(
++                    self.block_masking_config, "auto_capture_mementos", False
++                ):
++                    try:
++                        from vllm.v1.core.block_masking.memento_store import (
++                            drain_kv_restore_requests as _drain,
++                        )
++                        pending_mids = _drain()
++                    except Exception:
++                        pending_mids = []
++                    for mid in pending_mids:
++                        try:
++                            ok, msg = self.queue_kv_restore(request.request_id, mid)
++                            print(f"[v3c-splice-on-schedule] req={request.request_id} "
++                                  f"mid={mid} ok={ok} msg={msg}",
++                                  flush=True)
++                        except Exception as e:
++                            print(f"[v3c-splice-on-schedule-err] req={request.request_id} "
++                                  f"mid={mid} err={type(e).__name__}: {e}",
++                                  flush=True)
+                 # Count the number of prefix cached tokens.
+                 if request.num_cached_tokens < 0:
+                     request.num_cached_tokens = num_computed_tokens
+@@ -773,6 +820,42 @@ class Scheduler(SchedulerInterface):
          )
          self.pending_block_table_truncations.clear()
  
@@ -291,7 +325,7 @@ index 6b0d8fe..5be9cfe 100644
          # Block masking: Detect requests with pending compactions that are
          # about to transition from prefill to decode. These should skip
          # sampling so compaction can run before the first decode token.
-@@ -816,7 +872,10 @@ class Scheduler(SchedulerInterface):
+@@ -816,7 +899,10 @@ class Scheduler(SchedulerInterface):
              finished_req_ids=self.finished_req_ids,
              free_encoder_mm_hashes=self.encoder_cache_manager.get_freed_mm_hashes(),
              kv_copy_operations=kv_copy_operations,
@@ -302,7 +336,7 @@ index 6b0d8fe..5be9cfe 100644
              skip_sampling_req_ids=skip_sampling_req_ids,
          )
  
-@@ -1259,6 +1318,8 @@ class Scheduler(SchedulerInterface):
+@@ -1259,6 +1345,8 @@ class Scheduler(SchedulerInterface):
                              request.request_id,
                              start,
                              end,
@@ -311,7 +345,7 @@ index 6b0d8fe..5be9cfe 100644
                          )
                          if (self.block_masking_config is not None and
                              self.block_masking_config.debug):
-@@ -1469,6 +1530,8 @@ class Scheduler(SchedulerInterface):
+@@ -1469,6 +1557,8 @@ class Scheduler(SchedulerInterface):
                          request.request_id,
                          start,
                          end,
@@ -320,7 +354,7 @@ index 6b0d8fe..5be9cfe 100644
                      )
                      if (self.block_masking_config is not None and
                          self.block_masking_config.debug):
-@@ -1510,6 +1573,8 @@ class Scheduler(SchedulerInterface):
+@@ -1510,6 +1600,8 @@ class Scheduler(SchedulerInterface):
                          request.request_id,
                          start,
                          end,
@@ -329,7 +363,7 @@ index 6b0d8fe..5be9cfe 100644
                      )
                      if (self.block_masking_config is not None and
                          self.block_masking_config.debug):
-@@ -1759,11 +1824,176 @@ class Scheduler(SchedulerInterface):
+@@ -1759,11 +1851,220 @@ class Scheduler(SchedulerInterface):
                  merged.append((start, end))
          return merged
  
@@ -458,7 +492,51 @@ index 6b0d8fe..5be9cfe 100644
 +            target_block_ids=target_block_ids,
 +        )
 +        self.pending_kv_restore_operations.setdefault(request_id, []).append(op)
-+        return True, (f"queued restore: {n_blocks} blocks → "
++
++        # Phase 3c: splice the new blocks into the request's block_table at
++        # the obs's ORIGINAL chronological position. The model forward then
++        # attends to them as part of normal causal attention. Suffix tokens
++        # whose K vectors were RoPE-baked at compacted positions during the
++        # drop period end up at shifted logical positions on this recall —
++        # we accept the resulting RoPE-phase mismatch ("slight correctness
++        # loss") in exchange for not re-prefilling.
++        block_size = m.block_size if m.block_size > 0 else 16
++        insert_block_idx = m.logical_range[0] // block_size
++        spliced_into = []
++        for mgr in self.kv_cache_manager._coordinator.single_type_managers:
++            req_blocks = mgr.req_to_blocks.get(request_id)
++            if req_blocks is None:
++                continue
++            # Insert the new blocks at insert_block_idx, shifting the existing
++            # suffix blocks right by n_blocks. The suffix's K vectors retain
++            # their original RoPE-bake-in (they were baked at COMPACTED
++            # positions, but we're now treating them as being at NEW logical
++            # positions — that's the slight-correctness trade).
++            if 0 <= insert_block_idx <= len(req_blocks):
++                req_blocks[insert_block_idx:insert_block_idx] = blocks
++                spliced_into.append(mgr.kv_cache_group_id)
++
++        # Update num_computed_tokens to reflect that the obs's positions
++        # are now "computed" (covered by the restored blocks). Without this,
++        # vLLM's prefill scan would walk past them and try to compute.
++        request = self.requests.get(request_id)
++        if request is not None:
++            n_obs_tokens = m.logical_range[1] - m.logical_range[0]
++            request.num_computed_tokens += n_obs_tokens
++
++        try:
++            from vllm.v1.core.block_masking.memento_store import bump as _bump
++            _bump("kv_restores_executed")
++        except Exception:
++            pass
++
++        print(f"[v3-restore-splice] request_id={request_id} memento_id={memento_id} "
++              f"insert_idx={insert_block_idx} n_blocks={n_blocks} "
++              f"groups_spliced={spliced_into}",
++              flush=True)
++
++        return True, (f"queued restore + spliced: {n_blocks} blocks at "
++                      f"block_idx={insert_block_idx} → "
 +                      f"target_block_ids={target_block_ids}")
 +
 +    def _auto_memento_id(
@@ -506,7 +584,7 @@ index 6b0d8fe..5be9cfe 100644
      ) -> SpanRemovalResult:
          """Mask a span of tokens and compact the KV cache in one step.
  
-@@ -1776,6 +2006,11 @@ class Scheduler(SchedulerInterface):
+@@ -1776,6 +2077,11 @@ class Scheduler(SchedulerInterface):
              request_id: The request ID.
              start_position: Start logical position (inclusive).
              end_position: End logical position (exclusive).
@@ -518,7 +596,7 @@ index 6b0d8fe..5be9cfe 100644
  
          Returns:
              SpanRemovalResult with success status, tokens removed, and
-@@ -1854,20 +2089,107 @@ class Scheduler(SchedulerInterface):
+@@ -1854,20 +2160,107 @@ class Scheduler(SchedulerInterface):
              request.logical_to_physical(p) for p in active_logical
          ]
  

@@ -164,6 +164,21 @@ def run_task(
                     except Exception:
                         pass
 
+        # Phase 3c: drain kvrestore recall hints. Each entry's obs gets
+        # restored from CPU pinned memory into fresh GPU blocks, then
+        # spliced into the upcoming request's block_table at the obs's
+        # original logical position. No re-prefill of the obs.
+        pending_kvr = getattr(policy, "_pending_kvrestore_recalls", None)
+        if pending_kvr:
+            queue_kv_restore = getattr(model, "queue_kv_restore", None)
+            if callable(queue_kv_restore):
+                while pending_kvr:
+                    obs_text = pending_kvr.pop(0)
+                    try:
+                        queue_kv_restore(obs_text)
+                    except Exception:
+                        pass
+
         t0 = time.perf_counter()
         resp = model.chat(
             messages,
