@@ -65,6 +65,7 @@ class MementoPolicy(CompactionPolicy):
         min_obs_chars: int = 500,
         trigger_ratio: float = 0.85,
         target_ratio: float = 0.55,
+        compaction_enabled: bool = True,
         recall_enabled: bool = True,
         recall_low_water_ratio: float = 0.60,
         recall_cooldown_steps: int = 3,
@@ -82,6 +83,7 @@ class MementoPolicy(CompactionPolicy):
         self._min_obs_chars = min_obs_chars
         self._trigger_ratio = trigger_ratio
         self._target_ratio = target_ratio
+        self._compaction_enabled = compaction_enabled
         self._recall_enabled = recall_enabled
         self._recall_low_water_ratio = recall_low_water_ratio
         self._recall_cooldown_steps = recall_cooldown_steps
@@ -181,6 +183,9 @@ class MementoPolicy(CompactionPolicy):
         messages: List[Dict[str, Any]],
         ctx: CompactionContext,
     ) -> Tuple[List[Dict[str, Any]], Optional[CompactionEvent]]:
+        # 0. Compaction-disabled (true full-context baseline).
+        if not self._compaction_enabled:
+            return messages, None
         # 1. Trigger check — total tokens must exceed trigger threshold.
         total_tok = self._estimate_tokens(messages, ctx)
         trigger = int(self._trigger_ratio * ctx.budget)

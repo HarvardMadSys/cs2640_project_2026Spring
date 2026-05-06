@@ -128,6 +128,13 @@ def _build_policy(variant: str) -> MementoPolicy:
     if mode not in ("inplace", "append", "attmask", "drop", "kvrestore"):
         raise ValueError(f"unknown recall mode in variant {variant!r}: {mode!r}")
 
+    if base == "none":
+        # True full-context baseline: no compaction, no recall.
+        return MementoPolicy(
+            min_obs_chars=300,
+            compaction_enabled=False,
+            recall_enabled=False,
+        )
     if base == "off":
         return MementoPolicy(min_obs_chars=300, recall_enabled=False)
     if base == "lru":
