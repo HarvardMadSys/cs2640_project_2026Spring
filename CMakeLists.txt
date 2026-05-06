@@ -158,7 +158,7 @@ if(JNI_HDR_DIR AND JNI_MD_DIR)
         target_include_directories(${jni_target}
             PRIVATE ${BENCH_INCLUDES} ${JNI_INCLUDE_DIRS})
         target_link_libraries(${jni_target}
-            PRIVATE pthread mimalloc-static)
+            PRIVATE pthread)
         set_target_properties(${jni_target} PROPERTIES
             LIBRARY_OUTPUT_DIRECTORY
                 "${CMAKE_CURRENT_BINARY_DIR}/benchmarks/ycsb"
