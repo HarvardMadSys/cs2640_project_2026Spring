@@ -2,6 +2,7 @@ package site.ycsb.db;
 
 import site.ycsb.DB;
 import site.ycsb.Workload;
+import site.ycsb.measurements.Measurements;
 
 import java.io.FileReader;
 import java.util.Properties;
@@ -30,6 +31,7 @@ public final class SasYcsbDriver {
             }
         }
         props.setProperty("writeallfields", "true");
+        Measurements.setProperties(props);
 
         long records = Long.parseLong(props.getProperty("recordcount", "1000"));
         long ops = Long.parseLong(props.getProperty("operationcount", "1000"));
