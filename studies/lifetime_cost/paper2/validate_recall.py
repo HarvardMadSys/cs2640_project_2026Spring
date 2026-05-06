@@ -180,16 +180,25 @@ def _run(task, model, *, variant: str, seed: int = 0):
     # Override the model's default_seed for this run
     model._default_seed = seed
 
-    # Flush any stale recall_queue entries from prior cells. The queue is a
-    # global file shared across the engine subprocess and the main proc; we
-    # don't want hashes from a previous task accidentally matching here.
+    # Flush ALL stale Phase 9 state from prior cells. The engine is reused
+    # across cells; without these resets, a stale memento_id from cell N
+    # can be drained at the start of cell N+1, and the splice points to
+    # logical positions / blocks from cell N (different prompt entirely)
+    # → num_computed_tokens bumped past cell N+1's prompt length →
+    # `assert total_num_scheduled_tokens > 0` in _prepare_inputs.
     try:
         from vllm.v1.core.block_masking.memento_store import (
             reset_recall_queue,
             reset_captured_obs,
+            reset_kv_restore_queue,
+            reset_dual_key_queue,
+            reset_global_memento_store,
         )
         reset_recall_queue()
         reset_captured_obs()
+        reset_kv_restore_queue()
+        reset_dual_key_queue()
+        reset_global_memento_store()
     except Exception:
         pass
 
