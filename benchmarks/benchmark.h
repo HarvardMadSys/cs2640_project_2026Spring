@@ -165,6 +165,9 @@ template <typename CreateFn, typename DestroyFn, typename PutFn>
 void register_fill(const bench_config& cfg, const std::string& label,
                    size_t initial_capacity, size_t num_inserts, CreateFn create,
                    DestroyFn destroy, PutFn put) {
+    if (!cfg.run_fill) {
+        return;
+    }
     auto keys = std::make_shared<fill_keys>(num_inserts, cfg.num_threads);
     auto write_hist = std::make_shared<latency_hist>();
     register_threaded(label, cfg,

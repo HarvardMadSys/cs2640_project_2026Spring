@@ -23,6 +23,7 @@ struct bench_config {
     int seed = 2640;
     int warmup_secs = 5;
     int bench_secs = 10;
+    bool run_fill = true;
 };
 
 } // namespace sas::bench
@@ -33,10 +34,10 @@ template <> struct std::formatter<sas::bench::bench_config> {
         return std::format_to(ctx.out(),
                               "num_threads={} num_keys={} read_ratio={} "
                               "zipf_theta={} seed={} warmup_secs={} "
-                              "bench_secs={}",
+                              "bench_secs={} run_fill={}",
                               cfg.num_threads, cfg.num_keys, cfg.read_ratio,
                               cfg.zipf_theta, cfg.seed, cfg.warmup_secs,
-                              cfg.bench_secs);
+                              cfg.bench_secs, cfg.run_fill);
     }
 };
 
@@ -66,6 +67,8 @@ inline bench_config load_config(std::istream& is = std::cin) {
             cfg.warmup_secs = std::stoi(val);
         } else if (key == "bench_secs") {
             cfg.bench_secs = std::stoi(val);
+        } else if (key == "run_fill") {
+            cfg.run_fill = std::stoi(val) != 0;
         }
     }
     return cfg;
