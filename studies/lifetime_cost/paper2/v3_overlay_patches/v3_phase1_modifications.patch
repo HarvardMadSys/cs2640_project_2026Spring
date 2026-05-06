@@ -946,7 +946,7 @@ index db7a4d2..c703037 100644
      # block masking compactions. These requests will do prefill only,
      # allowing compaction to run before the first decode token.
 diff --git a/vllm/vllm/v1/core/sched/scheduler.py b/vllm/vllm/v1/core/sched/scheduler.py
-index 6b0d8fe..d69bfc0 100644
+index 6b0d8fe..835d0be 100644
 --- a/vllm/vllm/v1/core/sched/scheduler.py
 +++ b/vllm/vllm/v1/core/sched/scheduler.py
 @@ -88,6 +88,16 @@ class Scheduler(SchedulerInterface):
@@ -1215,7 +1215,7 @@ index 6b0d8fe..d69bfc0 100644
          
          if self.log_stats:
              request.record_event(EngineCoreEventType.QUEUED)
-@@ -1759,11 +1920,344 @@ class Scheduler(SchedulerInterface):
+@@ -1759,11 +1920,351 @@ class Scheduler(SchedulerInterface):
                  merged.append((start, end))
          return merged
  
@@ -1467,10 +1467,17 @@ index 6b0d8fe..d69bfc0 100644
 +        #   total tokens → `assert total_num_scheduled_tokens > 0`.
 +        request = self.requests.get(request_id)
 +        if request is not None:
-+            target = min(m.logical_range[1], request.num_tokens)
-+            request.num_computed_tokens = max(
-+                request.num_computed_tokens, target
-+            )
++            before = request.num_computed_tokens
++            obs_end = m.logical_range[1]
++            num_prompt = request.num_prompt_tokens
++            num_tokens = request.num_tokens
++            target = min(obs_end, num_prompt - 1)  # leave 1 for prefill
++            after = max(before, target)
++            print(f"[v9-bump-diag] req={request_id} "
++                  f"obs_end={obs_end} num_prompt={num_prompt} num_tokens={num_tokens} "
++                  f"num_computed: {before} → {after} (target={target})",
++                  flush=True)
++            request.num_computed_tokens = after
 +
 +        try:
 +            from vllm.v1.core.block_masking.memento_store import bump as _bump
@@ -1560,7 +1567,7 @@ index 6b0d8fe..d69bfc0 100644
      ) -> SpanRemovalResult:
          """Mask a span of tokens and compact the KV cache in one step.
  
-@@ -1776,6 +2270,11 @@ class Scheduler(SchedulerInterface):
+@@ -1776,6 +2277,11 @@ class Scheduler(SchedulerInterface):
              request_id: The request ID.
              start_position: Start logical position (inclusive).
              end_position: End logical position (exclusive).
@@ -1572,7 +1579,7 @@ index 6b0d8fe..d69bfc0 100644
  
          Returns:
              SpanRemovalResult with success status, tokens removed, and
-@@ -1808,6 +2307,10 @@ class Scheduler(SchedulerInterface):
+@@ -1808,6 +2314,10 @@ class Scheduler(SchedulerInterface):
              )
  
          if end_position > request.num_computed_tokens:
@@ -1583,7 +1590,7 @@ index 6b0d8fe..d69bfc0 100644
              return SpanRemovalResult(
                  success=False,
                  tokens_removed=0,
-@@ -1839,6 +2342,10 @@ class Scheduler(SchedulerInterface):
+@@ -1839,6 +2349,10 @@ class Scheduler(SchedulerInterface):
              active_logical.extend(range(prev_end, num_computed))
  
          if not active_logical:
@@ -1594,7 +1601,7 @@ index 6b0d8fe..d69bfc0 100644
              return SpanRemovalResult(
                  success=False,
                  tokens_removed=0,
-@@ -1854,20 +2361,121 @@ class Scheduler(SchedulerInterface):
+@@ -1854,20 +2368,121 @@ class Scheduler(SchedulerInterface):
              request.logical_to_physical(p) for p in active_logical
          ]
  
