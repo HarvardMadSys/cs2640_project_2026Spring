@@ -79,10 +79,10 @@ index 37c8bbd..413d091 100644
  ]
 diff --git a/vllm/vllm/v1/core/block_masking/memento_store.py b/vllm/vllm/v1/core/block_masking/memento_store.py
 new file mode 100644
-index 0000000..c7feb82
+index 0000000..5e74ae8
 --- /dev/null
 +++ b/vllm/vllm/v1/core/block_masking/memento_store.py
-@@ -0,0 +1,578 @@
+@@ -0,0 +1,606 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 +"""
@@ -136,6 +136,7 @@ index 0000000..c7feb82
 +
 +    def _heartbeat():
 +        last_seen = dict(ENGINE_STATS)
++        path = os.environ.get("PAPER2_GPU_MEM_TRACE_PATH")
 +        while True:
 +            _time.sleep(interval)
 +            now = dict(ENGINE_STATS)
@@ -144,9 +145,36 @@ index 0000000..c7feb82
 +                for k in now
 +                if now[k] != last_seen.get(k, 0)
 +            }
++            # GPU mem snapshot to log + jsonl trace
++            alloc_gb = 0.0
++            reserved_gb = 0.0
++            try:
++                import torch as _torch
++                if _torch.cuda.is_available():
++                    alloc_gb = _torch.cuda.memory_allocated() / 1e9
++                    reserved_gb = _torch.cuda.memory_reserved() / 1e9
++            except Exception:
++                pass
 +            print(f"[heartbeat pid={os.getpid()}] stats={now} "
++                  f"gpu_alloc={alloc_gb:.2f}GB reserved={reserved_gb:.2f}GB "
 +                  f"delta_last_{interval}s={delta or '(no change)'}",
 +                  flush=True)
++            if path:
++                try:
++                    import json as _json
++                    rec = {
++                        "t": _time.time(),
++                        "label": "heartbeat",
++                        "pid": os.getpid(),
++                        "alloc_bytes": int(alloc_gb * 1e9),
++                        "reserved_bytes": int(reserved_gb * 1e9),
++                        "num_free_blocks": -1,
++                        "engine_stats": now,
++                    }
++                    with open(path, "a") as f:
++                        f.write(_json.dumps(rec) + "\n")
++                except Exception:
++                    pass
 +            last_seen = now
 +
 +    t = threading.Thread(target=_heartbeat, daemon=True, name="paper2-heartbeat")
@@ -1850,10 +1878,10 @@ index 09302a7..3400f96 100644
      def from_engine_core_request(
          cls,
 diff --git a/vllm/vllm/v1/worker/gpu_model_runner.py b/vllm/vllm/v1/worker/gpu_model_runner.py
-index f677b37..b8964dc 100644
+index f677b37..a6ebb94 100644
 --- a/vllm/vllm/v1/worker/gpu_model_runner.py
 +++ b/vllm/vllm/v1/worker/gpu_model_runner.py
-@@ -866,6 +866,29 @@ class GPUModelRunner(
+@@ -866,6 +866,35 @@ class GPUModelRunner(
          is_last_rank = get_pp_group().is_last_rank
          req_data = scheduler_output.scheduled_cached_reqs
  
@@ -1862,7 +1890,9 @@ index f677b37..b8964dc 100644
 +        # capture is per-source-block-id; `kv_copy_operations` then runs
 +        # to compact the surviving (active) tokens into lower slots.
 +        if scheduler_output.kv_capture_operations:
++            self._snapshot_gpu_mem("pre_capture")
 +            self._execute_kv_capture_operations(scheduler_output.kv_capture_operations)
++            self._snapshot_gpu_mem("post_capture")
 +
 +        # Paper 2 v3 Phase 3b: restore CPU pinned bytes back to GPU at
 +        # specific (already-allocated) block IDs. This runs AFTER capture
@@ -1871,19 +1901,23 @@ index f677b37..b8964dc 100644
 +        # runs anywhere else), and BEFORE the model forward (so attention
 +        # can read from the restored slots).
 +        if getattr(scheduler_output, "kv_restore_operations", None):
++            self._snapshot_gpu_mem("pre_restore")
 +            self._execute_kv_restore_operations(scheduler_output.kv_restore_operations)
++            self._snapshot_gpu_mem("post_restore")
 +
 +        # Paper 2 Phase 9: rotate suffix's cached K in place to correct RoPE
 +        # phase after a kvrestore splice. Must run AFTER kv_restore (so the
 +        # obs's blocks are in place; we don't rotate them) and BEFORE the
 +        # model forward (so attention reads the correctly-phased K).
 +        if getattr(scheduler_output, "kv_rotate_operations", None):
++            self._snapshot_gpu_mem("pre_rotate")
 +            self._execute_kv_rotate_operations(scheduler_output.kv_rotate_operations)
++            self._snapshot_gpu_mem("post_rotate")
 +
          # Execute KV cache copy operations for compaction BEFORE updating block tables.
          # These physically move KV values to compact the cache after span removal.
          if scheduler_output.kv_copy_operations:
-@@ -880,6 +903,50 @@ class GPUModelRunner(
+@@ -880,6 +909,50 @@ class GPUModelRunner(
                  if req_index is not None:
                      self.input_batch.block_table.truncate_row(req_index, num_blocks)
  
@@ -1934,7 +1968,7 @@ index f677b37..b8964dc 100644
          # Wait until valid_sampled_tokens_count is copied to cpu,
          # then use it to update actual num_computed_tokens of each request.
          valid_sampled_token_count = self._get_valid_sampled_token_count()
-@@ -1041,6 +1108,338 @@ class GPUModelRunner(
+@@ -1041,6 +1114,384 @@ class GPUModelRunner(
          # Refresh batch metadata with any pending updates.
          self.input_batch.refresh_metadata()
  
@@ -2155,6 +2189,52 @@ index f677b37..b8964dc 100644
 +              f"({n_blocks} blocks, {len(self.kv_caches)} layers, "
 +              f"{m.cpu_bytes()} bytes)", flush=True)
 +        return True
++
++    def _snapshot_gpu_mem(self, label: str) -> None:
++        """Phase 9: append a GPU memory snapshot to a jsonl trace.
++
++        Writes to PAPER2_GPU_MEM_TRACE_PATH if set; no-op otherwise. Each
++        line records:
++          - label (which Phase 9 event this is)
++          - alloc_bytes (torch.cuda.memory_allocated)
++          - reserved_bytes (torch.cuda.memory_reserved)
++          - num_free_blocks (block_pool.get_num_free_blocks)
++          - timestamp
++        Plot script later joins these against the engine's [v9-rotate]
++        and [v3-restore-splice] markers to make memory-over-time figures.
++        """
++        import os as _os
++        path = _os.environ.get("PAPER2_GPU_MEM_TRACE_PATH")
++        if not path:
++            return
++        try:
++            import torch as _torch
++            import time as _time
++            import json as _json
++            alloc = _torch.cuda.memory_allocated() if _torch.cuda.is_available() else 0
++            reserved = _torch.cuda.memory_reserved() if _torch.cuda.is_available() else 0
++            n_free = -1
++            try:
++                # block_pool lives on the worker's KV cache manager via the model runner
++                # graph; we sample whichever single_type_manager the worker tracks.
++                # Best-effort: skip if unavailable.
++                from vllm.v1.core.block_masking.memento_store import ENGINE_STATS
++                stats_snap = dict(ENGINE_STATS)
++            except Exception:
++                stats_snap = {}
++            rec = {
++                "t": _time.time(),
++                "label": label,
++                "pid": _os.getpid(),
++                "alloc_bytes": alloc,
++                "reserved_bytes": reserved,
++                "num_free_blocks": n_free,
++                "engine_stats": stats_snap,
++            }
++            with open(path, "a") as f:
++                f.write(_json.dumps(rec) + "\n")
++        except Exception:
++            pass
 +
 +    def _find_rotary_embedding(self):
 +        """Walk the loaded model to find a RotaryEmbedding instance.

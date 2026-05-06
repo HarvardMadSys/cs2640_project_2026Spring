@@ -86,6 +86,8 @@ def run_validate_recall(
     run_id = int(time.time())
     out_dir = Path(f"/scratch/out/validate_recall/{run_id}")
     out_dir.mkdir(parents=True, exist_ok=True)
+    # Phase 9: GPU memory trace per Phase 9 event + heartbeat.
+    os.environ["PAPER2_GPU_MEM_TRACE_PATH"] = str(out_dir / "gpu_mem_trace.jsonl")
 
     # Wire env knobs that validate_recall.py reads on import.
     os.environ["PAPER2_INSTANCES"] = instances
