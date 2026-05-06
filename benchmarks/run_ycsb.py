@@ -40,7 +40,7 @@ THREAD_COUNTS = [1, 24, 64]
 STORES = ["sas", "lightning"]
 
 DEFAULTS = {
-    "YCSB_RECORDS": "100000",
+    "YCSB_RECORDS": "10000",
     "YCSB_OPS": "1000000",
     "YCSB_BACKEND": "hybrid",
 }
@@ -87,6 +87,7 @@ def run_sas(workload: str, threads: int) -> dict[str, float]:
 
 def run_lightning(workload: str, threads: int) -> dict[str, float]:
     LIGHTNING_SOCKET.unlink(missing_ok=True)
+    subprocess.run("rm -f /dev/shm/*", shell=True, stderr=subprocess.DEVNULL)
     daemon = subprocess.Popen(
         [str(LIGHTNING_BUILD / "store")],
         cwd=str(LIGHTNING_BUILD),
