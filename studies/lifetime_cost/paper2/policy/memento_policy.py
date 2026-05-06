@@ -253,6 +253,9 @@ class MementoPolicy(CompactionPolicy):
                 text = stashed
                 msg["memento"] = text
                 msg["prior_memento"] = None
+                msg["memento_step"] = ctx.step
+                # Phase 9: re-marker on next chat so engine recaptures.
+                msg["_compacted_already"] = False
             else:
                 tool_name, tool_args = _trace_tool_call(messages, i)
                 text, usage = self._writer.write(
@@ -274,6 +277,9 @@ class MementoPolicy(CompactionPolicy):
                     self._recall_table[mem_id] = msg["content"]
                     msg["memento_id"] = mem_id
                 msg["memento"] = text
+                msg["memento_step"] = ctx.step
+                # Phase 9: ensure markers fire on the chat after this set.
+                msg["_compacted_already"] = False
                 # Phase 7: when in `drop` recall mode, the obs needs to be
                 # rendered with markers ONE more time so the engine can
                 # capture+pin its KV. After that capture chat, the runner

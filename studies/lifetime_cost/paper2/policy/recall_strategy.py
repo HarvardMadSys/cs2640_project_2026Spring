@@ -32,12 +32,25 @@ class RecallStrategy(abc.ABC):
         ...
 
     @staticmethod
-    def _candidate_indices(messages: List[Dict[str, Any]]) -> List[int]:
-        """Tool messages that currently have a memento set."""
-        return [
-            i for i, m in enumerate(messages)
-            if m.get("role") == "tool" and m.get("memento")
-        ]
+    def _candidate_indices(
+        messages: List[Dict[str, Any]], step: int = -1,
+    ) -> List[int]:
+        """Tool messages that currently have a memento set.
+
+        Phase 9: when step is provided, exclude msgs memento'd in the
+        CURRENT step. The engine captures during the chat that follows
+        the memento-set; recalling in the same chat would query the
+        store before capture has run → 'unknown memento_id'. We require
+        at least one chat between memento-set and recall.
+        """
+        out = []
+        for i, m in enumerate(messages):
+            if m.get("role") != "tool" or not m.get("memento"):
+                continue
+            if step >= 0 and m.get("memento_step", -1) >= step:
+                continue
+            out.append(i)
+        return out
 
 
 class LRURecall(RecallStrategy):
@@ -50,7 +63,7 @@ class LRURecall(RecallStrategy):
     name = "lru"
 
     def pick(self, messages, *, step, recent_text):
-        cands = self._candidate_indices(messages)
+        cands = self._candidate_indices(messages, step=step)
         return cands[-1] if cands else None
 
 
@@ -99,7 +112,7 @@ class EmbeddingRecall(RecallStrategy):
         return self._model.encode(text, normalize_embeddings=True, convert_to_numpy=True)
 
     def pick(self, messages, *, step, recent_text):
-        cands = self._candidate_indices(messages)
+        cands = self._candidate_indices(messages, step=step)
         if not cands:
             return None
         if not recent_text.strip():
