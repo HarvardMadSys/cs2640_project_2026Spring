@@ -39,6 +39,8 @@ DEFAULTS = {
     "read_ratio": 0.5,
     "zipf_theta": 0.99,
     "seed": 2640,
+    "warmup_secs": 5,
+    "bench_secs": 10,
 }
 
 SWEEPS = {
