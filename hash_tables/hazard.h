@@ -2,6 +2,7 @@
 
 #include <array>
 #include <atomic>
+#include <boost/unordered/unordered_flat_set.hpp>
 #include <memory>
 #include <vector>
 
@@ -33,12 +34,6 @@ class hazard_domain {
                 ::sas::impl::free_table(static_cast<hash_table*>(ptr()));
             }
         }
-    };
-
-    struct retired_batch {
-        static constexpr size_t CAPACITY = 256;
-        std::array<retired_entry, CAPACITY> entries;
-        size_t size{0};
     };
 
     struct alignas(64) hazard_node {
@@ -94,7 +89,8 @@ class hazard_domain {
                                                std::memory_order_release);
     }
 
-    void scan_and_reclaim(retired_batch& retired, std::vector<void*>& active);
+    void scan_and_reclaim(std::vector<retired_entry>& retired,
+                          boost::unordered_flat_set<void*>& active);
 
   private:
     std::atomic<hazard_node*> head_{nullptr};
@@ -102,6 +98,8 @@ class hazard_domain {
 
 class hazard_thread_state {
   public:
+    static constexpr size_t SCAN_THRESHOLD = 256;
+
     hazard_thread_state();
     ~hazard_thread_state();
 
@@ -116,8 +114,9 @@ class hazard_thread_state {
   private:
     hazard_domain& domain_;
     hazard_domain::hazard_node* node_;
-    hazard_domain::retired_batch retired_;
-    std::vector<void*> active_;
+    std::vector<hazard_domain::retired_entry> retired_;
+    boost::unordered_flat_set<void*> active_;
+    size_t retire_counter_{0};
 
     void push_retire(tagged_ptr<void> ptr);
 };

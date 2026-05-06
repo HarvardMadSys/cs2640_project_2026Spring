@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <cassert>
 #include <vector>
 
@@ -43,8 +42,8 @@ hazard_domain::hazard_node* hazard_domain::acquire_node() {
     return node;
 }
 
-void hazard_domain::scan_and_reclaim(retired_batch& retired,
-                                     std::vector<void*>& active) {
+void hazard_domain::scan_and_reclaim(std::vector<retired_entry>& retired,
+                                     boost::unordered_flat_set<void*>& active) {
     active.clear();
     auto* curr = head_.load(std::memory_order_acquire);
     while (curr) {
@@ -54,41 +53,30 @@ void hazard_domain::scan_and_reclaim(retired_batch& retired,
                 if (hp) {
                     hp = reinterpret_cast<void*>(
                         reinterpret_cast<uintptr_t>(hp) & ~1ULL);
-                    active.push_back(hp);
+                    active.insert(hp);
                 }
             }
         }
         curr = curr->next;
     }
 
-    if (active.empty()) {
-        for (size_t i = 0; i < retired.size; ++i) {
-            retired.entries[i].free();
-        }
-        retired.size = 0;
-        return;
-    }
-
-    std::sort(active.begin(), active.end());
-    active.erase(std::unique(active.begin(), active.end()), active.end());
-
-    size_t survivor_count = 0;
-    for (size_t i = 0; i < retired.size; ++i) {
-        auto& entry = retired.entries[i];
-        if (std::binary_search(active.begin(), active.end(), entry.ptr())) {
-            retired.entries[survivor_count++] = entry;
+    size_t kept = 0;
+    for (auto& entry : retired) {
+        if (active.contains(entry.ptr())) {
+            retired[kept++] = entry;
         } else {
             entry.free();
         }
     }
-
-    retired.size = survivor_count;
+    retired.resize(kept);
 }
 
 hazard_thread_state::hazard_thread_state() : domain_(*::sas::g_domain) {
     ::sas::impl::init_pool();
     ::sas::impl::init_node_pool();
     node_ = domain_.acquire_node();
+    retired_.reserve(SCAN_THRESHOLD * 2);
+    active_.reserve(64);
     for (auto& entry : node_->orphaned) {
         push_retire(entry);
     }
@@ -96,12 +84,13 @@ hazard_thread_state::hazard_thread_state() : domain_(*::sas::g_domain) {
 }
 
 hazard_thread_state::~hazard_thread_state() {
-    for (size_t i = 0; i < node_->ptrs.size(); ++i) {
-        node_->ptrs[i].store(nullptr, std::memory_order_release);
+    for (auto& p : node_->ptrs) {
+        p.store(nullptr, std::memory_order_release);
     }
     domain_.scan_and_reclaim(retired_, active_);
-    node_->orphaned.insert(node_->orphaned.end(), retired_.entries.begin(),
-                           retired_.entries.begin() + retired_.size);
+    node_->orphaned.insert(node_->orphaned.end(), retired_.begin(),
+                           retired_.end());
+    retired_.clear();
     node_->active.store(false, std::memory_order_release);
 }
 
@@ -125,8 +114,9 @@ void hazard_thread_state::retire(hash_table* ptr) {
 }
 
 void hazard_thread_state::push_retire(tagged_ptr<void> ptr) {
-    retired_.entries[retired_.size++] = ptr;
-    if (retired_.size == retired_.CAPACITY) {
+    retired_.push_back(ptr);
+    if (++retire_counter_ >= SCAN_THRESHOLD) {
+        retire_counter_ = 0;
         domain_.scan_and_reclaim(retired_, active_);
     }
 }
