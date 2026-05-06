@@ -1465,7 +1465,7 @@ index 6b0d8fe..2025738 100644
          # Now merge the new span into compacted_spans.
          request.compacted_spans = self._merge_spans(
 diff --git a/vllm/vllm/v1/core/single_type_kv_cache_manager.py b/vllm/vllm/v1/core/single_type_kv_cache_manager.py
-index de7ce2e..9aa82f7 100644
+index de7ce2e..27aeec5 100644
 --- a/vllm/vllm/v1/core/single_type_kv_cache_manager.py
 +++ b/vllm/vllm/v1/core/single_type_kv_cache_manager.py
 @@ -304,7 +304,9 @@ class SingleTypeKVCacheManager(ABC):
@@ -1479,7 +1479,7 @@ index de7ce2e..9aa82f7 100644
          """
          Physically compact KV cache by copying active tokens to contiguous slots.
  
-@@ -322,17 +324,65 @@ class SingleTypeKVCacheManager(ABC):
+@@ -322,17 +324,75 @@ class SingleTypeKVCacheManager(ABC):
                  that are active. The caller (scheduler) is responsible for
                  converting logical positions to physical positions via
                  request.logical_to_physical().
@@ -1526,18 +1526,28 @@ index de7ce2e..9aa82f7 100644
 +            for spec in capture_specs:
 +                src_block_ids = []
 +                seen = set()
++                n_oor = 0
++                n_null = 0
 +                for p in spec.physical_positions:
 +                    block_idx = p // self.block_size
 +                    if block_idx >= len(blocks):
++                        n_oor += 1
 +                        continue  # out-of-range; skip
 +                    block = blocks[block_idx]
 +                    if block == self._null_block:
++                        n_null += 1
 +                        continue
 +                    bid = block.block_id
 +                    if bid in seen:
 +                        continue
 +                    seen.add(bid)
 +                    src_block_ids.append(bid)
++                if not src_block_ids:
++                    print(f"[v9-capture-empty] memento_id={spec.memento_id} "
++                          f"n_positions={len(spec.physical_positions)} "
++                          f"n_oor={n_oor} n_null={n_null} "
++                          f"len_blocks={len(blocks)} block_size={self.block_size}",
++                          flush=True)
 +                if src_block_ids:
 +                    capture_operations.append(CaptureOp(
 +                        memento_id=spec.memento_id,
@@ -1549,7 +1559,7 @@ index de7ce2e..9aa82f7 100644
  
          # Build copy plan: list of (src_slot, dst_slot) pairs
          # where src_slot is the current physical location of an active token
-@@ -368,11 +418,81 @@ class SingleTypeKVCacheManager(ABC):
+@@ -368,11 +428,81 @@ class SingleTypeKVCacheManager(ABC):
          # Truncate the blocks list
          del blocks[blocks_needed:]
  
