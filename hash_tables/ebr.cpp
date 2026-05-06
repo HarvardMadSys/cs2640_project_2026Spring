@@ -138,6 +138,7 @@ ebr_thread_state::ebr_thread_state() : domain_(*g_domain) {
 ebr_thread_state::~ebr_thread_state() {
     delete cached_node_;
     state_->announced.store(INACTIVE_EPOCH, std::memory_order_release);
+    domain_.scan_and_reclaim(*state_);
     state_->active.store(false, std::memory_order_release);
 }
 
