@@ -43,14 +43,11 @@ if [ ! -d external/lightning ]; then
     git clone --depth=1 https://github.com/danyangz/lightning external/lightning
 fi
 mkdir -p external/lightning/build
-JAVA_HOME=$(dirname "$(dirname "$(readlink -f "$(command -v javac)")")")
+export JAVA_HOME=$(dirname "$(dirname "$(readlink -f "$(command -v javac)")")")
 (cd external/lightning/build && \
-    cmake -DJAVA_CLIENT=ON \
-          -DJAVA_HOME="$JAVA_HOME" \
-          -DJAVA_AWT_LIBRARY=NotNeeded \
-          -DJAVA_AWT_INCLUDE_PATH=NotNeeded \
-          .. > /dev/null && \
+    cmake -DJAVA_CLIENT=ON .. > /dev/null && \
     make -j"$(nproc)" > /dev/null)
+
 javac -d external/lightning/build \
     external/lightning/java/jlightning/JlightningClient.java
 
