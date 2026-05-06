@@ -5,9 +5,10 @@ import site.ycsb.Workload;
 import site.ycsb.measurements.Measurements;
 
 import java.io.FileReader;
+import java.lang.reflect.Constructor;
 import java.util.Properties;
 
-public final class SasYcsbDriver {
+public final class YcsbDriver {
 
     public static void main(String[] args) throws Exception {
         Properties props = new Properties();
@@ -37,19 +38,25 @@ public final class SasYcsbDriver {
         long ops = Long.parseLong(props.getProperty("operationcount", "1000"));
         String workloadClass = props.getProperty(
             "workload", "site.ycsb.workloads.CoreWorkload");
+        String dbClassName = props.getProperty(
+            "dbclass", "site.ycsb.db.SasClient");
+        Constructor<? extends DB> dbCtor =
+            Class.forName(dbClassName).asSubclass(DB.class).getDeclaredConstructor();
 
         Workload workload = (Workload) Class.forName(workloadClass)
             .getDeclaredConstructor().newInstance();
         workload.init(props);
 
-        runPhase("load", threads, props, workload, records, true);
-        runPhase("run",  threads, props, workload, ops,     false);
+        runPhase("load", threads, props, workload, dbCtor, records, true);
+        runPhase("run",  threads, props, workload, dbCtor, ops,     false);
 
         workload.cleanup();
     }
 
     private static void runPhase(String name, int threads, Properties props,
-                                 Workload workload, long total, boolean insert)
+                                 Workload workload,
+                                 Constructor<? extends DB> dbCtor,
+                                 long total, boolean insert)
         throws InterruptedException {
         long perThread = total / threads;
         long remainder = total - perThread * threads;
@@ -60,7 +67,7 @@ public final class SasYcsbDriver {
             long myOps = perThread + (i == 0 ? remainder : 0);
             ts[i] = new Thread(() -> {
                 try {
-                    DB db = new SasClient();
+                    DB db = dbCtor.newInstance();
                     db.setProperties(props);
                     db.init();
                     Object state = workload.initThread(props, tid, threads);

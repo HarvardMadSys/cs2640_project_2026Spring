@@ -37,5 +37,17 @@ if [ ! -d external/ycsb ]; then
     rm /tmp/ycsb.tar.gz
 fi
 
+# Lightning
+sudo apt-get install -yq libboost-all-dev
+if [ ! -d external/lightning ]; then
+    git clone --depth=1 https://github.com/danyangz/lightning external/lightning
+fi
+mkdir -p external/lightning/build
+(cd external/lightning/build && \
+    cmake -DJAVA_CLIENT=ON .. > /dev/null && \
+    make -j"$(nproc)" > /dev/null)
+javac -d external/lightning/build \
+    external/lightning/java/jlightning/JlightningClient.java
+
 # Run `source ~/.bashrc` after setup! Necessary to build with Clang, which is
 # the easiest way to get a C++23 stdlib on Ubuntu.
