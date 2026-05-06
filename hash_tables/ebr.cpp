@@ -22,37 +22,15 @@ void delete_table(void* p) {
 ebr_domain::ebr_domain() {}
 
 ebr_domain::~ebr_domain() {
-    auto* curr = head_.load();
-    while (curr) {
-        for (auto& e : curr->retired) {
+    slots_.for_each([](thread_state& ts) {
+        for (auto& e : ts.retired) {
             e.deleter(e.ptr);
         }
-        auto* next = curr->next;
-        delete curr;
-        curr = next;
-    }
+    });
 }
 
 ebr_domain::thread_state* ebr_domain::acquire_state() {
-    auto* curr = head_.load(std::memory_order_acquire);
-    while (curr) {
-        if (!curr->active.load(std::memory_order_relaxed)) {
-            bool expected = false;
-            if (curr->active.compare_exchange_strong(
-                    expected, true, std::memory_order_acquire)) {
-                return curr;
-            }
-        }
-        curr = curr->next;
-    }
-
-    auto* node = new thread_state();
-    node->active.store(true, std::memory_order_relaxed);
-    node->next = head_.load(std::memory_order_relaxed);
-    while (!head_.compare_exchange_weak(
-        node->next, node, std::memory_order_release, std::memory_order_relaxed))
-        ;
-    return node;
+    return slots_.acquire();
 }
 
 uint64_t ebr_domain::enter(thread_state& ts) noexcept {
@@ -88,16 +66,13 @@ void ebr_domain::scan_and_reclaim(thread_state& self) {
                                        std::memory_order_relaxed);
     } else {
         cutoff = global;
-        auto* curr = head_.load(std::memory_order_acquire);
-        while (curr) {
-            if (curr != &self && curr->active.load(std::memory_order_acquire)) {
-                uint64_t a = curr->announced.load(std::memory_order_acquire);
-                if (a != INACTIVE_EPOCH && a < cutoff) {
-                    cutoff = a;
-                }
+        slots_.for_each_active([&](thread_state& ts) {
+            if (&ts == &self) return;
+            uint64_t a = ts.announced.load(std::memory_order_acquire);
+            if (a != INACTIVE_EPOCH && a < cutoff) {
+                cutoff = a;
             }
-            curr = curr->next;
-        }
+        });
 
         if (cutoff == global) {
             epoch_.compare_exchange_strong(global, global + 1,
@@ -139,7 +114,7 @@ ebr_thread_state::~ebr_thread_state() {
     delete cached_node_;
     state_->announced.store(INACTIVE_EPOCH, std::memory_order_release);
     domain_.scan_and_reclaim(*state_);
-    state_->active.store(false, std::memory_order_release);
+    domain_.release_state(state_);
 }
 
 void ebr_thread_state::retire(object_handle* h) {

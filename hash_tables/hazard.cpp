@@ -10,55 +10,30 @@ namespace sas::hp {
 hazard_domain::hazard_domain() {}
 
 hazard_domain::~hazard_domain() {
-    auto* curr = head_.load();
-    while (curr) {
-        for (auto& entry : curr->orphaned) {
+    slots_.for_each([](hazard_node& node) {
+        for (auto& entry : node.orphaned) {
             entry.free();
         }
-        auto* next = curr->next;
-        delete curr;
-        curr = next;
-    }
+    });
 }
 
 hazard_domain::hazard_node* hazard_domain::acquire_node() {
-    auto* curr = head_.load(std::memory_order_acquire);
-    while (curr) {
-        if (!curr->active.load(std::memory_order_relaxed)) {
-            bool expected = false;
-            if (curr->active.compare_exchange_strong(
-                    expected, true, std::memory_order_acquire)) {
-                return curr;
-            }
-        }
-        curr = curr->next;
-    }
-
-    auto* node = new hazard_node();
-    node->next = head_.load(std::memory_order_relaxed);
-    while (!head_.compare_exchange_weak(
-        node->next, node, std::memory_order_release, std::memory_order_relaxed))
-        ;
-    return node;
+    return slots_.acquire();
 }
 
 void hazard_domain::scan_and_reclaim(std::vector<retired_entry>& retired,
                                      boost::unordered_flat_set<void*>& active) {
     active.clear();
-    auto* curr = head_.load(std::memory_order_acquire);
-    while (curr) {
-        if (curr->active.load(std::memory_order_acquire)) {
-            for (size_t i = 0; i < 2; ++i) {
-                void* hp = curr->ptrs[i].load(std::memory_order_seq_cst);
-                if (hp) {
-                    hp = reinterpret_cast<void*>(
-                        reinterpret_cast<uintptr_t>(hp) & ~1ULL);
-                    active.insert(hp);
-                }
+    slots_.for_each_active([&](hazard_node& node) {
+        for (size_t i = 0; i < 2; ++i) {
+            void* hp = node.ptrs[i].load(std::memory_order_seq_cst);
+            if (hp) {
+                hp = reinterpret_cast<void*>(
+                    reinterpret_cast<uintptr_t>(hp) & ~1ULL);
+                active.insert(hp);
             }
         }
-        curr = curr->next;
-    }
+    });
 
     size_t kept = 0;
     for (auto& entry : retired) {
@@ -91,7 +66,7 @@ hazard_thread_state::~hazard_thread_state() {
     node_->orphaned.insert(node_->orphaned.end(), retired_.begin(),
                            retired_.end());
     retired_.clear();
-    node_->active.store(false, std::memory_order_release);
+    domain_.release_node(node_);
 }
 
 hash_table* hazard_thread_state::acquire_table(

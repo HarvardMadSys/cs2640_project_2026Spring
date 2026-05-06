@@ -7,6 +7,7 @@
 
 #include "handle.h"
 #include "hash_table.h"
+#include "slot_table.h"
 
 namespace sas::ebr {
 
@@ -53,13 +54,13 @@ class ebr_domain {
                   sizeof(std::atomic<bool>)];
         uint64_t cached_epoch{0};
         retired_list retired;
-        thread_state* next{nullptr};
     };
 
     ebr_domain();
     ~ebr_domain();
 
     thread_state* acquire_state();
+    void release_state(thread_state* ts) noexcept { slots_.release(ts); }
 
     uint64_t enter(thread_state& ts) noexcept;
     void exit(thread_state& ts) noexcept;
@@ -78,7 +79,7 @@ class ebr_domain {
   private:
     alignas(64) std::atomic<uint64_t> epoch_{0};
     alignas(64) std::atomic<uint64_t> min_active_{0};
-    alignas(64) std::atomic<thread_state*> head_{nullptr};
+    alignas(64) slot_table<thread_state> slots_;
 };
 
 class ebr_thread_state {

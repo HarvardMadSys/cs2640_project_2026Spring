@@ -9,6 +9,7 @@
 #include "common.h"
 #include "handle.h"
 #include "hash_table.h"
+#include "slot_table.h"
 #include "tagged_ptr.h"
 
 namespace sas::hp {
@@ -38,14 +39,14 @@ class hazard_domain {
 
     struct alignas(64) hazard_node {
         std::array<std::atomic<void*>, 2> ptrs{{nullptr, nullptr}};
-        std::atomic<bool> active{true};
+        std::atomic<bool> active{false};
         std::vector<retired_entry> orphaned;
-        hazard_node* next{nullptr};
     };
 
     explicit hazard_domain();
     ~hazard_domain();
     hazard_node* acquire_node();
+    void release_node(hazard_node* node) noexcept { slots_.release(node); }
 
     template <typename T>
     T* protect(const std::atomic<T*>& shared_ptr, hazard_node* node) {
@@ -93,7 +94,7 @@ class hazard_domain {
                           boost::unordered_flat_set<void*>& active);
 
   private:
-    std::atomic<hazard_node*> head_{nullptr};
+    slot_table<hazard_node> slots_;
 };
 
 class hazard_thread_state {
