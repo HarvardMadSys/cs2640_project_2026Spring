@@ -793,3 +793,86 @@ python3.11 plugins/sweep14_report.py
 Per-trace JSON dumps in `plugins/result/sweep14_*.json`. Total wall-clock for the full sweep was ~13.5 minutes on the harness machine.
 
 ---
+
+## §15 — V4 learning diagnostics: weight jitter and label imbalance
+
+After §14 surfaced that V4+OptS adds essentially nothing on top of OptS_T2 (a knobs-only static sweep), we ran a per-cell diagnostic to ask two mechanistic questions:
+
+1. **Are weights jittering / failing to converge?** (jitter hypothesis)
+2. **Are labels so heavily skewed to one class that there's no learning signal?** (imbalance hypothesis)
+
+Diagnostic harness: `plugins/diag_v4.py` subclasses `S3FIFOLearnedV4` to snapshot `(w, b)` every 200 SGD updates and record per-window y=1 rate. Per-cell JSONs in `plugins/result/diag_v4_*.json`. Ran on 9 (trace, cache_size) cells, prioritizing the smallest local traces (cluster10 200k, alibaba_110/185 100k, cloudphysics 100k) before the larger cluster45 / msr / twitter slices.
+
+### Per-cell summary
+
+`flips` = sign-flips per weight across the snapshot trajectory; `std_2nd` = stddev of each weight over the second half of training (post-warmup); `all0w%` = fraction of 200-decision windows in which zero positive labels arrived.
+
+| trace | cache | reqMR | y=1% | all0w% | promote% | flips lh/age/rec | std_2nd lh/age/rec/b | final (lh, age, rec, b) |
+|---|---|---|---|---|---|---|---|---|
+| alibaba_110 | 100 | 0.398 | 8.9% | 17% | 5.5% | 0 / 35 / 10 | 0.17 / 0.66 / 0.52 / **0.95** | (+1.69, +0.27, −0.81, −2.13) |
+| alibaba_185 | 100 | 0.463 | 1.6% | 14% | 0.9% | 0 / 8 / 0 | 0.20 / 0.19 / 0.22 / 0.12 | (+2.01, +0.85, −2.45, −0.77) |
+| cloudphysics | 500 | 0.841 | 0.5% | **79%** | 0.3% | 0 / 22 / 0 | 0.08 / 0.51 / 0.75 / **0.67** | (+0.86, −1.53, −2.66, −1.95) |
+| cluster10 | 1000 | 0.500 | **0.0%** | **100%** | 0.0% | 0 / 0 / 0 | 0.05 / 0.03 / 0.03 / 0.00 | (+0.60, −0.36, −0.36, −0.38) |
+| cluster10 | 10000 | 0.500 | **0.0%** | **100%** | 0.0% | 0 / 0 / 0 | 0.05 / 0.03 / 0.03 / 0.00 | (+0.62, −0.38, −0.38, −0.38) |
+| cluster45 | 1000 | 0.545 | 1.1% | 11% | 0.2% | 5 / 31 / 0 | 0.12 / 0.15 / 0.12 / 0.08 | (−0.24, −0.11, −1.57, −0.68) |
+| cluster45 | 10000 | 0.500 | 2.1% | 3% | 2.0% | 0 / 29 / 46 | **1.10** / 0.31 / 0.31 / 0.02 | (**+3.68**, −0.58, −0.72, −0.40) |
+| msr_hm_0 | 1000 | 0.428 | 2.4% | 28% | 1.3% | 0 / 39 / 28 | 0.44 / 0.30 / 0.37 / 0.37 | (+1.69, +0.51, −0.54, −4.12) |
+| twitter | 1000 | 0.320 | 5.1% | 0% | 0.6% | 15 / **73** / 0 | 0.16 / 0.15 / 0.14 / 0.07 | (−0.33, −0.04, −0.55, −0.66) |
+| twitter | 10000 | 0.228 | 5.2% | 0% | 5.2% | 0 / 51 / 8 | **1.15** / 0.60 / 0.57 / 0.02 | (**+4.61**, +0.19, −0.99, −0.33) |
+
+### Both pathologies are real, and they are partially decoupled
+
+**(1) Label imbalance is severe and traces fall into a clear hierarchy.**
+
+- **Degenerate (no learning possible)**: `cluster10` at any cache size has y=1 = 0.000 across all 99 006 decisions; 100% of windows are all-zero. The Belady-binary label simply never fires at H = cache_size on this near-uniform-access trace. V4 collapses to a trivial "never promote" policy (1 promotion in 99 006 S-evictions). The §13 / §14 observation that cluster10 has no signal is verified at the label level.
+- **Nearly degenerate**: `cloudphysics 500` has y=1 = 0.5% with **79% of 200-decision windows containing zero positives**. Most updates monotonically push weights toward "always y=0"; the rare positive yanks them back, producing visible bias drift (b std_2nd = 0.67) and 22 sign-flips on w_age.
+- **Heavy imbalance**: cluster45, msr_hm_0, alibaba_185 all sit at y=1 = 1–3% with 11–28% all-zero windows. Even the *good* learning cells are operating on a heavily skewed label distribution.
+- **Twitter is the only cell with no all-zero windows**, sitting at ~5% y=1.
+- **Cache size barely shifts the balance.** cluster45 goes 1.1% → 2.1% as cache scales 1k → 10k; cluster10 stays at 0% regardless. The Belady label is structurally sparse on these traces, not under-resolved.
+
+**(2) Weight jitter is universal but takes two distinct forms.**
+
+- **`w_age` is consistently the noisiest weight**: 8–73 sign flips per cell on every non-degenerate trace. Mechanism: at S-eviction time the age feature is concentrated near `S_cap` (only old objects get evicted), so the gradient signal in this dimension has small effective range and high per-decision variance.
+- **`w_loghits` exhibits unbounded drift, not oscillation, on large-cache cells**: twitter c=10000 has **0 sign-flips on w_loghits** but final value **+4.61** (init = +1.0) with range_2nd = 3.74 — this is monotone growth. Cluster45 c=10000 has the same shape (final +3.68, range_2nd = 3.66, 0 flips). With L2 = 1e-4 and lr = 0.05, the per-snapshot L2 pull is ~5×10⁻⁶ — effectively no regularization. **This is the cleanest non-convergence finding.**
+- **Bias drift in label-starved cells**: cloudphysics b std_2nd = 0.67, alibaba_110 b std_2nd = 0.95. The model keeps re-adjusting the decision threshold to chase a moving negative-class baseline.
+- **Jitter ≠ harm**: the cell with the highest w_age flip count (twitter c=1000, 73 flips) is a V4-win cell. The flips happen around an effectively-zero coefficient (final w_age = −0.04, std_2nd = 0.15) — tiny oscillation around no-effect, not a learning failure. This matters for interpretation: flip count alone is not a diagnostic for whether learning is broken.
+
+### Pathology → cell map
+
+| pathology | cells |
+|---|---|
+| Degenerate, no learning possible | cluster10 (any cache) — y=1 = 0% |
+| Severe imbalance + bias drift | cloudphysics 500, alibaba_110 100 |
+| w_loghits unbounded drift | twitter c=10000, cluster45 c=10000 |
+| Healthy oscillation around small weights | twitter c=1000 (high flip count, but coefficients ≈ 0) |
+
+### Implication for §14's findings
+
+The **w_loghits drift cells line up with V4's losses to OptST in §14**: cluster45 c=10000 (V4 0.4940 vs OptST 0.4855) and the large-cache end of wiki / alibaba (the §14 cells where "V4 loses to static-best concentrate at large cache sizes"). The mechanism is consistent: larger cache → larger H → more positive labels per S-resident → unbounded growth in `w_loghits` → over-aggressive promotion, similar to vanilla S3-FIFO's failure mode.
+
+Two concrete interventions this implies, neither tested yet:
+
+1. **Stronger or feature-specific L2** on `w_loghits`, or hard clip to a sensible range. The current 1e-4 L2 is too weak by ~3 orders of magnitude relative to gradient signal at large caches.
+2. **Weight the loss by class frequency** (or use a label-rate-aware learning rate). With y=1 at 1–5%, every positive arrival yanks the bias / weights disproportionately; this is exactly the regime where naive SGD oscillates.
+
+Cluster10's 100% degeneracy also explains why it's a "safe" cell in §9 / §14 — there is literally no decision V4 can make differently from "never promote", so it can't lose. It's not robustness; it's that the cell is trivial.
+
+### Reproducibility
+
+```bash
+# one cell — small slice, ~30 s wall-clock
+python3.11 plugins/diag_v4.py cluster45 1000 200000
+
+# the full set used in the table above (run sequentially, ~5 min total)
+for spec in "cluster10 1000 200000" "cluster10 10000 200000" \
+            "alibaba_110 100 100000" "alibaba_185 100 100000" \
+            "cloudphysics 500 100000" "cluster45 1000 200000" \
+            "cluster45 10000 200000" "msr_hm_0 1000 200000" \
+            "twitter 1000 200000" "twitter 10000 200000"; do
+  python3.11 plugins/diag_v4.py $spec
+done
+```
+
+Per-cell JSONs in `plugins/result/diag_v4_*.json` carry the full snapshot trajectories, label rates per window, and pathology stats summarized above.
+
+---
