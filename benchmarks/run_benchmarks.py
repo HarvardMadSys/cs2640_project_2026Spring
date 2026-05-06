@@ -62,8 +62,8 @@ TARGETS: dict[str, dict] = {
 
 PLOTS: dict[str, dict] = {
     "backends": {
-        "targets": ["compare_hp", "compare_ebr",
-                    "compare_sharded", "compare_hybrid", "compare_spinlock"],
+        "targets": ["compare_hp", "compare_ebr", "compare_sharded", 
+                    "compare_hybrid", "compare_spinlock"],
         "axes": ["num_threads", "num_keys", "read_ratio", "zipf_theta"],
     },
     "arch": {
