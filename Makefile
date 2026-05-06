@@ -15,6 +15,8 @@ YCSB_HOME ?= external/ycsb
 YCSB_BACKEND ?= hp
 YCSB_WORKLOAD ?= workloada
 YCSB_THREADS ?= 1
+YCSB_RECORDS ?= 1000000
+YCSB_OPS ?= 1000000
 YCSB_CLASSES = $(BUILD_DIR)/benchmarks/ycsb/classes
 YCSB_LIB = $(BUILD_DIR)/benchmarks/ycsb
 YCSB_CORE_JAR = $(firstword $(wildcard $(YCSB_HOME)/lib/core-*.jar))
@@ -54,7 +56,9 @@ ycsb-bench: ycsb
 	    -Dsas.backend=$(YCSB_BACKEND) \
 	    site.ycsb.db.SasYcsbDriver \
 	    -P $(abspath $(YCSB_HOME))/workloads/$(YCSB_WORKLOAD) \
-	    -threads $(YCSB_THREADS)
+	    -threads $(YCSB_THREADS) \
+	    -p recordcount=$(YCSB_RECORDS) \
+	    -p operationcount=$(YCSB_OPS)
 
 ycsb-load: ycsb
 	@cd $(YCSB_HOME) && ./bin/ycsb load basic \
