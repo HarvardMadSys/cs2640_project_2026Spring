@@ -79,10 +79,10 @@ index 37c8bbd..413d091 100644
  ]
 diff --git a/vllm/vllm/v1/core/block_masking/memento_store.py b/vllm/vllm/v1/core/block_masking/memento_store.py
 new file mode 100644
-index 0000000..b46a725
+index 0000000..c7feb82
 --- /dev/null
 +++ b/vllm/vllm/v1/core/block_masking/memento_store.py
-@@ -0,0 +1,571 @@
+@@ -0,0 +1,578 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 +"""
@@ -120,7 +120,14 @@ index 0000000..b46a725
 +    global _HEARTBEAT_THREAD_STARTED
 +    if _HEARTBEAT_THREAD_STARTED:
 +        return
-+    interval = int(os.environ.get("PAPER2_HEARTBEAT_SEC", "0") or "0")
++    raw = os.environ.get("PAPER2_HEARTBEAT_SEC", "0") or "0"
++    try:
++        interval = int(raw)
++    except Exception:
++        interval = 0
++    print(f"[heartbeat-init pid={os.getpid()}] PAPER2_HEARTBEAT_SEC={raw!r} "
++          f"→ interval={interval}",
++          flush=True)
 +    if interval <= 0:
 +        return
 +    _HEARTBEAT_THREAD_STARTED = True
@@ -888,7 +895,7 @@ index db7a4d2..c703037 100644
      # block masking compactions. These requests will do prefill only,
      # allowing compaction to run before the first decode token.
 diff --git a/vllm/vllm/v1/core/sched/scheduler.py b/vllm/vllm/v1/core/sched/scheduler.py
-index 6b0d8fe..b4d3766 100644
+index 6b0d8fe..0df2281 100644
 --- a/vllm/vllm/v1/core/sched/scheduler.py
 +++ b/vllm/vllm/v1/core/sched/scheduler.py
 @@ -88,6 +88,16 @@ class Scheduler(SchedulerInterface):
@@ -1511,7 +1518,7 @@ index 6b0d8fe..b4d3766 100644
              return SpanRemovalResult(
                  success=False,
                  tokens_removed=0,
-@@ -1854,20 +2343,114 @@ class Scheduler(SchedulerInterface):
+@@ -1854,20 +2343,121 @@ class Scheduler(SchedulerInterface):
              request.logical_to_physical(p) for p in active_logical
          ]
  
@@ -1578,15 +1585,22 @@ index 6b0d8fe..b4d3766 100644
              self.pending_kv_copy_operations[request_id] = copy_ops
  
 +        # Store capture operations to be sent to worker.
-+        # IMPORTANT: extend (not overwrite) — mask_token_span is called in a
-+        # loop within `schedule()` for requests with multiple pending
-+        # compactions, and each call produces its own capture_ops. Overwriting
-+        # would discard all but the last compaction's captures, which is what
-+        # bottlenecked Phase 9 to one obs/chat in earlier smokes.
++        # IMPORTANT: extend (not overwrite) so multi-compaction-per-chat
++        # captures all reach the worker. Dedup by memento_id within the
++        # request's pending list — re-firing capture for the same obs in
++        # the same chat (which happens when prior memento'd msgs' marker
++        # pairs reappear in pending_compactions) would have the worker
++        # copy the same KV multiple times, exhausting CPU pinned mem.
 +        if capture_ops:
-+            self.pending_kv_capture_operations.setdefault(
++            existing = self.pending_kv_capture_operations.setdefault(
 +                request_id, []
-+            ).extend(capture_ops)
++            )
++            seen_memento_ids = {op.memento_id for op in existing}
++            for op in capture_ops:
++                if op.memento_id in seen_memento_ids:
++                    continue
++                existing.append(op)
++                seen_memento_ids.add(op.memento_id)
 +            # Phase 3b/4a: stash a metadata-only StoredMemento on the
 +            # SCHEDULER-side memento store so future operations
 +            # (queue_kv_restore, release_pinned_memento) can find block

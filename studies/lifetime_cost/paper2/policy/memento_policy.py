@@ -465,7 +465,10 @@ class MementoPolicy(CompactionPolicy):
                     # avoid losing the memento. Try again next step.
                     print(f"[policy-recall] step={ctx.step} SKIP: "
                           f"target obs_id={expected_obs_id} not yet captured "
-                          f"(captured set has {len(captured)} obs)",
+                          f"(captured={sorted(captured)[:5]}{'…' if len(captured)>5 else ''}) "
+                          f"obs_token_len={len(obs_token_ids) if obs_token_ids else 0} "
+                          f"obs_first3={obs_token_ids[:3] if obs_token_ids else []} "
+                          f"obs_last3={obs_token_ids[-3:] if obs_token_ids else []}",
                           flush=True)
                     return messages, None
                 m_obs = ctx.tokenizer.count(obs)
