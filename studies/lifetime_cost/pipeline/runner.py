@@ -164,18 +164,31 @@ def run_task(
                     except Exception:
                         pass
 
-        # Phase 3c: drain kvrestore recall hints. Each entry's obs gets
-        # restored from CPU pinned memory into fresh GPU blocks, then
-        # spliced into the upcoming request's block_table at the obs's
-        # original logical position. No re-prefill of the obs.
+        # Phase 3c + 9: drain kvrestore recall hints. Each entry's obs gets
+        # restored from CPU pinned memory into fresh GPU blocks and spliced
+        # into the upcoming request's block_table at the obs's original
+        # logical position; the suffix's cached K is then rotated by
+        # delta_tokens to correct RoPE phase. No re-prefill anywhere.
+        # Each entry is either an (obs_text, delta_tokens) tuple (post-
+        # Phase 9) or a bare obs_text (legacy; treated as delta=0).
         pending_kvr = getattr(policy, "_pending_kvrestore_recalls", None)
         if pending_kvr:
             queue_kv_restore = getattr(model, "queue_kv_restore", None)
             if callable(queue_kv_restore):
                 while pending_kvr:
-                    obs_text = pending_kvr.pop(0)
+                    entry = pending_kvr.pop(0)
+                    if isinstance(entry, tuple):
+                        obs_text, delta = entry
+                    else:
+                        obs_text, delta = entry, 0
                     try:
-                        queue_kv_restore(obs_text)
+                        queue_kv_restore(obs_text, delta)
+                    except TypeError:
+                        # legacy adapter signature without delta
+                        try:
+                            queue_kv_restore(obs_text)
+                        except Exception:
+                            pass
                     except Exception:
                         pass
 

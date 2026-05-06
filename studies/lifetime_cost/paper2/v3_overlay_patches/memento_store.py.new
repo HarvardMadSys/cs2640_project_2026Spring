@@ -41,6 +41,9 @@ ENGINE_STATS: dict[str, int] = {
     "recalls_via_unmask": 0,      # Phase 4e: obs_id consumed from recall queue
     "dual_key_inserts": 0,        # Phase 8: cached block dual-keyed under
                                    # additional chain hash (transparent compaction)
+    "kv_rotations_executed": 0,   # Phase 9: suffix K rotated in cache to match
+                                   # post-recall logical positions (RoPE composition)
+    "kv_rotations_blocks": 0,     # Phase 9: total #blocks whose K was rotated
 }
 
 
@@ -190,35 +193,48 @@ def _kv_restore_queue_path() -> str:
     )
 
 
-def queue_kv_restore_request(memento_id: str) -> None:
-    """Phase 3c: append a memento_id to the kv-restore queue.
+def queue_kv_restore_request(memento_id: str, rotate_delta: int = 0) -> None:
+    """Phase 3c + 9: append a memento_id (+ optional rotate_delta) to the queue.
 
     Adapter writes (main proc); scheduler reads (engine proc) when the
     next chat()'s request is about to start. The scheduler then calls
-    its own queue_kv_restore(request_id, memento_id) to allocate fresh
-    GPU blocks, queue a worker KVRestoreOp (CPU→GPU copy), and splice
-    the new blocks into req_to_blocks at the obs's original logical
-    position. Cross-process file IPC mirrors queue_recall/consume_recall.
+    its own queue_kv_restore(request_id, memento_id, rotate_delta) to
+    allocate fresh GPU blocks, queue a worker KVRestoreOp (CPU→GPU copy),
+    splice the new blocks into req_to_blocks at the obs's original
+    logical position, AND queue a KVRotateOp that rotates the suffix's
+    cached K vectors by `rotate_delta` tokens to correct their RoPE
+    phase post-splice.
+
+    rotate_delta: tokens by which the suffix shifted on recall.
+        For lru-kvrestore mode this is m_obs - p_placeholder
+        (positive when obs is longer than placeholder, which is normal).
+        Pass 0 to skip rotation (legacy Phase 3c behavior with
+        accepted RoPE drift).
     """
     path = _kv_restore_queue_path()
     try:
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
         with open(path, "a") as f:
-            f.write(json.dumps({"memento_id": memento_id}) + "\n")
+            f.write(json.dumps({
+                "memento_id": memento_id,
+                "rotate_delta": int(rotate_delta),
+            }) + "\n")
     except Exception:
         pass
 
 
-def drain_kv_restore_requests() -> list[str]:
-    """Consume + return all queued memento_ids. Empties the queue.
+def drain_kv_restore_requests() -> list[tuple[str, int]]:
+    """Consume + return all queued (memento_id, rotate_delta). Empties queue.
 
     Called by the scheduler at request-add time so each new request gets
-    the pending restores applied before forward runs.
+    the pending restores applied before forward runs. Backward-compatible
+    with prior file format that had only {"memento_id": ...} — those
+    return rotate_delta=0.
     """
     path = _kv_restore_queue_path()
     if not os.path.exists(path):
         return []
-    out: list[str] = []
+    out: list[tuple[str, int]] = []
     try:
         with open(path) as f:
             for line in f:
@@ -228,7 +244,7 @@ def drain_kv_restore_requests() -> list[str]:
                     continue
                 mid = rec.get("memento_id")
                 if mid:
-                    out.append(mid)
+                    out.append((mid, int(rec.get("rotate_delta", 0) or 0)))
     except Exception:
         return []
     try:
@@ -438,3 +454,21 @@ class KVRestoreOp:
     memento_id: str
     request_id: str
     target_block_ids: list[int]   # already-allocated GPU blocks to fill
+
+
+@dataclass
+class KVRotateOp:
+    """Manager→worker job: rotate cached K vectors by delta_tokens in place.
+
+    Phase 9 — the missing piece for "no re-prefill on recall". After
+    `KVRestoreOp` brings obs's KV back to GPU and the scheduler splices
+    obs blocks at original positions, the SUFFIX blocks have K vectors
+    that were RoPE-baked at compacted slot positions. Their logical
+    positions just shifted by delta_tokens = m_obs - p_placeholder. We
+    re-rotate K in place via vLLM's rotary kernel so RoPE phase matches
+    the new positions, exploiting RoPE composition: R(p+Δ) = R(Δ) ∘ R(p).
+    """
+
+    request_id: str
+    suffix_block_ids: list[int]   # blocks AFTER the spliced obs region
+    delta_tokens: int             # signed; typically positive on recall

@@ -406,17 +406,26 @@ class MementoPolicy(CompactionPolicy):
             msg["recalled_step"] = ctx.step
             new_messages = messages
         elif self._recall_mode == "kvrestore":
-            # Phase 3c: clear memento so the renderer puts the full obs
-            # back at original position on the next chat. Stage the obs_text
-            # for the runner to push into the engine's kv_restore queue.
-            # The scheduler will splice the captured KV from CPU into the
-            # new request's block_table at the obs's original logical
-            # position; vLLM's prefill should then SKIP those positions
-            # (covered) and the suffix's K vectors stay at compacted
-            # positions (slight RoPE-phase mismatch, accepted).
+            # Phase 3c + 9: clear memento so the renderer puts the full obs
+            # back at original position. Stage (obs_text, delta_tokens) for
+            # the runner. delta_tokens = m_obs - p_memento_placeholder; this
+            # is the suffix shift the rotation kernel must correct so RoPE
+            # phase matches the new logical positions (no re-prefill).
             obs = msg.get("content") or ""
+            memento_text = msg.get("memento") or ""
             if obs:
-                self._pending_kvrestore_recalls.append(obs)
+                # Tokenize both with ctx.tokenizer to get accurate counts.
+                # The "memento placeholder" rendered into the prompt during
+                # the compacted period is `[tool_response, evicted, memento]\n{memento}`
+                # — a small wrapper plus the memento body. We approximate the
+                # placeholder length as len(memento) tokens since the wrapper
+                # is fixed across compaction events; the precise wrapper
+                # length only matters if it shifts the suffix by more than
+                # block_size, which is unlikely (the wrapper is ~5 tokens).
+                m_obs = ctx.tokenizer.count(obs)
+                p_placeholder = ctx.tokenizer.count(memento_text)
+                delta = m_obs - p_placeholder
+                self._pending_kvrestore_recalls.append((obs, delta))
             msg["prior_memento"] = msg.get("memento")
             msg["memento"] = None
             msg["recalled_step"] = ctx.step

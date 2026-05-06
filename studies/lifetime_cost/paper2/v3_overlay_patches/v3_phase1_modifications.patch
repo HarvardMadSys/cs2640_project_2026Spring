@@ -79,10 +79,10 @@ index 37c8bbd..413d091 100644
  ]
 diff --git a/vllm/vllm/v1/core/block_masking/memento_store.py b/vllm/vllm/v1/core/block_masking/memento_store.py
 new file mode 100644
-index 0000000..2f3ee41
+index 0000000..cfefa78
 --- /dev/null
 +++ b/vllm/vllm/v1/core/block_masking/memento_store.py
-@@ -0,0 +1,440 @@
+@@ -0,0 +1,474 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 +"""
@@ -126,6 +126,9 @@ index 0000000..2f3ee41
 +    "recalls_via_unmask": 0,      # Phase 4e: obs_id consumed from recall queue
 +    "dual_key_inserts": 0,        # Phase 8: cached block dual-keyed under
 +                                   # additional chain hash (transparent compaction)
++    "kv_rotations_executed": 0,   # Phase 9: suffix K rotated in cache to match
++                                   # post-recall logical positions (RoPE composition)
++    "kv_rotations_blocks": 0,     # Phase 9: total #blocks whose K was rotated
 +}
 +
 +
@@ -275,35 +278,48 @@ index 0000000..2f3ee41
 +    )
 +
 +
-+def queue_kv_restore_request(memento_id: str) -> None:
-+    """Phase 3c: append a memento_id to the kv-restore queue.
++def queue_kv_restore_request(memento_id: str, rotate_delta: int = 0) -> None:
++    """Phase 3c + 9: append a memento_id (+ optional rotate_delta) to the queue.
 +
 +    Adapter writes (main proc); scheduler reads (engine proc) when the
 +    next chat()'s request is about to start. The scheduler then calls
-+    its own queue_kv_restore(request_id, memento_id) to allocate fresh
-+    GPU blocks, queue a worker KVRestoreOp (CPU→GPU copy), and splice
-+    the new blocks into req_to_blocks at the obs's original logical
-+    position. Cross-process file IPC mirrors queue_recall/consume_recall.
++    its own queue_kv_restore(request_id, memento_id, rotate_delta) to
++    allocate fresh GPU blocks, queue a worker KVRestoreOp (CPU→GPU copy),
++    splice the new blocks into req_to_blocks at the obs's original
++    logical position, AND queue a KVRotateOp that rotates the suffix's
++    cached K vectors by `rotate_delta` tokens to correct their RoPE
++    phase post-splice.
++
++    rotate_delta: tokens by which the suffix shifted on recall.
++        For lru-kvrestore mode this is m_obs - p_placeholder
++        (positive when obs is longer than placeholder, which is normal).
++        Pass 0 to skip rotation (legacy Phase 3c behavior with
++        accepted RoPE drift).
 +    """
 +    path = _kv_restore_queue_path()
 +    try:
 +        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
 +        with open(path, "a") as f:
-+            f.write(json.dumps({"memento_id": memento_id}) + "\n")
++            f.write(json.dumps({
++                "memento_id": memento_id,
++                "rotate_delta": int(rotate_delta),
++            }) + "\n")
 +    except Exception:
 +        pass
 +
 +
-+def drain_kv_restore_requests() -> list[str]:
-+    """Consume + return all queued memento_ids. Empties the queue.
++def drain_kv_restore_requests() -> list[tuple[str, int]]:
++    """Consume + return all queued (memento_id, rotate_delta). Empties queue.
 +
 +    Called by the scheduler at request-add time so each new request gets
-+    the pending restores applied before forward runs.
++    the pending restores applied before forward runs. Backward-compatible
++    with prior file format that had only {"memento_id": ...} — those
++    return rotate_delta=0.
 +    """
 +    path = _kv_restore_queue_path()
 +    if not os.path.exists(path):
 +        return []
-+    out: list[str] = []
++    out: list[tuple[str, int]] = []
 +    try:
 +        with open(path) as f:
 +            for line in f:
@@ -313,7 +329,7 @@ index 0000000..2f3ee41
 +                    continue
 +                mid = rec.get("memento_id")
 +                if mid:
-+                    out.append(mid)
++                    out.append((mid, int(rec.get("rotate_delta", 0) or 0)))
 +    except Exception:
 +        return []
 +    try:
@@ -523,6 +539,24 @@ index 0000000..2f3ee41
 +    memento_id: str
 +    request_id: str
 +    target_block_ids: list[int]   # already-allocated GPU blocks to fill
++
++
++@dataclass
++class KVRotateOp:
++    """Manager→worker job: rotate cached K vectors by delta_tokens in place.
++
++    Phase 9 — the missing piece for "no re-prefill on recall". After
++    `KVRestoreOp` brings obs's KV back to GPU and the scheduler splices
++    obs blocks at original positions, the SUFFIX blocks have K vectors
++    that were RoPE-baked at compacted slot positions. Their logical
++    positions just shifted by delta_tokens = m_obs - p_placeholder. We
++    re-rotate K in place via vLLM's rotary kernel so RoPE phase matches
++    the new positions, exploiting RoPE composition: R(p+Δ) = R(Δ) ∘ R(p).
++    """
++
++    request_id: str
++    suffix_block_ids: list[int]   # blocks AFTER the spliced obs region
++    delta_tokens: int             # signed; typically positive on recall
 diff --git a/vllm/vllm/v1/core/kv_cache_coordinator.py b/vllm/vllm/v1/core/kv_cache_coordinator.py
 index d8acac0..4c0ff07 100644
 --- a/vllm/vllm/v1/core/kv_cache_coordinator.py
@@ -621,10 +655,10 @@ index 3297434..612403e 100644
 +            attention_mask_mode=attention_mask_mode,
          )
 diff --git a/vllm/vllm/v1/core/sched/output.py b/vllm/vllm/v1/core/sched/output.py
-index db7a4d2..f0d6014 100644
+index db7a4d2..c703037 100644
 --- a/vllm/vllm/v1/core/sched/output.py
 +++ b/vllm/vllm/v1/core/sched/output.py
-@@ -217,10 +217,34 @@ class SchedulerOutput:
+@@ -217,10 +217,43 @@ class SchedulerOutput:
      # to physically move KV values during context compression.
      kv_copy_operations: dict[str, list[tuple[int, int, int, int]]] | None = None
  
@@ -643,6 +677,15 @@ index db7a4d2..f0d6014 100644
 +    # None unless populated via Scheduler.queue_kv_restore(...).
 +    kv_restore_operations: dict[str, list] | None = None
 +
++    # req_id -> list of KVRotateOp (block_masking.memento_store).
++    # Paper 2 Phase 9: after a kvrestore splice shifts the suffix's logical
++    # positions by delta_tokens, the worker rotates the suffix's cached K
++    # vectors in place via vLLM's rotary kernel (RoPE composition). Runs
++    # AFTER kv_restore_operations (so obs KV is in place) and BEFORE the
++    # model forward (so attention reads correctly-phased K). None unless
++    # populated by Scheduler.queue_kv_restore with rotate_delta != 0.
++    kv_rotate_operations: dict[str, list] | None = None
++
      # req_id -> tuple of num_blocks per KV cache group
      # for block table truncation after compaction.
      block_table_truncations: dict[str, tuple[int, ...]] | None = None
@@ -660,10 +703,10 @@ index db7a4d2..f0d6014 100644
      # block masking compactions. These requests will do prefill only,
      # allowing compaction to run before the first decode token.
 diff --git a/vllm/vllm/v1/core/sched/scheduler.py b/vllm/vllm/v1/core/sched/scheduler.py
-index 6b0d8fe..26e18a4 100644
+index 6b0d8fe..431168c 100644
 --- a/vllm/vllm/v1/core/sched/scheduler.py
 +++ b/vllm/vllm/v1/core/sched/scheduler.py
-@@ -185,10 +185,30 @@ class Scheduler(SchedulerInterface):
+@@ -185,10 +185,37 @@ class Scheduler(SchedulerInterface):
              str, list[tuple[int, int, int, int]]
          ] = {}
  
@@ -680,6 +723,13 @@ index 6b0d8fe..26e18a4 100644
 +        # GPU blocks. Populated by `Scheduler.queue_kv_restore(...)`.
 +        self.pending_kv_restore_operations: dict[str, list] = {}
 +
++        # Pending KV ROTATE operations for Paper 2 Phase 9. After a
++        # kvrestore splice shifts the suffix's logical positions by
++        # delta_tokens, the worker rotates the suffix's cached K in
++        # place via vLLM's rotary kernel (RoPE composition). Populated
++        # by `Scheduler.queue_kv_restore(...)` when rotate_delta != 0.
++        self.pending_kv_rotate_operations: dict[str, list] = {}
++
          # Block table truncation info after KV cache compaction.
          # Maps request_id -> tuple of num_blocks per KV cache group.
          self.pending_block_table_truncations: dict[str, tuple[int, ...]] = {}
@@ -694,7 +744,7 @@ index 6b0d8fe..26e18a4 100644
  
          # KV Connector: requests in process of async KV loading or recving
          self.finished_recving_kv_req_ids: set[str] = set()
-@@ -677,6 +697,33 @@ class Scheduler(SchedulerInterface):
+@@ -677,6 +704,40 @@ class Scheduler(SchedulerInterface):
                  token_budget -= num_new_tokens
                  request.status = RequestStatus.RUNNING
                  request.num_computed_tokens = num_computed_tokens
@@ -715,11 +765,18 @@ index 6b0d8fe..26e18a4 100644
 +                        pending_mids = _drain()
 +                    except Exception:
 +                        pending_mids = []
-+                    for mid in pending_mids:
++                    for mid_rec in pending_mids:
++                        # drain_kv_restore_requests returns (memento_id, rotate_delta)
++                        if isinstance(mid_rec, tuple):
++                            mid, rotate_delta = mid_rec
++                        else:
++                            mid, rotate_delta = mid_rec, 0
 +                        try:
-+                            ok, msg = self.queue_kv_restore(request.request_id, mid)
++                            ok, msg = self.queue_kv_restore(
++                                request.request_id, mid, rotate_delta=rotate_delta,
++                            )
 +                            print(f"[v3c-splice-on-schedule] req={request.request_id} "
-+                                  f"mid={mid} ok={ok} msg={msg}",
++                                  f"mid={mid} delta={rotate_delta} ok={ok} msg={msg}",
 +                                  flush=True)
 +                        except Exception as e:
 +                            print(f"[v3c-splice-on-schedule-err] req={request.request_id} "
@@ -728,7 +785,7 @@ index 6b0d8fe..26e18a4 100644
                  # Count the number of prefix cached tokens.
                  if request.num_cached_tokens < 0:
                      request.num_cached_tokens = num_computed_tokens
-@@ -773,6 +820,42 @@ class Scheduler(SchedulerInterface):
+@@ -773,6 +834,52 @@ class Scheduler(SchedulerInterface):
          )
          self.pending_block_table_truncations.clear()
  
@@ -747,6 +804,16 @@ index 6b0d8fe..26e18a4 100644
 +            else None
 +        )
 +        self.pending_kv_restore_operations.clear()
++
++        # Get pending KV rotate operations (Phase 9). Worker rotates the
++        # suffix's cached K vectors in place by delta_tokens to correct
++        # RoPE phase after a kvrestore splice.
++        kv_rotate_operations = (
++            self.pending_kv_rotate_operations.copy()
++            if self.pending_kv_rotate_operations
++            else None
++        )
++        self.pending_kv_rotate_operations.clear()
 +
 +        # Phase 4c: build block_table_filter_ops from each running/resumed
 +        # request's masked_block_ids. We re-emit on every step (idempotent
@@ -771,18 +838,19 @@ index 6b0d8fe..26e18a4 100644
          # Block masking: Detect requests with pending compactions that are
          # about to transition from prefill to decode. These should skip
          # sampling so compaction can run before the first decode token.
-@@ -816,7 +899,10 @@ class Scheduler(SchedulerInterface):
+@@ -816,7 +923,11 @@ class Scheduler(SchedulerInterface):
              finished_req_ids=self.finished_req_ids,
              free_encoder_mm_hashes=self.encoder_cache_manager.get_freed_mm_hashes(),
              kv_copy_operations=kv_copy_operations,
 +            kv_capture_operations=kv_capture_operations,
 +            kv_restore_operations=kv_restore_operations,
++            kv_rotate_operations=kv_rotate_operations,
              block_table_truncations=block_table_truncations,
 +            block_table_filter_ops=block_table_filter_ops,
              skip_sampling_req_ids=skip_sampling_req_ids,
          )
  
-@@ -1259,6 +1345,8 @@ class Scheduler(SchedulerInterface):
+@@ -1259,6 +1370,8 @@ class Scheduler(SchedulerInterface):
                              request.request_id,
                              start,
                              end,
@@ -791,7 +859,7 @@ index 6b0d8fe..26e18a4 100644
                          )
                          if (self.block_masking_config is not None and
                              self.block_masking_config.debug):
-@@ -1469,6 +1557,8 @@ class Scheduler(SchedulerInterface):
+@@ -1469,6 +1582,8 @@ class Scheduler(SchedulerInterface):
                          request.request_id,
                          start,
                          end,
@@ -800,7 +868,7 @@ index 6b0d8fe..26e18a4 100644
                      )
                      if (self.block_masking_config is not None and
                          self.block_masking_config.debug):
-@@ -1510,6 +1600,8 @@ class Scheduler(SchedulerInterface):
+@@ -1510,6 +1625,8 @@ class Scheduler(SchedulerInterface):
                          request.request_id,
                          start,
                          end,
@@ -809,7 +877,7 @@ index 6b0d8fe..26e18a4 100644
                      )
                      if (self.block_masking_config is not None and
                          self.block_masking_config.debug):
-@@ -1598,7 +1690,7 @@ class Scheduler(SchedulerInterface):
+@@ -1598,7 +1715,7 @@ class Scheduler(SchedulerInterface):
      def add_request(self, request: Request) -> None:
          self.waiting.add_request(request)
          self.requests[request.request_id] = request
@@ -818,7 +886,7 @@ index 6b0d8fe..26e18a4 100644
          # Initialize block masking state if enabled
          if self.block_masking_processor is not None:
              request.block_masking_state = self.block_masking_processor.create_state()
-@@ -1608,6 +1700,28 @@ class Scheduler(SchedulerInterface):
+@@ -1608,6 +1725,28 @@ class Scheduler(SchedulerInterface):
                      request.block_masking_state,
                      request.prompt_token_ids,
                  )
@@ -847,7 +915,7 @@ index 6b0d8fe..26e18a4 100644
          
          if self.log_stats:
              request.record_event(EngineCoreEventType.QUEUED)
-@@ -1759,11 +1873,303 @@ class Scheduler(SchedulerInterface):
+@@ -1759,11 +1898,334 @@ class Scheduler(SchedulerInterface):
                  merged.append((start, end))
          return merged
  
@@ -1015,6 +1083,7 @@ index 6b0d8fe..26e18a4 100644
 +        self,
 +        request_id: str,
 +        memento_id: str,
++        rotate_delta: int = 0,
 +    ) -> "tuple[bool, str]":
 +        """Allocate fresh GPU blocks + queue a KVRestoreOp for the worker.
 +
@@ -1065,21 +1134,25 @@ index 6b0d8fe..26e18a4 100644
 +        # attends to them as part of normal causal attention. Suffix tokens
 +        # whose K vectors were RoPE-baked at compacted positions during the
 +        # drop period end up at shifted logical positions on this recall —
-+        # we accept the resulting RoPE-phase mismatch ("slight correctness
-+        # loss") in exchange for not re-prefilling.
++        # Phase 9 corrects this via an in-place K rotation (see below).
 +        block_size = m.block_size if m.block_size > 0 else 16
 +        insert_block_idx = m.logical_range[0] // block_size
 +        spliced_into = []
++        suffix_block_ids_pre_splice: list[int] = []
 +        for mgr in self.kv_cache_manager._coordinator.single_type_managers:
 +            req_blocks = mgr.req_to_blocks.get(request_id)
 +            if req_blocks is None:
 +                continue
 +            # Insert the new blocks at insert_block_idx, shifting the existing
-+            # suffix blocks right by n_blocks. The suffix's K vectors retain
-+            # their original RoPE-bake-in (they were baked at COMPACTED
-+            # positions, but we're now treating them as being at NEW logical
-+            # positions — that's the slight-correctness trade).
++            # suffix blocks right by n_blocks. Phase 9: capture the suffix's
++            # block IDs BEFORE we splice — those are the blocks whose K
++            # vectors need re-rotation by rotate_delta.
 +            if 0 <= insert_block_idx <= len(req_blocks):
++                if not suffix_block_ids_pre_splice:
++                    # Same suffix block IDs across kv_cache groups; capture once.
++                    suffix_block_ids_pre_splice = [
++                        b.block_id for b in req_blocks[insert_block_idx:]
++                    ]
 +                req_blocks[insert_block_idx:insert_block_idx] = blocks
 +                spliced_into.append(mgr.kv_cache_group_id)
 +
@@ -1102,9 +1175,35 @@ index 6b0d8fe..26e18a4 100644
 +              f"groups_spliced={spliced_into}",
 +              flush=True)
 +
++        # Phase 9: queue an in-place K rotation for the suffix blocks. The
++        # suffix's K was RoPE-baked at compacted slot positions; after the
++        # splice above its logical positions shifted by `rotate_delta`
++        # tokens. Apply R(rotate_delta) to the suffix's cached K so RoPE
++        # phase matches the new positions. Pure metadata + a kernel call;
++        # no model forward, no re-prefill.
++        if rotate_delta and suffix_block_ids_pre_splice:
++            try:
++                from vllm.v1.core.block_masking.memento_store import KVRotateOp
++                rotate_op = KVRotateOp(
++                    request_id=request_id,
++                    suffix_block_ids=list(suffix_block_ids_pre_splice),
++                    delta_tokens=int(rotate_delta),
++                )
++                self.pending_kv_rotate_operations.setdefault(
++                    request_id, []
++                ).append(rotate_op)
++                print(f"[v9-rotate-queued] request_id={request_id} "
++                      f"delta={rotate_delta} suffix_blocks={len(suffix_block_ids_pre_splice)}",
++                      flush=True)
++            except Exception as e:
++                print(f"[v9-rotate-err] {type(e).__name__}: {e}", flush=True)
++
 +        return True, (f"queued restore + spliced: {n_blocks} blocks at "
 +                      f"block_idx={insert_block_idx} → "
-+                      f"target_block_ids={target_block_ids}")
++                      f"target_block_ids={target_block_ids}"
++                      + (f"; rotate_delta={rotate_delta}, "
++                         f"suffix_blocks={len(suffix_block_ids_pre_splice)}"
++                         if rotate_delta else ""))
 +
 +    def _auto_memento_id(
 +        self, request_id: str, start_position: int, end_position: int
@@ -1151,7 +1250,7 @@ index 6b0d8fe..26e18a4 100644
      ) -> SpanRemovalResult:
          """Mask a span of tokens and compact the KV cache in one step.
  
-@@ -1776,6 +2182,11 @@ class Scheduler(SchedulerInterface):
+@@ -1776,6 +2238,11 @@ class Scheduler(SchedulerInterface):
              request_id: The request ID.
              start_position: Start logical position (inclusive).
              end_position: End logical position (exclusive).
@@ -1163,7 +1262,7 @@ index 6b0d8fe..26e18a4 100644
  
          Returns:
              SpanRemovalResult with success status, tokens removed, and
-@@ -1854,20 +2265,107 @@ class Scheduler(SchedulerInterface):
+@@ -1854,20 +2321,107 @@ class Scheduler(SchedulerInterface):
              request.logical_to_physical(p) for p in active_logical
          ]
  
@@ -1464,10 +1563,10 @@ index 09302a7..3400f96 100644
      def from_engine_core_request(
          cls,
 diff --git a/vllm/vllm/v1/worker/gpu_model_runner.py b/vllm/vllm/v1/worker/gpu_model_runner.py
-index f677b37..477f211 100644
+index f677b37..02eb4a7 100644
 --- a/vllm/vllm/v1/worker/gpu_model_runner.py
 +++ b/vllm/vllm/v1/worker/gpu_model_runner.py
-@@ -866,6 +866,22 @@ class GPUModelRunner(
+@@ -866,6 +866,29 @@ class GPUModelRunner(
          is_last_rank = get_pp_group().is_last_rank
          req_data = scheduler_output.scheduled_cached_reqs
  
@@ -1487,10 +1586,17 @@ index f677b37..477f211 100644
 +        if getattr(scheduler_output, "kv_restore_operations", None):
 +            self._execute_kv_restore_operations(scheduler_output.kv_restore_operations)
 +
++        # Paper 2 Phase 9: rotate suffix's cached K in place to correct RoPE
++        # phase after a kvrestore splice. Must run AFTER kv_restore (so the
++        # obs's blocks are in place; we don't rotate them) and BEFORE the
++        # model forward (so attention reads the correctly-phased K).
++        if getattr(scheduler_output, "kv_rotate_operations", None):
++            self._execute_kv_rotate_operations(scheduler_output.kv_rotate_operations)
++
          # Execute KV cache copy operations for compaction BEFORE updating block tables.
          # These physically move KV values to compact the cache after span removal.
          if scheduler_output.kv_copy_operations:
-@@ -880,6 +896,50 @@ class GPUModelRunner(
+@@ -880,6 +903,50 @@ class GPUModelRunner(
                  if req_index is not None:
                      self.input_batch.block_table.truncate_row(req_index, num_blocks)
  
@@ -1541,7 +1647,7 @@ index f677b37..477f211 100644
          # Wait until valid_sampled_tokens_count is copied to cpu,
          # then use it to update actual num_computed_tokens of each request.
          valid_sampled_token_count = self._get_valid_sampled_token_count()
-@@ -1041,6 +1101,216 @@ class GPUModelRunner(
+@@ -1041,6 +1108,330 @@ class GPUModelRunner(
          # Refresh batch metadata with any pending updates.
          self.input_batch.refresh_metadata()
  
@@ -1754,6 +1860,120 @@ index f677b37..477f211 100644
 +              f"({n_blocks} blocks, {len(self.kv_caches)} layers, "
 +              f"{m.cpu_bytes()} bytes)", flush=True)
 +        return True
++
++    def _find_rotary_embedding(self):
++        """Walk the loaded model to find a RotaryEmbedding instance.
++
++        Qwen3 (and most decoder-only models we target) share a single RoPE
++        config across all attention layers, so any layer's `rotary_emb`
++        works. Caches on `self._cached_rotary_emb` after first lookup.
++        Returns None if no RoPE is found (e.g., a model without RoPE).
++        """
++        cached = getattr(self, "_cached_rotary_emb", None)
++        if cached is not None:
++            return cached
++        try:
++            from vllm.model_executor.layers.rotary_embedding import (
++                RotaryEmbedding,
++            )
++        except Exception:
++            return None
++        # Walk submodules and pick the first RotaryEmbedding-like module.
++        for module in self.model.modules():
++            if isinstance(module, RotaryEmbedding):
++                self._cached_rotary_emb = module
++                return module
++            if module.__class__.__name__.endswith("RotaryEmbedding"):
++                self._cached_rotary_emb = module
++                return module
++        return None
++
++    def _execute_kv_rotate_operations(
++        self,
++        kv_rotate_operations: dict,
++    ) -> None:
++        """Phase 9: rotate cached suffix K vectors by delta_tokens in place.
++
++        Called after a kvrestore splice has shifted the suffix's logical
++        positions. RoPE composition R(p+Δ) = R(Δ) ∘ R(p) means we can
++        correct the suffix's K phase by applying a single rotation by Δ
++        to the cached K. Pure tensor op; no model forward, no re-prefill.
++
++        For each KVRotateOp:
++          1. Gather K from `suffix_block_ids` for every layer.
++          2. Apply rotary kernel with positions = [delta_tokens] * n_tokens.
++          3. Scatter K back. V is left untouched (RoPE only rotates K).
++        """
++        if not self.kv_caches or not kv_rotate_operations:
++            return
++        import torch as _torch
++
++        rope = self._find_rotary_embedding()
++        if rope is None:
++            print("[v9-rotate] no RotaryEmbedding found on model; skipping rotation",
++                  flush=True)
++            return
++
++        first_cache = self.kv_caches[0]
++        flash_attn_layout = (first_cache.shape[0] == 2)
++        # Block size from layout
++        if flash_attn_layout:
++            # [2, num_blocks, block_size, num_kv_heads, head_size]
++            block_size = first_cache.shape[2]
++        else:
++            # [num_blocks, 2, block_size, num_kv_heads, head_size]
++            block_size = first_cache.shape[2]
++
++        total_blocks_rotated = 0
++        for req_id, ops in kv_rotate_operations.items():
++            for op in ops:
++                block_ids = list(op.suffix_block_ids)
++                delta = int(op.delta_tokens)
++                if not block_ids or delta == 0:
++                    continue
++                n_blocks = len(block_ids)
++                n_tokens = n_blocks * block_size
++                idx = _torch.tensor(block_ids, dtype=_torch.long,
++                                    device=first_cache.device)
++                positions = _torch.full((n_tokens,), delta,
++                                        device=first_cache.device,
++                                        dtype=_torch.long)
++
++                for kv_cache in self.kv_caches:
++                    if flash_attn_layout:
++                        # [2, num_blocks, block_size, num_kv_heads, head_size]
++                        k_gathered = kv_cache[0].index_select(0, idx).contiguous()
++                    else:
++                        # [num_blocks, 2, block_size, num_kv_heads, head_size]
++                        k_gathered = kv_cache.index_select(0, idx)[:, 0].contiguous()
++
++                    n_heads = k_gathered.shape[2]
++                    head_size = k_gathered.shape[3]
++                    k_flat = k_gathered.reshape(n_tokens, n_heads * head_size)
++
++                    q_dummy = _torch.zeros_like(k_flat)
++                    _, k_rot_flat = rope.forward_native(positions, q_dummy, k_flat)
++
++                    k_rot = k_rot_flat.reshape(
++                        n_blocks, block_size, n_heads, head_size
++                    ).to(kv_cache.dtype)
++                    if flash_attn_layout:
++                        kv_cache[0, idx] = k_rot
++                    else:
++                        kv_cache[idx, 0] = k_rot
++
++                total_blocks_rotated += n_blocks
++                print(f"[v9-rotate] req={req_id} delta={delta} "
++                      f"suffix_blocks={n_blocks} layers={len(self.kv_caches)}",
++                      flush=True)
++
++        try:
++            from vllm.v1.core.block_masking.memento_store import bump as _bump
++            _bump("kv_rotations_executed",
++                  sum(len(ops) for ops in kv_rotate_operations.values()))
++            _bump("kv_rotations_blocks", total_blocks_rotated)
++        except Exception:
++            pass
 +
      def _execute_kv_copy_operations(
          self,

@@ -147,18 +147,26 @@ class MementoVLLMModel(ChatModel):
     _engine_cache: Dict[Tuple, Any] = {}
     _tokenizer_cache: Dict[str, Any] = {}
 
-    def queue_kv_restore(self, obs_text: str) -> Optional[str]:
-        """Phase 3c: trigger CPU→GPU KV restore + block_table splice on the
-        next chat's request.
+    def queue_kv_restore(
+        self, obs_text: str, rotate_delta: int = 0
+    ) -> Optional[str]:
+        """Phase 3c + 9: trigger CPU→GPU KV restore + block_table splice +
+        suffix K rotation on the next chat's request.
 
         Hashes the obs (matching the engine's compute_obs_id), writes the
-        memento_id to the kv_restore queue file. The scheduler picks it up
-        when the next request transitions to RUNNING and calls its own
-        queue_kv_restore() to allocate fresh GPU blocks, schedule the
-        worker copy, and splice the new blocks into req_to_blocks at the
-        obs's original logical_range[0]//block_size.
+        memento_id and rotate_delta to the kv_restore queue file. The
+        scheduler picks it up at request-add time and calls its own
+        queue_kv_restore(request_id, memento_id, rotate_delta) to:
+          1. Allocate fresh GPU blocks + schedule worker CPU→GPU copy.
+          2. Splice obs blocks at original logical position.
+          3. Queue a worker KVRotateOp that rotates the suffix's cached
+             K by rotate_delta tokens (RoPE composition) so phase matches
+             the new logical positions — no re-prefill of suffix.
 
-        Returns the obs_id (so the caller can verify), or None on failure.
+        rotate_delta=0 falls back to legacy Phase 3c behavior (no rotation;
+        suffix RoPE is wrong by Δ tokens, accuracy degrades for nontrivial Δ).
+
+        Returns the obs_id, or None on failure.
         """
         try:
             from vllm.v1.core.block_masking import compute_obs_id
@@ -173,9 +181,9 @@ class MementoVLLMModel(ChatModel):
             return None
         obs_id = compute_obs_id(token_ids)
         print(f"[v3c-adapter-kv-restore] len={len(token_ids)} first={token_ids[:3]} "
-              f"last={token_ids[-3:]} → {obs_id}",
+              f"last={token_ids[-3:]} delta={rotate_delta} → {obs_id}",
               flush=True)
-        queue_kv_restore_request(obs_id)
+        queue_kv_restore_request(obs_id, rotate_delta=rotate_delta)
         return obs_id
 
     def queue_recall(self, obs_text: str) -> Optional[str]:
