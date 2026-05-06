@@ -22,13 +22,37 @@ class ebr_domain {
         uint64_t epoch;
     };
 
+    struct retired_list {
+        std::vector<retired_entry> entries;
+        size_t front{0};
+
+        size_t size() const noexcept { return entries.size() - front; }
+        bool empty() const noexcept { return front >= entries.size(); }
+        void reserve(size_t n) { entries.reserve(n); }
+
+        auto begin() noexcept { return entries.begin() + front; }
+        auto end() noexcept { return entries.end(); }
+        auto begin() const noexcept { return entries.begin() + front; }
+        auto end() const noexcept { return entries.end(); }
+
+        void push(retired_entry e) {
+            if (front > entries.size() / 2) {
+                entries.erase(entries.begin(), entries.begin() + front);
+                front = 0;
+            }
+            entries.push_back(e);
+        }
+
+        void pop_front_n(size_t n) noexcept { front += n; }
+    };
+
     struct alignas(64) thread_state {
         std::atomic<uint64_t> announced{INACTIVE_EPOCH};
         std::atomic<bool> active{false};
         char pad_[64 - sizeof(std::atomic<uint64_t>) -
                   sizeof(std::atomic<bool>)];
         uint64_t cached_epoch{0};
-        std::vector<retired_entry> retired;
+        retired_list retired;
         thread_state* next{nullptr};
     };
 

@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <atomic>
 #include <cassert>
 
@@ -66,7 +67,7 @@ void ebr_domain::exit(thread_state& ts) noexcept {
 }
 
 void ebr_domain::retire(thread_state& ts, void* ptr, deleter_fn deleter) {
-    ts.retired.emplace_back(ptr, deleter, ts.cached_epoch);
+    ts.retired.push({ptr, deleter, ts.cached_epoch});
 }
 
 void ebr_domain::maybe_scan(thread_state& ts) {
@@ -117,16 +118,14 @@ void ebr_domain::scan_and_reclaim(thread_state& self) {
     if (cutoff < 2) {
         return;
     }
-    auto& vec = self.retired;
-    size_t survivor = 0;
-    for (auto& e : vec) {
-        if (e.epoch + 1 < cutoff) {
-            e.deleter(e.ptr);
-        } else {
-            vec[survivor++] = e;
-        }
+    auto& list = self.retired;
+    auto cut = std::lower_bound(
+        list.begin(), list.end(), cutoff,
+        [](const retired_entry& e, uint64_t c) { return e.epoch + 1 < c; });
+    for (auto it = list.begin(); it != cut; ++it) {
+        it->deleter(it->ptr);
     }
-    vec.resize(survivor);
+    list.pop_front_n(cut - list.begin());
 }
 
 ebr_thread_state::ebr_thread_state() : domain_(*g_domain) {
