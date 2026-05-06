@@ -101,8 +101,8 @@ public class LightningClient extends DB {
         String[] names = new String[n];
         long[] valueEnds = new long[n];
         for (int i = 0; i < n; i++) {
-            long nameEnd = payload.getLong(8 + 16L * i);
-            valueEnds[i] = payload.getLong(8 + 16L * i + 8);
+            long nameEnd = payload.getLong(8 + 16 * i);
+            valueEnds[i] = payload.getLong(8 + 16 * i + 8);
             int nameLen = (int) (nameEnd - namePos);
             byte[] nb = new byte[nameLen];
             payload.position(namePos);
