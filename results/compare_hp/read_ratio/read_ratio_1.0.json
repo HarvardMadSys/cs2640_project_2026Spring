@@ -1,6 +1,6 @@
 {
   "context": {
-    "date": "2026-05-05T22:02:50-06:00",
+    "date": "2026-05-05T22:36:55-06:00",
     "host_name": "node0.wolfiejk-304669.cs2640-pg0.utah.cloudlab.us",
     "executable": "bench",
     "num_cpus": 48,
@@ -33,9 +33,9 @@
       }
     ],
     "load_avg": [
-      13.9766,
-      14.3726,
-      10.084
+      14.5786,
+      15.6587,
+      12.9204
     ],
     "library_version": "v1.9.1",
     "library_build_type": "release",
@@ -51,14 +51,15 @@
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 16,
-      "iterations": 14096496,
-      "real_time": 496.4549490174435,
-      "cpu_time": 496.44519233715954,
+      "iterations": 14096752,
+      "real_time": 496.33713496550047,
+      "cpu_time": 496.3346963896363,
       "time_unit": "ns",
-      "items_per_second": 2014281.4609445336,
-      "rd_p50": 1763.3084284338738,
-      "rd_p99": 16516.703948154962,
-      "rd_p999": 20844.82463612902,
+      "items_per_second": 2014759.584872706,
+      "peak_rss_mb": 9664.5,
+      "rd_p50": 1763.3091732100938,
+      "rd_p99": 16516.71092438675,
+      "rd_p999": 20363.930938663314,
       "wr_p50": 0.0,
       "wr_p99": 0.0,
       "wr_p999": 0.0
