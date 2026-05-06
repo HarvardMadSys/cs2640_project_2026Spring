@@ -288,7 +288,9 @@ def main():
         # attention_mask_mode the per-call compaction is cheap (refcount
         # pin + filter, no physical KV move), so we render markers on
         # every memento'd tool message to actually exercise the v4 path.
-        last_only_masking=not ATTENTION_MASK_MODE,
+        last_only_masking=not (ATTENTION_MASK_MODE or any(
+            "kvrestore" in v for v in RECALL_VARIANTS
+        )),
     )
 
     # Run order: seed outermost (so within a seed, all variants see the
