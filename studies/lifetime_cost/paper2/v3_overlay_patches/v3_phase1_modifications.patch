@@ -946,7 +946,7 @@ index db7a4d2..c703037 100644
      # block masking compactions. These requests will do prefill only,
      # allowing compaction to run before the first decode token.
 diff --git a/vllm/vllm/v1/core/sched/scheduler.py b/vllm/vllm/v1/core/sched/scheduler.py
-index 6b0d8fe..e1b1080 100644
+index 6b0d8fe..d8d2f81 100644
 --- a/vllm/vllm/v1/core/sched/scheduler.py
 +++ b/vllm/vllm/v1/core/sched/scheduler.py
 @@ -88,6 +88,16 @@ class Scheduler(SchedulerInterface):
@@ -1215,7 +1215,7 @@ index 6b0d8fe..e1b1080 100644
          
          if self.log_stats:
              request.record_event(EngineCoreEventType.QUEUED)
-@@ -1759,11 +1920,342 @@ class Scheduler(SchedulerInterface):
+@@ -1759,11 +1920,340 @@ class Scheduler(SchedulerInterface):
                  merged.append((start, end))
          return merged
  
@@ -1457,17 +1457,15 @@ index 6b0d8fe..e1b1080 100644
 +                spliced_into.append(mgr.kv_cache_group_id)
 +
 +        # Update num_computed_tokens to reflect that the obs's positions
-+        # are now "computed" (covered by the restored blocks). Use max+min:
-+        # - max() handles the case where prefix cache already covered the
-+        #   obs (don't go backwards).
-+        # - min() clamps to the request's actual prompt length: a stale
-+        #   m.logical_range[1] (set at capture time, possibly stale after
-+        #   subsequent compactions shifted positions) could exceed the
-+        #   request's prompt length, which would push num_computed past
-+        #   total tokens → `assert total_num_scheduled_tokens > 0`.
++        # are now "computed" (covered by the restored blocks). Clamp to
++        # num_prompt_tokens (NOT num_tokens — the latter includes generated
++        # output tokens, so once decode begins, request.num_tokens grows
++        # and our clamp would falsely allow num_computed to grow with it,
++        # producing num_scheduled_tokens = num_tokens - num_computed = 0
++        # or negative on subsequent steps).
 +        request = self.requests.get(request_id)
 +        if request is not None:
-+            target = min(m.logical_range[1], request.num_tokens)
++            target = min(m.logical_range[1], request.num_prompt_tokens)
 +            request.num_computed_tokens = max(
 +                request.num_computed_tokens, target
 +            )
@@ -1558,7 +1556,7 @@ index 6b0d8fe..e1b1080 100644
      ) -> SpanRemovalResult:
          """Mask a span of tokens and compact the KV cache in one step.
  
-@@ -1776,6 +2268,11 @@ class Scheduler(SchedulerInterface):
+@@ -1776,6 +2266,11 @@ class Scheduler(SchedulerInterface):
              request_id: The request ID.
              start_position: Start logical position (inclusive).
              end_position: End logical position (exclusive).
@@ -1570,7 +1568,7 @@ index 6b0d8fe..e1b1080 100644
  
          Returns:
              SpanRemovalResult with success status, tokens removed, and
-@@ -1808,6 +2305,10 @@ class Scheduler(SchedulerInterface):
+@@ -1808,6 +2303,10 @@ class Scheduler(SchedulerInterface):
              )
  
          if end_position > request.num_computed_tokens:
@@ -1581,7 +1579,7 @@ index 6b0d8fe..e1b1080 100644
              return SpanRemovalResult(
                  success=False,
                  tokens_removed=0,
-@@ -1839,6 +2340,10 @@ class Scheduler(SchedulerInterface):
+@@ -1839,6 +2338,10 @@ class Scheduler(SchedulerInterface):
              active_logical.extend(range(prev_end, num_computed))
  
          if not active_logical:
@@ -1592,7 +1590,7 @@ index 6b0d8fe..e1b1080 100644
              return SpanRemovalResult(
                  success=False,
                  tokens_removed=0,
-@@ -1854,20 +2359,121 @@ class Scheduler(SchedulerInterface):
+@@ -1854,20 +2357,121 @@ class Scheduler(SchedulerInterface):
              request.logical_to_physical(p) for p in active_logical
          ]
  
