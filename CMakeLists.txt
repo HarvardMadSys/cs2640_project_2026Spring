@@ -130,8 +130,17 @@ foreach(src IN LISTS TEST_SRCS)
     endforeach()
 endforeach()
 
-find_package(JNI QUIET)
-if(JNI_FOUND)
+find_path(JNI_HDR_DIR jni.h
+    HINTS ENV JAVA_HOME
+    PATHS /usr/lib/jvm/default-java
+          /usr/lib/jvm/java-17-openjdk-amd64
+          /usr/lib/jvm/java-17-openjdk-arm64
+    PATH_SUFFIXES include)
+find_path(JNI_MD_DIR jni_md.h
+    HINTS ${JNI_HDR_DIR}
+    PATH_SUFFIXES linux darwin)
+if(JNI_HDR_DIR AND JNI_MD_DIR)
+    set(JNI_INCLUDE_DIRS ${JNI_HDR_DIR} ${JNI_MD_DIR})
     foreach(be IN LISTS BACKENDS)
         if(be STREQUAL "hp" OR be STREQUAL "hybrid")
             set(jni_extra ${HP_SRCS})
