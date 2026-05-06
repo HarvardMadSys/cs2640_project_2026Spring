@@ -118,8 +118,7 @@ int main() {
             return 1;
         }
         sas::g_domain = std::make_unique<sas::hazard_domain>();
-        sas::g_store =
-            std::make_unique<sas::object_store>(std::size_t(cfg.num_keys) * 2);
+        sas::g_store = std::make_unique<sas::object_store>();
 
         auto* work = new sas::bench::steady_workload(
             cfg, [](std::string_view k, int* v) {

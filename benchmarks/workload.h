@@ -11,6 +11,8 @@
 #include <string_view>
 #include <vector>
 
+#define XXH_INLINE_ALL
+#include "xxhash.h"
 #include "zipfian_int_distribution.h"
 
 namespace sas::bench {
@@ -23,7 +25,6 @@ struct bench_config {
     int seed = 2640;
     int warmup_secs = 5;
     int bench_secs = 10;
-    bool run_fill = true;
 };
 
 } // namespace sas::bench
@@ -34,10 +35,10 @@ template <> struct std::formatter<sas::bench::bench_config> {
         return std::format_to(ctx.out(),
                               "num_threads={} num_keys={} read_ratio={} "
                               "zipf_theta={} seed={} warmup_secs={} "
-                              "bench_secs={} run_fill={}",
+                              "bench_secs={}",
                               cfg.num_threads, cfg.num_keys, cfg.read_ratio,
                               cfg.zipf_theta, cfg.seed, cfg.warmup_secs,
-                              cfg.bench_secs, cfg.run_fill);
+                              cfg.bench_secs);
     }
 };
 
@@ -67,11 +68,14 @@ inline bench_config load_config(std::istream& is = std::cin) {
             cfg.warmup_secs = std::stoi(val);
         } else if (key == "bench_secs") {
             cfg.bench_secs = std::stoi(val);
-        } else if (key == "run_fill") {
-            cfg.run_fill = std::stoi(val) != 0;
         }
     }
     return cfg;
+}
+
+inline uint32_t mix_seed(int seed, int thread_index) {
+    uint64_t packed = (uint64_t(uint32_t(seed)) << 32) | uint32_t(thread_index);
+    return static_cast<uint32_t>(XXH3_64bits(&packed, sizeof(packed)));
 }
 
 struct steady_rng {
@@ -83,7 +87,7 @@ struct steady_rng {
     steady_rng(const bench_config& cfg, int thread_index)
         : rng(static_cast<uint32_t>(thread_index + 1) * 2654435761u),
           read_thresh(static_cast<uint32_t>(cfg.read_ratio * 0xffffffffu)),
-          mt(cfg.seed + thread_index),
+          mt(mix_seed(cfg.seed, thread_index)),
           zipf(0, cfg.num_keys - 1, cfg.zipf_theta) {}
 
     uint32_t next_rng() {
@@ -103,13 +107,18 @@ struct steady_workload {
     std::vector<int> values;
     std::barrier<> sync;
 
-    template <typename PutFn>
-    steady_workload(const bench_config& cfg, PutFn put)
-        : raw(cfg.num_keys), sv(cfg.num_keys), values(cfg.num_keys),
-          sync(cfg.num_threads) {
-        for (int i = 0; i < cfg.num_keys; ++i) {
+    steady_workload(int num_keys, int num_threads)
+        : raw(num_keys), sv(num_keys), values(num_keys), sync(num_threads) {
+        for (int i = 0; i < num_keys; ++i) {
             int len = std::snprintf(raw[i].data(), 16, "k:%d", i);
             sv[i] = std::string_view(raw[i].data(), len);
+        }
+    }
+
+    template <typename PutFn>
+    steady_workload(const bench_config& cfg, PutFn put)
+        : steady_workload(cfg.num_keys, cfg.num_threads) {
+        for (int i = 0; i < cfg.num_keys; ++i) {
             put(sv[i], &values[i]);
         }
     }
@@ -123,21 +132,6 @@ struct fill_partition {
         size_t per = total / num_threads;
         start = thread_index * per;
         end = (thread_index == num_threads - 1) ? total : start + per;
-    }
-};
-
-struct fill_keys {
-    std::vector<std::array<char, 16>> raw;
-    std::vector<std::string_view> sv;
-    std::vector<int> values;
-    std::barrier<> sync;
-
-    fill_keys(size_t n, int num_threads)
-        : raw(n), sv(n), values(n), sync(num_threads) {
-        for (size_t i = 0; i < n; ++i) {
-            int len = std::snprintf(raw[i].data(), 16, "k:%zu", i);
-            sv[i] = std::string_view(raw[i].data(), len);
-        }
     }
 };
 

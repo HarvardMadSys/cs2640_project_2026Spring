@@ -41,7 +41,6 @@ DEFAULTS = {
     "seed": 2640,
     "warmup_secs": 5,
     "bench_secs": 10,
-    "run_fill": 1,
 }
 
 SWEEPS = {
@@ -52,7 +51,7 @@ SWEEPS = {
 }
 
 LOG_X_AXES = {"num_keys"}
-SCENARIO_SUFFIXES = ("fill_presized", "fill_resize")
+SCENARIO_SUFFIXES = ("fill",)
 
 TARGETS: dict[str, dict] = {
     "bench_sas":   {"pattern": "host_n_copies"},
@@ -73,7 +72,7 @@ PLOTS: dict[str, dict] = {
         "secondary_label": "Page walks per op",
     },
     "client_overhead": {
-        "targets": ["compare_hp", "bench_end_to_end"],
+        "targets": ["compare_hybrid", "bench_end_to_end"],
         "axes": ["num_threads", "num_keys", "read_ratio", "zipf_theta"],
     },
 }
@@ -236,14 +235,6 @@ def sweep_target(target: str, axis: str, values: list) -> list[tuple]:
     return rows
 
 
-def split_bench_name(name: str) -> tuple[str, str]:
-    for sc in SCENARIO_SUFFIXES:
-        suffix = "_" + sc
-        if name.endswith(suffix):
-            return name[:-len(suffix)], sc
-    return name, "mixed"
-
-
 def merge_rows(per_target_rows: dict[str, list[tuple]]) -> list[tuple]:
     by_value: dict[object, dict] = {}
     for _, rows in per_target_rows.items():
@@ -251,6 +242,14 @@ def merge_rows(per_target_rows: dict[str, list[tuple]]) -> list[tuple]:
             by_value.setdefault(v, {"context": {}, "benchmarks": []})
             by_value[v]["benchmarks"].extend(result.get("benchmarks", []))
     return [(v, by_value[v]) for v in sorted(by_value)]
+
+
+def split_bench_name(name: str) -> tuple[str, str]:
+    for sc in SCENARIO_SUFFIXES:
+        suffix = "_" + sc
+        if name.endswith(suffix):
+            return name[:-len(suffix)], sc
+    return name, "mixed"
 
 
 def collect_grouped(rows: list) -> dict[str, list[str]]:

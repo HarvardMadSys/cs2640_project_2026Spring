@@ -74,11 +74,10 @@ struct latency_hist {
     }
 
     benchmark::Counter pct(double p) const {
-        if (hist->total_count == 0) {
-            return benchmark::Counter(0);
-        }
-        return benchmark::Counter(hdr_value_at_percentile(hist, p) /
-                                  cycles_per_ns());
+        double v = hist->total_count == 0
+                       ? 0.0
+                       : hdr_value_at_percentile(hist, p) / cycles_per_ns();
+        return benchmark::Counter(v, benchmark::Counter::kAvgThreads);
     }
 
     void report(benchmark::State& state, std::string_view prefix) const {

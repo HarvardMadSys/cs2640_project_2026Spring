@@ -14,9 +14,7 @@ int main() {
     auto cfg = sas::bench::load_config();
     std::println(std::cerr, "Loaded config: {}", cfg);
 
-    const size_t mixed_capacity = static_cast<size_t>(cfg.num_keys) * 2;
-
-    g_spinlock = std::make_unique<sas::bench::spinlock_store>(mixed_capacity);
+    g_spinlock = std::make_unique<sas::bench::spinlock_store>();
 
     auto get = [](std::string_view key) {
         auto* h = g_spinlock->get(key);
@@ -29,7 +27,5 @@ int main() {
         g_spinlock->put(key, value, nullptr);
     };
 
-    sas::bench::register_mixed(cfg, "spinlock", get, put);
-
-    sas::bench::run_benchmarks(cfg);
+    sas::bench::run_benchmarks(cfg, "spinlock", get, put);
 }

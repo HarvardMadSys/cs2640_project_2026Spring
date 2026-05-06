@@ -30,7 +30,7 @@ struct spinlock_store {
     std::atomic_flag lock_ = ATOMIC_FLAG_INIT;
     std::unordered_map<std::string, sas::object_handle*, key_hash, key_eq> map_;
 
-    explicit spinlock_store(size_t initial_capacity) {
+    explicit spinlock_store(size_t initial_capacity = 1024) {
         map_.reserve(initial_capacity);
     }
 

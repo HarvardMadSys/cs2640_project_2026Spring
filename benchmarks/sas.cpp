@@ -31,8 +31,7 @@ extern "C" void entry(int idx) {
         g_cfg = sas::bench::load_config();
         std::println(std::cerr, "Loaded config: {}", g_cfg);
 
-        sas::g_store = std::make_unique<sas::object_store>(
-            std::size_t(g_cfg.num_keys) * 2);
+        sas::g_store = std::make_unique<sas::object_store>();
 
         g_work = std::make_unique<sas::bench::steady_workload>(
             g_cfg, [](std::string_view k, int* v) {

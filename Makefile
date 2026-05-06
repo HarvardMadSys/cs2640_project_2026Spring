@@ -16,7 +16,7 @@ LIGHTNING_HOME ?= external/lightning
 LIGHTNING_BUILD = $(abspath $(LIGHTNING_HOME)/build)
 
 YCSB_STORE ?= sas
-YCSB_BACKEND ?= hp
+YCSB_BACKEND ?= hybrid
 YCSB_WORKLOAD ?= workloada
 YCSB_THREADS ?= 1
 YCSB_RECORDS ?= 10000

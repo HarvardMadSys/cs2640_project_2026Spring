@@ -30,7 +30,8 @@ struct sharded_store {
                                key_eq>
         map_;
 
-    explicit sharded_store(size_t initial_capacity) : map_(initial_capacity) {}
+    explicit sharded_store(size_t initial_capacity = 1024)
+        : map_(initial_capacity) {}
 
     ~sharded_store() {
         map_.visit_all([](auto& e) { sas::impl::drop_handle(e.second); });

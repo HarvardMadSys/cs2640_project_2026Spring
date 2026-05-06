@@ -42,7 +42,8 @@ struct hybrid_store {
     boost::concurrent_flat_map<std::string, atomic_handle_slot, key_hash, key_eq>
         map_;
 
-    explicit hybrid_store(size_t initial_capacity) : map_(initial_capacity) {}
+    explicit hybrid_store(size_t initial_capacity = 1024)
+        : map_(initial_capacity) {}
 
     ~hybrid_store() {
         map_.visit_all([](auto& e) {

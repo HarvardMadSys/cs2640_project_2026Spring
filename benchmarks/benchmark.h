@@ -79,16 +79,16 @@ void mixed_benchmark(benchmark::State& state, const bench_config& cfg,
 
     read_hist.report(state, "rd_");
     write_hist.report(state, "wr_");
-    state.counters["peak_rss_mb"] = peak_rss_mb();
+    state.counters["peak_rss_mb"] =
+        benchmark::Counter(peak_rss_mb(), benchmark::Counter::kAvgThreads);
     state.SetItemsProcessed(total_ops);
     workload.sync.arrive_and_wait();
 }
 
-template <typename CreateFn, typename DestroyFn, typename PutFn>
+template <typename PutFn>
 void fill_benchmark(benchmark::State& state, const bench_config& cfg,
-                    size_t initial_capacity, fill_keys& keys,
-                    latency_hist& write_hist, CreateFn create,
-                    DestroyFn destroy, PutFn put) {
+                    steady_workload& keys, latency_hist& write_hist,
+                    PutFn put) {
     if (state.thread_index() == 0) {
         write_hist.reset_locked();
         reset_peak_rss();
@@ -100,32 +100,18 @@ void fill_benchmark(benchmark::State& state, const bench_config& cfg,
     int64_t total_ops = 0;
 
     for (auto _ : state) {
-        state.PauseTiming();
-        if (state.thread_index() == 0) {
-            create(initial_capacity);
-        }
-        keys.sync.arrive_and_wait();
-        state.ResumeTiming();
-
         for (size_t i = p.start; i < p.end; ++i) {
             time_op(local_write, [&] { put(keys.sv[i], &keys.values[i]); });
         }
         total_ops += static_cast<int64_t>(p.end - p.start);
-
-        state.PauseTiming();
-        keys.sync.arrive_and_wait();
-        if (state.thread_index() == 0) {
-            destroy();
-        }
-        keys.sync.arrive_and_wait();
-        state.ResumeTiming();
     }
 
     write_hist.merge(local_write);
     keys.sync.arrive_and_wait();
 
     write_hist.report(state, "wr_");
-    state.counters["peak_rss_mb"] = peak_rss_mb();
+    state.counters["peak_rss_mb"] =
+        benchmark::Counter(peak_rss_mb(), benchmark::Counter::kAvgThreads);
     state.SetItemsProcessed(total_ops);
     keys.sync.arrive_and_wait();
 }
@@ -138,40 +124,44 @@ void register_threaded(const std::string& name, const bench_config& cfg,
         ->UseRealTime();
 }
 
-} // namespace
+template <typename PutFn>
+void register_fill(const bench_config& cfg, const std::string& label,
+                   std::shared_ptr<steady_workload> keys, PutFn put) {
+    auto write_hist = std::make_shared<latency_hist>();
+    benchmark::RegisterBenchmark(
+        label,
+        [cfg, keys, write_hist, put](benchmark::State& state) {
+            fill_benchmark(state, cfg, *keys, *write_hist, put);
+        })
+        ->Threads(cfg.num_threads)
+        ->UseRealTime()
+        ->Iterations(1);
+}
 
 template <typename GetFn, typename PutFn>
 void register_mixed(const bench_config& cfg, const std::string& label,
-                    GetFn get, PutFn put) {
-    auto workload = std::make_shared<steady_workload>(cfg, put);
+                    std::shared_ptr<steady_workload> keys, GetFn get,
+                    PutFn put) {
     auto read_hist = std::make_shared<latency_hist>();
     auto write_hist = std::make_shared<latency_hist>();
     register_threaded(label, cfg,
-                      [cfg, workload, read_hist, write_hist, get,
+                      [cfg, keys, read_hist, write_hist, get,
                        put](benchmark::State& state) {
-                          mixed_benchmark(state, cfg, *workload, *read_hist,
+                          mixed_benchmark(state, cfg, *keys, *read_hist,
                                           *write_hist, get, put);
                       });
 }
 
-template <typename CreateFn, typename DestroyFn, typename PutFn>
-void register_fill(const bench_config& cfg, const std::string& label,
-                   size_t initial_capacity, size_t num_inserts, CreateFn create,
-                   DestroyFn destroy, PutFn put) {
-    if (!cfg.run_fill) {
-        return;
-    }
-    auto keys = std::make_shared<fill_keys>(num_inserts, cfg.num_threads);
-    auto write_hist = std::make_shared<latency_hist>();
-    register_threaded(label, cfg,
-                      [cfg, initial_capacity, keys, write_hist, create, destroy,
-                       put](benchmark::State& state) {
-                          fill_benchmark(state, cfg, initial_capacity, *keys,
-                                         *write_hist, create, destroy, put);
-                      });
-}
+} // namespace
 
-inline void run_benchmarks(const bench_config& cfg) {
+template <typename GetFn, typename PutFn>
+void run_benchmarks(const bench_config& cfg, const std::string& label,
+                    GetFn get, PutFn put) {
+    auto keys = std::make_shared<steady_workload>(cfg.num_keys,
+                                                  cfg.num_threads);
+    register_fill(cfg, label + "_fill", keys, put);
+    register_mixed(cfg, label, keys, get, put);
+
     static char prog[] = "bench";
     std::string min_time_arg =
         std::format("--benchmark_min_time={}s", cfg.bench_secs);
