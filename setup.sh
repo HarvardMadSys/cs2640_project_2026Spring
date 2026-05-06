@@ -45,7 +45,7 @@ fi
 mkdir -p external/lightning/build
 export JAVA_HOME=$(dirname "$(dirname "$(readlink -f "$(command -v javac)")")")
 (cd external/lightning/build && \
-    cmake -DJAVA_CLIENT=ON .. > /dev/null && \
+    cmake -DJAVA_CLIENT=ON -DUSE_MPK=OFF .. > /dev/null && \
     make -j"$(nproc)" > /dev/null)
 
 javac -d external/lightning/build \
