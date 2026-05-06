@@ -42,10 +42,13 @@ sudo apt-get install -yq libboost-all-dev
 if [ ! -d external/lightning ]; then
     git clone --depth=1 https://github.com/danyangz/lightning external/lightning
 fi
+if [ -f external/lightning/inc/config.h ]; then
+    sed -i 's/^#define USE_MPK/\/\/ #define USE_MPK/' external/lightning/inc/config.h
+fi
 mkdir -p external/lightning/build
 export JAVA_HOME=$(dirname "$(dirname "$(readlink -f "$(command -v javac)")")")
 (cd external/lightning/build && \
-    cmake -DJAVA_CLIENT=ON -DUSE_MPK=OFF .. > /dev/null && \
+    cmake -DJAVA_CLIENT=ON .. > /dev/null && \
     make -j"$(nproc)" > /dev/null)
 
 javac -d external/lightning/build \
