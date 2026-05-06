@@ -19,7 +19,7 @@ namespace sas::bench {
 namespace {
 
 constexpr int WARMUP_BATCH = 1024;
-constexpr int LATENCY_SAMPLE_OPS = 128;
+constexpr int LATENCY_SAMPLE_OPS = 64;
 
 template <typename Op>
 inline void maybe_time(int& counter, hdr_histogram* hist, Op&& op) {
