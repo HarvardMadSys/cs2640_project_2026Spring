@@ -1,7 +1,7 @@
 #include <jni.h>
-#include <atomic>
 #include <cstdint>
 #include <cstring>
+#include <mutex>
 #include <new>
 #include <string_view>
 
@@ -30,7 +30,7 @@ const std::uint8_t* payload_data(const void* p) noexcept {
     return static_cast<const std::uint8_t*>(p) + HEADER_SIZE;
 }
 
-std::atomic_flag g_initialized = ATOMIC_FLAG_INIT;
+std::once_flag g_init_flag;
 
 } // namespace
 
@@ -38,9 +38,9 @@ extern "C" {
 
 JNIEXPORT void JNICALL Java_site_ycsb_db_SasClient_init0(JNIEnv*, jclass,
                                                          jlong capacity_hint) {
-    if (!g_initialized.test_and_set(std::memory_order_acq_rel)) {
+    std::call_once(g_init_flag, [capacity_hint] {
         sas::host_driver::setup(static_cast<std::size_t>(capacity_hint));
-    }
+    });
 }
 
 JNIEXPORT void JNICALL Java_site_ycsb_db_SasClient_cleanup0(JNIEnv*, jclass) {}
