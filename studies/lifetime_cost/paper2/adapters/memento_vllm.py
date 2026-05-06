@@ -135,8 +135,21 @@ def transform_messages(
             body = wrap_tool_message_inlined(obs=obs, memento=memento)
         elif last_only_masking and i != last_tool_idx:
             body = wrap_tool_message_inlined(obs=obs, memento=memento)
+        elif memento and m.get("_compacted_already"):
+            # Phase 9: the engine already captured + compacted this obs in
+            # a prior chat. Render plain memento text so the engine's
+            # masking processor doesn't try to re-compact it (which would
+            # only mask the freshly-memento'd obs anyway, leaving older
+            # obs un-captured). Each memento'd obs gets exactly one chat
+            # with markers — the chat right after the memento was emitted.
+            body = wrap_tool_message_inlined(obs=obs, memento=memento)
         else:
             body = wrap_tool_message_for_masking(obs=obs, memento=memento)
+            if memento:
+                # Mark for next render: markers were emitted once; the
+                # engine's compaction span will capture this obs's KV under
+                # its content hash. Subsequent renders use plain memento.
+                m["_compacted_already"] = True
         out.append({"role": "user", "content": body})
     return out
 
