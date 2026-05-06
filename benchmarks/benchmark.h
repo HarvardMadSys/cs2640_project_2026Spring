@@ -19,19 +19,12 @@ namespace sas::bench {
 namespace {
 
 constexpr int WARMUP_BATCH = 1024;
-constexpr int LATENCY_SAMPLE_OPS = 64;
 
-template <typename Op>
-inline void maybe_time(int& counter, hdr_histogram* hist, Op&& op) {
-    if (++counter >= LATENCY_SAMPLE_OPS) {
-        counter = 0;
-        uint64_t t0 = rdtsc_start();
-        op();
-        uint64_t t1 = rdtsc_end();
-        insert_local_hist(hist, t1 - t0);
-    } else {
-        op();
-    }
+template <typename Op> inline void time_op(hdr_histogram* hist, Op&& op) {
+    uint64_t t0 = rdtsc_start();
+    op();
+    uint64_t t1 = rdtsc_end();
+    insert_local_hist(hist, t1 - t0);
 }
 
 template <typename GetFn, typename PutFn>
@@ -65,8 +58,6 @@ void mixed_benchmark(benchmark::State& state, const bench_config& cfg,
     steady_rng rng(cfg, state.thread_index());
     hdr_histogram* local_read = new_local_hist();
     hdr_histogram* local_write = new_local_hist();
-    int read_sample = 0;
-    int write_sample = 0;
 
     warmup(cfg.warmup_secs, workload, rng, get, put);
 
@@ -74,11 +65,10 @@ void mixed_benchmark(benchmark::State& state, const bench_config& cfg,
     for (auto _ : state) {
         int key = rng.next_key();
         if (!rng.is_read()) {
-            maybe_time(write_sample, local_write,
-                       [&] { put(workload.sv[key], &workload.values[key]); });
+            time_op(local_write,
+                    [&] { put(workload.sv[key], &workload.values[key]); });
         } else {
-            maybe_time(read_sample, local_read,
-                       [&] { auto _ = get(workload.sv[key]); });
+            time_op(local_read, [&] { auto _ = get(workload.sv[key]); });
         }
         total_ops++;
     }
@@ -107,7 +97,6 @@ void fill_benchmark(benchmark::State& state, const bench_config& cfg,
 
     fill_partition p(keys.sv.size(), state.thread_index(), cfg.num_threads);
     hdr_histogram* local_write = new_local_hist();
-    int write_sample = 0;
     int64_t total_ops = 0;
 
     for (auto _ : state) {
@@ -119,8 +108,7 @@ void fill_benchmark(benchmark::State& state, const bench_config& cfg,
         state.ResumeTiming();
 
         for (size_t i = p.start; i < p.end; ++i) {
-            maybe_time(write_sample, local_write,
-                       [&] { put(keys.sv[i], &keys.values[i]); });
+            time_op(local_write, [&] { put(keys.sv[i], &keys.values[i]); });
         }
         total_ops += static_cast<int64_t>(p.end - p.start);
 
