@@ -80,22 +80,19 @@ def run_validate_recall(
     # unset → mismatched NONE_HASH across procs → dual-key inserts
     # would never hit. This MUST be set BEFORE any vLLM import.
     os.environ["PYTHONHASHSEED"] = "1"
-    # Phase 9: heartbeat thread is OFF by default — its periodic
-    # block_pool.get_num_free_blocks() call from a side thread races
-    # with the main thread during warmup (suspected) and triggers
-    # `assert total_num_scheduled_tokens > 0` in _prepare_inputs.
-    # Turn on only for explicit profiling runs via `--profile-mem`.
-    if profile_mem:
-        os.environ["PAPER2_HEARTBEAT_SEC"] = "15"
-    else:
-        os.environ.pop("PAPER2_HEARTBEAT_SEC", None)
+    # Phase 9 heartbeat: KNOWN to break --no-pin warmup (race between
+    # heartbeat-thread sampling block_pool and main-thread warmup pass).
+    # Off until that race is fixed; not gated on --profile-mem so we can
+    # still write per-event GPU mem traces safely.
+    os.environ.pop("PAPER2_HEARTBEAT_SEC", None)
 
     # Per-run output dir on the persistent volume.
     run_id = int(time.time())
     out_dir = Path(f"/scratch/out/validate_recall/{run_id}")
     out_dir.mkdir(parents=True, exist_ok=True)
-    # Phase 9: GPU memory trace per Phase 9 event. Same warmup-race risk
-    # as the heartbeat — gated on --profile-mem.
+    # Phase 9: GPU memory trace at every kv_capture/restore/rotate event.
+    # Worker-side _snapshot_gpu_mem; runs in main worker thread (no race).
+    # Gated on --profile-mem so non-profiling runs are bit-identical.
     if profile_mem:
         os.environ["PAPER2_GPU_MEM_TRACE_PATH"] = str(out_dir / "gpu_mem_trace.jsonl")
     else:
