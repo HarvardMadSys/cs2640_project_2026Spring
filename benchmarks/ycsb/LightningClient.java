@@ -1,13 +1,12 @@
 package site.ycsb.db;
 
 import jlightning.JlightningClient;
-import site.ycsb.ByteArrayByteIterator;
 import site.ycsb.ByteIterator;
 import site.ycsb.DB;
 import site.ycsb.DBException;
 import site.ycsb.Status;
 
-import java.nio.charset.StandardCharsets;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -16,17 +15,10 @@ import java.util.Vector;
 public class LightningClient extends DB {
 
     private JlightningClient client;
-    private String[] defaultFields;
+    private long pendingId = -1;
 
     @Override
     public void init() throws DBException {
-        int fieldCount = Integer.parseInt(
-            getProperties().getProperty("fieldcount", "10"));
-        String prefix = getProperties().getProperty("fieldnameprefix", "field");
-        defaultFields = new String[fieldCount];
-        for (int i = 0; i < fieldCount; i++) {
-            defaultFields[i] = prefix + i;
-        }
         String socket = getProperties().getProperty(
             "lightning.socket", "/tmp/lightning");
         String password = getProperties().getProperty(
@@ -35,7 +27,9 @@ public class LightningClient extends DB {
     }
 
     @Override
-    public void cleanup() {}
+    public void cleanup() {
+        drainPending();
+    }
 
     private static long keyToId(String key) {
         String numStr = key.startsWith("user") ? key.substring(4) : key;
@@ -45,28 +39,14 @@ public class LightningClient extends DB {
     @Override
     public Status read(String table, String key, Set<String> fields,
                        Map<String, ByteIterator> result) {
+        drainPending();
         long id = keyToId(key);
-        String[] query = fields == null
-            ? defaultFields
-            : fields.toArray(new String[0]);
-        long[] ret = client.multiget(id, query);
-        if (ret == null || ret.length == 0) {
+        ByteBuffer payload = client.get(id);
+        if (payload == null || payload.capacity() == 0) {
             return Status.NOT_FOUND;
         }
-        int n = ret.length / 4;
-        for (int i = 0; i < n; i++) {
-            long fSize = ret[i * 4];
-            long fAddr = ret[i * 4 + 1];
-            long vSize = ret[i * 4 + 2];
-            long vAddr = ret[i * 4 + 3];
-            byte[] fName = new byte[(int) fSize];
-            client.getbytes(fName, 0, fAddr, fSize);
-            byte[] vBytes = new byte[(int) vSize];
-            client.getbytes(vBytes, 0, vAddr, vSize);
-            result.put(new String(fName, StandardCharsets.UTF_8),
-                       new ByteArrayByteIterator(vBytes));
-        }
-        client.release(id);
+        pendingId = id;
+        RecordCodec.decode(payload, fields, result);
         return Status.OK;
     }
 
@@ -78,40 +58,41 @@ public class LightningClient extends DB {
     }
 
     @Override
-    public Status update(String table, String key,
+    public Status insert(String table, String key,
                          Map<String, ByteIterator> values) {
+        drainPending();
         long id = keyToId(key);
-        String[] fields = new String[values.size()];
-        byte[][] vals = new byte[values.size()][];
-        int i = 0;
-        for (Map.Entry<String, ByteIterator> e : values.entrySet()) {
-            fields[i] = e.getKey();
-            vals[i] = e.getValue().toArray();
-            i++;
-        }
-        client.multiupdate(id, fields, vals);
+        RecordCodec.Encoded enc = RecordCodec.Encoded.of(values);
+        ByteBuffer dst = client.create(id, enc.totalBytes);
+        enc.writeTo(dst);
+        client.seal(id);
         return Status.OK;
     }
 
     @Override
-    public Status insert(String table, String key,
+    public Status update(String table, String key,
                          Map<String, ByteIterator> values) {
+        drainPending();
         long id = keyToId(key);
-        String[] fields = new String[values.size()];
-        byte[][] vals = new byte[values.size()][];
-        int i = 0;
-        for (Map.Entry<String, ByteIterator> e : values.entrySet()) {
-            fields[i] = e.getKey();
-            vals[i] = e.getValue().toArray();
-            i++;
-        }
-        client.multiput(id, fields, vals);
+        client.delete(id);
+        RecordCodec.Encoded enc = RecordCodec.Encoded.of(values);
+        ByteBuffer dst = client.create(id, enc.totalBytes);
+        enc.writeTo(dst);
+        client.seal(id);
         return Status.OK;
     }
 
     @Override
     public Status delete(String table, String key) {
+        drainPending();
         client.delete(keyToId(key));
         return Status.OK;
+    }
+
+    private void drainPending() {
+        if (pendingId >= 0) {
+            client.release(pendingId);
+            pendingId = -1;
+        }
     }
 }

@@ -6,7 +6,6 @@ import site.ycsb.DBException;
 import site.ycsb.Status;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -53,7 +52,7 @@ public class SasClient extends DB {
             return Status.NOT_FOUND;
         }
         pendingHandle = handleOut[0];
-        deserialize(payload.order(ByteOrder.LITTLE_ENDIAN), fields, result);
+        RecordCodec.decode(payload, fields, result);
         return Status.OK;
     }
 
@@ -67,17 +66,13 @@ public class SasClient extends DB {
     @Override
     public Status update(String table, String key,
                          Map<String, ByteIterator> values) {
-        drainPending();
-        put0(key.getBytes(StandardCharsets.UTF_8), serialize(values));
-        return Status.OK;
+        return write(key, values);
     }
 
     @Override
     public Status insert(String table, String key,
                          Map<String, ByteIterator> values) {
-        drainPending();
-        put0(key.getBytes(StandardCharsets.UTF_8), serialize(values));
-        return Status.OK;
+        return write(key, values);
     }
 
     @Override
@@ -85,85 +80,17 @@ public class SasClient extends DB {
         return Status.NOT_IMPLEMENTED;
     }
 
+    private Status write(String key, Map<String, ByteIterator> values) {
+        drainPending();
+        put0(key.getBytes(StandardCharsets.UTF_8),
+             RecordCodec.Encoded.of(values).toByteArray());
+        return Status.OK;
+    }
+
     private void drainPending() {
         if (pendingHandle != 0) {
             readClose0(pendingHandle);
             pendingHandle = 0;
-        }
-    }
-
-    private static byte[] serialize(Map<String, ByteIterator> values) {
-        byte[][] keys = new byte[values.size()][];
-        byte[][] vals = new byte[values.size()][];
-        int total = 4;
-        int i = 0;
-        for (Map.Entry<String, ByteIterator> e : values.entrySet()) {
-            keys[i] = e.getKey().getBytes(StandardCharsets.UTF_8);
-            vals[i] = e.getValue().toArray();
-            total += 4 + keys[i].length + 4 + vals[i].length;
-            i++;
-        }
-        ByteBuffer buf = ByteBuffer.allocate(total).order(ByteOrder.LITTLE_ENDIAN);
-        buf.putInt(values.size());
-        for (int j = 0; j < keys.length; j++) {
-            buf.putInt(keys[j].length).put(keys[j])
-               .putInt(vals[j].length).put(vals[j]);
-        }
-        return buf.array();
-    }
-
-    private static void deserialize(ByteBuffer payload, Set<String> wanted,
-                                    Map<String, ByteIterator> out) {
-        int count = payload.getInt();
-        for (int i = 0; i < count; i++) {
-            int klen = payload.getInt();
-            byte[] kbytes = new byte[klen];
-            payload.get(kbytes);
-            int vlen = payload.getInt();
-            String field = new String(kbytes, StandardCharsets.UTF_8);
-            if (wanted == null || wanted.contains(field)) {
-                ByteBuffer view = payload.slice();
-                view.limit(vlen);
-                out.put(field, new ByteBufferByteIterator(view, vlen));
-            }
-            payload.position(payload.position() + vlen);
-        }
-    }
-
-    private static final class ByteBufferByteIterator extends ByteIterator {
-        private final ByteBuffer view;
-        private final int length;
-        private int pos;
-
-        ByteBufferByteIterator(ByteBuffer view, int length) {
-            this.view = view;
-            this.length = length;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return pos < length;
-        }
-
-        @Override
-        public byte nextByte() {
-            return view.get(pos++);
-        }
-
-        @Override
-        public long bytesLeft() {
-            return length - pos;
-        }
-
-        @Override
-        public byte[] toArray() {
-            int remaining = length - pos;
-            byte[] out = new byte[remaining];
-            ByteBuffer dup = view.duplicate();
-            dup.position(pos);
-            dup.get(out);
-            pos = length;
-            return out;
         }
     }
 }
