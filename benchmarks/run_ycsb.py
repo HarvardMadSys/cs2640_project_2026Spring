@@ -40,7 +40,7 @@ THREAD_COUNTS = [1, 24, 64]
 STORES = ["sas", "lightning"]
 
 DEFAULTS = {
-    "YCSB_RECORDS": "1000000",
+    "YCSB_RECORDS": "100000",
     "YCSB_OPS": "1000000",
     "YCSB_BACKEND": "hybrid",
 }

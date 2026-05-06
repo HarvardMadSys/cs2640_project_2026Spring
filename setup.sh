@@ -26,7 +26,7 @@ python3 -m venv .venv
 .venv/bin/pip install -q -r requirements.txt
 
 # Java + YCSB
-sudo apt-get install -yq openjdk-17-jdk-headless
+sudo apt-get install -yq openjdk-17-jdk
 YCSB_VERSION=0.17.0
 if [ ! -d external/ycsb ]; then
     mkdir -p external

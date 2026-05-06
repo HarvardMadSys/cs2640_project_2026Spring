@@ -32,7 +32,12 @@ else
     YCSB_SYS_PROPS = -Dsas.backend=$(YCSB_BACKEND)
 endif
 
-.PHONY: all configure build host test bench clean ycsb ycsb-bench
+LIGHTNING_DAEMON = $(LIGHTNING_BUILD)/store
+LIGHTNING_SOCKET ?= /tmp/lightning
+LIGHTNING_PIDFILE = /tmp/lightning.pid
+
+.PHONY: all configure build host test bench clean ycsb ycsb-bench \
+        lightning-daemon-start lightning-daemon-stop
 
 all: build
 
@@ -65,6 +70,22 @@ ycsb-bench: ycsb
 	    -p dbclass=$(YCSB_DB_CLASS) \
 	    -p recordcount=$(YCSB_RECORDS) \
 	    -p operationcount=$(YCSB_OPS)
+
+lightning-daemon-start:
+	@test -x $(LIGHTNING_DAEMON) || \
+	    (echo "lightning daemon not built at $(LIGHTNING_DAEMON); run setup.sh"; exit 1)
+	@rm -f $(LIGHTNING_SOCKET)
+	@$(LIGHTNING_DAEMON) >/dev/null 2>&1 & echo $$! > $(LIGHTNING_PIDFILE)
+	@for i in $$(seq 1 50); do \
+	    test -S $(LIGHTNING_SOCKET) && exit 0; sleep 0.1; \
+	done; echo "lightning daemon failed to bind $(LIGHTNING_SOCKET)"; exit 1
+
+lightning-daemon-stop:
+	@if [ -f $(LIGHTNING_PIDFILE) ]; then \
+	    kill $$(cat $(LIGHTNING_PIDFILE)) 2>/dev/null || true; \
+	    rm -f $(LIGHTNING_PIDFILE); \
+	fi
+	@rm -f $(LIGHTNING_SOCKET)
 
 clean:
 	rm -rf build build_san
