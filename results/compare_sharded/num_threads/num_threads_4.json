@@ -1,6 +1,6 @@
 {
   "context": {
-    "date": "2026-05-05T22:27:50-06:00",
+    "date": "2026-05-06T03:43:52-06:00",
     "host_name": "node0.wolfiejk-304669.cs2640-pg0.utah.cloudlab.us",
     "executable": "bench",
     "num_cpus": 48,
@@ -33,9 +33,9 @@
       }
     ],
     "load_avg": [
-      12.1548,
-      13.293,
-      10.0708
+      3.69385,
+      13.4121,
+      13.0498
     ],
     "library_version": "v1.9.1",
     "library_build_type": "release",
@@ -51,18 +51,56 @@
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 4,
-      "iterations": 14580236,
-      "real_time": 479.82530502245305,
-      "cpu_time": 479.81979605817105,
+      "iterations": 29140724,
+      "real_time": 479.61014729733364,
+      "cpu_time": 479.59017384056756,
       "time_unit": "ns",
-      "items_per_second": 2084091.8341170144,
-      "peak_rss_mb": 3128.84375,
-      "rd_p50": 801.5043473779892,
-      "rd_p99": 3087.2229951684335,
-      "rd_p999": 3688.3512557019258,
-      "wr_p50": 921.7299994846877,
-      "wr_p99": 3207.448647275132,
-      "wr_p999": 3848.6521251775234
+      "items_per_second": 2085026.7777592526,
+      "peak_rss_mb": 4283.15625,
+      "rd_p50": 801.504323618889,
+      "rd_p99": 3127.298119834415,
+      "rd_p999": 3728.426362548582,
+      "wr_p50": 881.654755980778,
+      "wr_p99": 3207.4485521963043,
+      "wr_p999": 3888.72722727236
+    },
+    {
+      "name": "sharded_fill_presized/real_time/threads:4",
+      "family_index": 1,
+      "per_family_instance_index": 0,
+      "run_name": "sharded_fill_presized/real_time/threads:4",
+      "run_type": "iteration",
+      "repetitions": 1,
+      "repetition_index": 0,
+      "threads": 4,
+      "iterations": 24,
+      "real_time": 565463066.291765,
+      "cpu_time": 565433937.9583338,
+      "time_unit": "ns",
+      "items_per_second": 1854366.9118417024,
+      "peak_rss_mb": 4550.25,
+      "wr_p50": 881.654755980778,
+      "wr_p99": 9141.443062417578,
+      "wr_p999": 18959.87102674897
+    },
+    {
+      "name": "sharded_fill_resize/real_time/threads:4",
+      "family_index": 2,
+      "per_family_instance_index": 0,
+      "run_name": "sharded_fill_resize/real_time/threads:4",
+      "run_type": "iteration",
+      "repetitions": 1,
+      "repetition_index": 0,
+      "threads": 4,
+      "iterations": 16,
+      "real_time": 910902981.9369426,
+      "cpu_time": 885248193.4999998,
+      "time_unit": "ns",
+      "items_per_second": 1151139.057389306,
+      "peak_rss_mb": 3826.484375,
+      "wr_p50": 841.5795397998335,
+      "wr_p99": 2284.2873223138336,
+      "wr_p999": 9622.345656588912
     }
   ]
 }

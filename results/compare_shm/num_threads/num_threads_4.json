@@ -1,0 +1,13 @@
+{
+  "context": {},
+  "benchmarks": [
+    {
+      "name": "shm/real_time/threads:4",
+      "run_type": "iteration",
+      "iterations": 1,
+      "items_per_second": 8302796.8,
+      "page_walks_per_op": 0,
+      "peak_rss_mb": 580.796875
+    }
+  ]
+}

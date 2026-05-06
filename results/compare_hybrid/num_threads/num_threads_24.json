@@ -1,6 +1,6 @@
 {
   "context": {
-    "date": "2026-05-05T22:25:42-06:00",
+    "date": "2026-05-06T03:37:55-06:00",
     "host_name": "node0.wolfiejk-304669.cs2640-pg0.utah.cloudlab.us",
     "executable": "bench",
     "num_cpus": 48,
@@ -33,9 +33,9 @@
       }
     ],
     "load_avg": [
-      9.50879,
-      10.4082,
-      8.63818
+      10.4731,
+      10.4067,
+      10.8423
     ],
     "library_version": "v1.9.1",
     "library_build_type": "release",
@@ -51,18 +51,56 @@
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 24,
-      "iterations": 13069656,
-      "real_time": 532.8348419423859,
-      "cpu_time": 532.8314640415937,
+      "iterations": 25787904,
+      "real_time": 533.8210989154213,
+      "cpu_time": 533.8169922999559,
       "time_unit": "ns",
-      "items_per_second": 1876754.1483485189,
-      "peak_rss_mb": 19007.15625,
-      "rd_p50": 5289.931315476823,
-      "rd_p99": 21408.764236174877,
-      "rd_p999": 37295.733284278955,
-      "wr_p50": 4328.125621753762,
-      "wr_p99": 20206.507119021036,
-      "wr_p999": 34152.68967800539
+      "items_per_second": 1873286.7659815748,
+      "peak_rss_mb": 25934.53125,
+      "rd_p50": 5289.928407569137,
+      "rd_p99": 21649.20375889901,
+      "rd_p999": 37776.61536509193,
+      "wr_p50": 4328.123242556566,
+      "wr_p99": 20206.496011380143,
+      "wr_p999": 35114.47606907496
+    },
+    {
+      "name": "hybrid_fill_presized/real_time/threads:24",
+      "family_index": 1,
+      "per_family_instance_index": 0,
+      "run_name": "hybrid_fill_presized/real_time/threads:24",
+      "run_type": "iteration",
+      "repetitions": 1,
+      "repetition_index": 0,
+      "threads": 24,
+      "iterations": 72,
+      "real_time": 239861512.5687987,
+      "cpu_time": 239852156.43055546,
+      "time_unit": "ns",
+      "items_per_second": 728598.2014998761,
+      "peak_rss_mb": 38431.6875,
+      "wr_p50": 5049.477116315995,
+      "wr_p99": 96240.62932407028,
+      "wr_p999": 186719.0152041812
+    },
+    {
+      "name": "hybrid_fill_resize/real_time/threads:24",
+      "family_index": 2,
+      "per_family_instance_index": 0,
+      "run_name": "hybrid_fill_resize/real_time/threads:24",
+      "run_type": "iteration",
+      "repetitions": 1,
+      "repetition_index": 0,
+      "threads": 24,
+      "iterations": 24,
+      "real_time": 570955000.1665775,
+      "cpu_time": 543010815.5416666,
+      "time_unit": "ns",
+      "items_per_second": 306088.3372869652,
+      "peak_rss_mb": 26608.875,
+      "wr_p50": 5049.477116315995,
+      "wr_p99": 34633.5734865687,
+      "wr_p999": 83462.36070318901
     }
   ]
 }

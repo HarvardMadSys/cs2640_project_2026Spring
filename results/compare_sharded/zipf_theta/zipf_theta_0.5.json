@@ -1,0 +1,106 @@
+{
+  "context": {
+    "date": "2026-05-06T05:48:31-06:00",
+    "host_name": "node0.wolfiejk-304669.cs2640-pg0.utah.cloudlab.us",
+    "executable": "bench",
+    "num_cpus": 48,
+    "mhz_per_cpu": 2795,
+    "cpu_scaling_enabled": false,
+    "caches": [
+      {
+        "type": "Data",
+        "level": 1,
+        "size": 32768,
+        "num_sharing": 2
+      },
+      {
+        "type": "Instruction",
+        "level": 1,
+        "size": 32768,
+        "num_sharing": 2
+      },
+      {
+        "type": "Unified",
+        "level": 2,
+        "size": 524288,
+        "num_sharing": 2
+      },
+      {
+        "type": "Unified",
+        "level": 3,
+        "size": 16777216,
+        "num_sharing": 6
+      }
+    ],
+    "load_avg": [
+      12.583,
+      13.1826,
+      13.0132
+    ],
+    "library_version": "v1.9.1",
+    "library_build_type": "release",
+    "json_schema_version": 1
+  },
+  "benchmarks": [
+    {
+      "name": "sharded/real_time/threads:16",
+      "family_index": 0,
+      "per_family_instance_index": 0,
+      "run_name": "sharded/real_time/threads:16",
+      "run_type": "iteration",
+      "repetitions": 1,
+      "repetition_index": 0,
+      "threads": 16,
+      "iterations": 18178064,
+      "real_time": 770.388743982565,
+      "cpu_time": 770.3839675116121,
+      "time_unit": "ns",
+      "items_per_second": 1298045.9642108055,
+      "peak_rss_mb": 17199.875,
+      "rd_p50": 8335.646805088301,
+      "rd_p99": 14272.505140855179,
+      "rd_p999": 16196.1159420294,
+      "wr_p50": 8656.248605284009,
+      "wr_p99": 15234.310541442283,
+      "wr_p999": 17478.523142812217
+    },
+    {
+      "name": "sharded_fill_presized/real_time/threads:16",
+      "family_index": 1,
+      "per_family_instance_index": 0,
+      "run_name": "sharded_fill_presized/real_time/threads:16",
+      "run_type": "iteration",
+      "repetitions": 1,
+      "repetition_index": 0,
+      "threads": 16,
+      "iterations": 48,
+      "real_time": 310071494.02027303,
+      "cpu_time": 310061419.3541668,
+      "time_unit": "ns",
+      "items_per_second": 845430.8282297648,
+      "peak_rss_mb": 25282.5625,
+      "wr_p50": 3366.3189020548907,
+      "wr_p99": 57748.39926025119,
+      "wr_p999": 99747.23508588837
+    },
+    {
+      "name": "sharded_fill_resize/real_time/threads:16",
+      "family_index": 2,
+      "per_family_instance_index": 0,
+      "run_name": "sharded_fill_resize/real_time/threads:16",
+      "run_type": "iteration",
+      "repetitions": 1,
+      "repetition_index": 0,
+      "threads": 16,
+      "iterations": 16,
+      "real_time": 690435670.9387685,
+      "cpu_time": 658624625.4999999,
+      "time_unit": "ns",
+      "items_per_second": 379679.10847301566,
+      "peak_rss_mb": 17436.6875,
+      "wr_p50": 3206.0180019570394,
+      "wr_p99": 18921.231243692884,
+      "wr_p999": 47809.743454184354
+    }
+  ]
+}
