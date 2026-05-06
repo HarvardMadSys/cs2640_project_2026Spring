@@ -147,6 +147,26 @@ class MementoVLLMModel(ChatModel):
     _engine_cache: Dict[Tuple, Any] = {}
     _tokenizer_cache: Dict[str, Any] = {}
 
+    def compute_obs_id_for_text(self, obs_text: str) -> Optional[str]:
+        """Compute the engine-side obs_id for a given obs_text.
+
+        Phase 9: the policy needs this to gate recalls on whether the
+        engine has captured the obs (file IPC on /tmp/paper2_captured_obs.jsonl).
+        Crucially this MUST use the same tokenizer the engine uses (Qwen3),
+        NOT the budget-counting tokenizer (often tiktoken cl100k_base) —
+        the hashes won't match otherwise. This method wraps + tokenizes +
+        hashes the same way `queue_kv_restore` does.
+        """
+        try:
+            from vllm.v1.core.block_masking import compute_obs_id
+        except Exception:
+            return None
+        wrapped = f"<tool_response>\n{obs_text}\n</tool_response>"
+        token_ids = self._tokenizer(wrapped, add_special_tokens=False).input_ids
+        if not token_ids:
+            return None
+        return compute_obs_id(token_ids)
+
     def queue_kv_restore(
         self, obs_text: str, rotate_delta: int = 0
     ) -> Optional[str]:

@@ -132,6 +132,14 @@ def run_task(
 
     tools_schema = tool_env.schemas() or None
 
+    # Phase 9: give the policy a content-hash function that uses the model's
+    # actual tokenizer (Qwen3 in our case), not the budget-counting tokenizer
+    # (often tiktoken cl100k_base). Otherwise policy.maybe_recall computes
+    # wrong obs_ids and the captured-obs gate never lets recall through.
+    obs_id_for_text = getattr(model, "compute_obs_id_for_text", None)
+    if callable(obs_id_for_text):
+        setattr(policy, "_obs_id_for_text", obs_id_for_text)
+
     final_answer: Optional[str] = None
     done = False
     step_idx = 0

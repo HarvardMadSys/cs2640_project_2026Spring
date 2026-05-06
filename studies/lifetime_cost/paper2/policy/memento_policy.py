@@ -445,20 +445,33 @@ class MementoPolicy(CompactionPolicy):
             obs = msg.get("content") or ""
             memento_text = msg.get("memento") or ""
             if obs:
-                # Compute obs_id and check engine has captured it.
+                # Compute obs_id using the MODEL's tokenizer (set by runner
+                # via _obs_id_for_text, defaults to Qwen3 for kvrestore).
+                # ctx.tokenizer is the budget-counting tokenizer (often
+                # tiktoken cl100k_base) and produces different token IDs for
+                # `<tool_response>` etc. — wrong hash, recall never matches.
                 try:
-                    from vllm.v1.core.block_masking import compute_obs_id
                     from vllm.v1.core.block_masking.memento_store import (
                         read_captured_obs_ids,
                     )
-                    wrapped = f"<tool_response>\n{obs}\n</tool_response>"
-                    obs_token_ids = ctx.tokenizer.encode(wrapped)
-                    expected_obs_id = (
-                        compute_obs_id(obs_token_ids) if obs_token_ids else None
-                    )
+                    obs_id_fn = getattr(self, "_obs_id_for_text", None)
+                    if callable(obs_id_fn):
+                        expected_obs_id = obs_id_fn(obs)
+                        obs_token_ids = []  # not needed for diag below
+                    else:
+                        # Fallback: budget tokenizer (works only if it
+                        # matches the model's tokenizer, which it usually
+                        # doesn't).
+                        from vllm.v1.core.block_masking import compute_obs_id
+                        wrapped = f"<tool_response>\n{obs}\n</tool_response>"
+                        obs_token_ids = ctx.tokenizer.encode(wrapped)
+                        expected_obs_id = (
+                            compute_obs_id(obs_token_ids) if obs_token_ids else None
+                        )
                     captured = read_captured_obs_ids()
                 except Exception:
                     expected_obs_id = None
+                    obs_token_ids = []
                     captured = set()
                 if expected_obs_id and expected_obs_id not in captured:
                     # Engine hasn't captured this obs yet; skip recall to
