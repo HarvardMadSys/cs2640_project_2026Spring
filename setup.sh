@@ -25,5 +25,17 @@ python3 -m venv .venv
 .venv/bin/pip install -q --upgrade pip
 .venv/bin/pip install -q -r requirements.txt
 
+# Java + YCSB
+sudo apt-get install -yq openjdk-17-jdk-headless
+YCSB_VERSION=0.17.0
+if [ ! -d external/ycsb ]; then
+    mkdir -p external
+    wget -qO /tmp/ycsb.tar.gz \
+        https://github.com/brianfrankcooper/YCSB/releases/download/${YCSB_VERSION}/ycsb-${YCSB_VERSION}.tar.gz
+    tar xf /tmp/ycsb.tar.gz -C external
+    mv external/ycsb-${YCSB_VERSION} external/ycsb
+    rm /tmp/ycsb.tar.gz
+fi
+
 # Run `source ~/.bashrc` after setup! Necessary to build with Clang, which is
 # the easiest way to get a C++23 stdlib on Ubuntu.
