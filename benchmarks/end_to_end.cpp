@@ -1,6 +1,6 @@
 #include "benchmark.h"
 #include "client.h"
-#include "store.h"
+#include "hp_store.h"
 
 extern "C" void entry(int) {
     auto cfg = sas::bench::load_config();
@@ -16,5 +16,5 @@ extern "C" void entry(int) {
             sas::put<int, nullptr>(key, value);
         });
 
-    sas::bench::run_benchmarks();
+    sas::bench::run_benchmarks(cfg);
 }

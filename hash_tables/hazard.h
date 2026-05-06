@@ -2,13 +2,15 @@
 
 #include <array>
 #include <atomic>
+#include <memory>
 #include <vector>
 
+#include "common.h"
 #include "handle.h"
 #include "hash_table.h"
 #include "tagged_ptr.h"
 
-namespace sas {
+namespace sas::hp {
 
 namespace impl {
 
@@ -26,9 +28,9 @@ class hazard_domain {
             : tagged_ptr<void>(base) {}
         void free() {
             if (!is_frozen()) {
-                impl::drop_handle(static_cast<object_handle*>(ptr()));
+                ::sas::impl::drop_handle(static_cast<object_handle*>(ptr()));
             } else {
-                impl::free_table(static_cast<hash_table*>(ptr()));
+                ::sas::impl::free_table(static_cast<hash_table*>(ptr()));
             }
         }
     };
@@ -120,6 +122,9 @@ class hazard_thread_state {
     void push_retire(tagged_ptr<void> ptr);
 };
 
-extern std::unique_ptr<hazard_domain> g_domain;
+} // namespace sas::hp
 
+namespace sas {
+using hazard_domain = hp::hazard_domain;
+extern std::unique_ptr<hazard_domain> g_domain;
 } // namespace sas

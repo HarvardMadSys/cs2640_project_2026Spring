@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "hazard.h"
-#include "store.h"
+#include "hp_store.h"
 
 std::unique_ptr<sas::hazard_domain> sas::g_domain;
 std::unique_ptr<sas::object_store> sas::g_store;

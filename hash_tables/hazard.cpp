@@ -2,10 +2,11 @@
 #include <cassert>
 #include <vector>
 
+#include "common.h"
 #include "hash_table.h"
 #include "hazard.h"
 
-namespace sas {
+namespace sas::hp {
 
 hazard_domain::hazard_domain() {}
 
@@ -84,9 +85,9 @@ void hazard_domain::scan_and_reclaim(retired_batch& retired,
     retired.size = survivor_count;
 }
 
-hazard_thread_state::hazard_thread_state() : domain_(*g_domain) {
-    impl::init_pool();
-    impl::init_node_pool();
+hazard_thread_state::hazard_thread_state() : domain_(*::sas::g_domain) {
+    ::sas::impl::init_pool();
+    ::sas::impl::init_node_pool();
     node_ = domain_.acquire_node();
     for (auto& entry : node_->orphaned) {
         push_retire(entry);
@@ -96,7 +97,6 @@ hazard_thread_state::hazard_thread_state() : domain_(*g_domain) {
 
 hazard_thread_state::~hazard_thread_state() {
     for (size_t i = 0; i < node_->ptrs.size(); ++i) {
-        node_->ptrs[i].store(nullptr, std::memory_order_release);
         node_->ptrs[i].store(nullptr, std::memory_order_release);
     }
     domain_.scan_and_reclaim(retired_, active_);
@@ -138,4 +138,4 @@ hazard_thread_state& hazard_thread_state::get() {
     return state;
 }
 
-} // namespace sas
+} // namespace sas::hp

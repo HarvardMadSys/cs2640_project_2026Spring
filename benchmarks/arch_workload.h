@@ -12,13 +12,11 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
-#include "store.h"
+#include "hp_store.h"
 #include "workload.h"
 
 namespace sas::bench {
 
-inline constexpr std::chrono::seconds ARCH_DURATION{10};
-inline constexpr std::chrono::seconds ARCH_WARMUP{5};
 inline constexpr int ARCH_MAX_WORKERS = 64;
 inline constexpr int ARCH_CLOCK_CHECK_BATCH = 1024;
 
@@ -82,8 +80,7 @@ class perf_counter {
     int fd_ = -1;
 };
 
-inline constexpr uint64_t DTLB_PAGE_WALK_CONFIG =
-    0x046ULL | (0x02ULL << 8);
+inline constexpr uint64_t DTLB_PAGE_WALK_CONFIG = 0x046ULL | (0x02ULL << 8);
 
 inline void
 arch_worker_loop(int idx, const bench_config& cfg, const steady_workload& work,

@@ -3,10 +3,12 @@
 #include <benchmark/benchmark.h>
 #include <chrono>
 #include <cstdint>
+#include <format>
 #include <hdr/hdr_histogram.h>
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "timing.h"
 #include "workload.h"
@@ -15,7 +17,6 @@ namespace sas::bench {
 
 namespace {
 
-constexpr std::chrono::seconds WARMUP_DURATION{5};
 constexpr int WARMUP_BATCH = 1024;
 constexpr int LATENCY_SAMPLE_OPS = 128;
 
@@ -33,8 +34,10 @@ inline void maybe_time(int& counter, hdr_histogram* hist, Op&& op) {
 }
 
 template <typename GetFn, typename PutFn>
-void warmup(steady_workload& workload, steady_rng& rng, GetFn get, PutFn put) {
-    auto deadline = std::chrono::steady_clock::now() + WARMUP_DURATION;
+void warmup(int warmup_secs, steady_workload& workload, steady_rng& rng,
+            GetFn get, PutFn put) {
+    auto deadline =
+        std::chrono::steady_clock::now() + std::chrono::seconds(warmup_secs);
     while (std::chrono::steady_clock::now() < deadline) {
         for (int i = 0; i < WARMUP_BATCH; ++i) {
             int k = rng.next_key();
@@ -51,7 +54,6 @@ template <typename GetFn, typename PutFn>
 void mixed_benchmark(benchmark::State& state, const bench_config& cfg,
                      steady_workload& workload, latency_hist& read_hist,
                      latency_hist& write_hist, GetFn get, PutFn put) {
-    pin_to_cpu(state.thread_index());
     if (state.thread_index() == 0) {
         read_hist.reset_locked();
         write_hist.reset_locked();
@@ -64,7 +66,7 @@ void mixed_benchmark(benchmark::State& state, const bench_config& cfg,
     int read_sample = 0;
     int write_sample = 0;
 
-    warmup(workload, rng, get, put);
+    warmup(cfg.warmup_secs, workload, rng, get, put);
 
     int64_t total_ops = 0;
     for (auto _ : state) {
@@ -94,7 +96,6 @@ void fill_benchmark(benchmark::State& state, const bench_config& cfg,
                     size_t initial_capacity, fill_keys& keys,
                     latency_hist& write_hist, CreateFn create,
                     DestroyFn destroy, PutFn put) {
-    pin_to_cpu(state.thread_index());
     if (state.thread_index() == 0) {
         write_hist.reset_locked();
     }
@@ -174,13 +175,15 @@ void register_fill(const bench_config& cfg, const std::string& label,
                       });
 }
 
-inline void run_benchmarks() {
+inline void run_benchmarks(const bench_config& cfg) {
     static char prog[] = "bench";
+    std::string min_time_arg =
+        std::format("--benchmark_min_time={}s", cfg.bench_secs);
     std::vector<char*> argv = {
         prog,
         const_cast<char*>("--benchmark_counters_tabular=true"),
         const_cast<char*>("--benchmark_time_unit=ns"),
-        const_cast<char*>("--benchmark_min_time=10s"),
+        min_time_arg.data(),
         const_cast<char*>("--benchmark_out=/dev/stdout"),
         const_cast<char*>("--benchmark_out_format=json"),
     };

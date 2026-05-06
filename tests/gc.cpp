@@ -22,9 +22,7 @@ static void tfree(void* p) {
 }
 
 struct leak_guard {
-    ~leak_guard() {
-        assert(frees.load() == allocs.load());
-    }
+    ~leak_guard() { assert(frees.load() == allocs.load()); }
 } guard;
 
 static void wait_frees(int expected) {

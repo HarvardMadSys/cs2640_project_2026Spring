@@ -2,13 +2,11 @@
 #include <string_view>
 
 #include "benchmark.h"
-#include "hazard.h"
-#include "hp_store.h"
-#include "sharded.h"
+#include "ebr.h"
+#include "ebr_store.h"
 
-std::unique_ptr<sas::hazard_domain> sas::g_domain;
-std::unique_ptr<sas::object_store> sas::g_store;
-static std::unique_ptr<sas::bench::sharded_store> g_sharded;
+std::unique_ptr<sas::ebr::ebr_domain> sas::ebr::g_domain;
+std::unique_ptr<sas::ebr::object_store> sas::ebr::g_store;
 
 int main() {
     auto cfg = sas::bench::load_config();
@@ -19,27 +17,29 @@ int main() {
     const size_t fill_presized_cap = fill_inserts * 2;
     constexpr size_t fill_resize_cap = 1024;
 
-    g_sharded = std::make_unique<sas::bench::sharded_store>(mixed_capacity);
+    sas::ebr::g_domain = std::make_unique<sas::ebr::ebr_domain>();
+    sas::ebr::g_store =
+        std::make_unique<sas::ebr::object_store>(mixed_capacity);
 
     auto get = [](std::string_view key) {
-        auto* h = g_sharded->get(key);
+        auto* h = sas::ebr::g_store->get(key);
         if (h) {
-            g_sharded->close(h);
+            sas::ebr::g_store->close(h);
         }
         return h;
     };
     auto put = [](std::string_view key, int* value) {
-        g_sharded->put(key, value, nullptr);
+        sas::ebr::g_store->put(key, value, nullptr);
     };
     auto create = [](size_t cap) {
-        g_sharded = std::make_unique<sas::bench::sharded_store>(cap);
+        sas::ebr::g_store = std::make_unique<sas::ebr::object_store>(cap);
     };
-    auto destroy = []() { g_sharded.reset(); };
+    auto destroy = []() { sas::ebr::g_store.reset(); };
 
-    sas::bench::register_mixed(cfg, "sharded", get, put);
-    sas::bench::register_fill(cfg, "sharded_fill_presized", fill_presized_cap,
+    sas::bench::register_mixed(cfg, "ebr", get, put);
+    sas::bench::register_fill(cfg, "ebr_fill_presized", fill_presized_cap,
                               fill_inserts, create, destroy, put);
-    sas::bench::register_fill(cfg, "sharded_fill_resize", fill_resize_cap,
+    sas::bench::register_fill(cfg, "ebr_fill_resize", fill_resize_cap,
                               fill_inserts, create, destroy, put);
 
     sas::bench::run_benchmarks(cfg);

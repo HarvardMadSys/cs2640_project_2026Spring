@@ -20,9 +20,7 @@ static void tfree(void* p) {
 }
 
 struct leak_guard {
-    ~leak_guard() {
-        assert(frees.load() == allocs.load());
-    }
+    ~leak_guard() { assert(frees.load() == allocs.load()); }
 } guard;
 
 static void flush_gc() {

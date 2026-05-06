@@ -13,9 +13,7 @@ template <typename T> class tagged_ptr {
     constexpr tagged_ptr(T* p, bool frozen = false) noexcept
         : raw_(reinterpret_cast<uintptr_t>(p) | (frozen ? 1 : 0)) {}
 
-    T* ptr() const noexcept {
-        return reinterpret_cast<T*>(raw_ & PTR_MASK);
-    }
+    T* ptr() const noexcept { return reinterpret_cast<T*>(raw_ & PTR_MASK); }
 
     bool is_frozen() const noexcept { return (raw_ & TAG_MASK) != 0; }
 

@@ -7,26 +7,13 @@
 #include <format>
 #include <iostream>
 #include <random>
-#include <sched.h>
 #include <string>
 #include <string_view>
-#include <unistd.h>
 #include <vector>
 
 #include "zipfian_int_distribution.h"
 
 namespace sas::bench {
-
-inline void pin_to_cpu(int idx) {
-    long ncpu = sysconf(_SC_NPROCESSORS_ONLN);
-    if (ncpu <= 0) {
-        return;
-    }
-    cpu_set_t set;
-    CPU_ZERO(&set);
-    CPU_SET((idx * 2) % int(ncpu), &set);
-    sched_setaffinity(0, sizeof(set), &set);
-}
 
 struct bench_config {
     int num_threads = 8;
@@ -34,6 +21,8 @@ struct bench_config {
     double read_ratio = 0.5;
     double zipf_theta = 0.99;
     int seed = 2640;
+    int warmup_secs = 5;
+    int bench_secs = 10;
 };
 
 } // namespace sas::bench
@@ -43,9 +32,11 @@ template <> struct std::formatter<sas::bench::bench_config> {
     auto format(const sas::bench::bench_config& cfg, auto& ctx) const {
         return std::format_to(ctx.out(),
                               "num_threads={} num_keys={} read_ratio={} "
-                              "zipf_theta={} seed={}",
+                              "zipf_theta={} seed={} warmup_secs={} "
+                              "bench_secs={}",
                               cfg.num_threads, cfg.num_keys, cfg.read_ratio,
-                              cfg.zipf_theta, cfg.seed);
+                              cfg.zipf_theta, cfg.seed, cfg.warmup_secs,
+                              cfg.bench_secs);
     }
 };
 
@@ -71,6 +62,10 @@ inline bench_config load_config(std::istream& is = std::cin) {
             cfg.zipf_theta = std::stod(val);
         } else if (key == "seed") {
             cfg.seed = std::stoi(val);
+        } else if (key == "warmup_secs") {
+            cfg.warmup_secs = std::stoi(val);
+        } else if (key == "bench_secs") {
+            cfg.bench_secs = std::stoi(val);
         }
     }
     return cfg;

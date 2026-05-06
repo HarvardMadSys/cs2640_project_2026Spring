@@ -42,11 +42,4 @@ struct hash_table {
     }
 };
 
-namespace impl {
-
-void free_table(hash_table* table);
-void init_node_pool() noexcept;
-
-} // namespace impl
-
 } // namespace sas

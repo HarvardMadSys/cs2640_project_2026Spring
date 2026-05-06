@@ -17,7 +17,7 @@
 
 #include "arch_workload.h"
 #include "hazard.h"
-#include "store.h"
+#include "hp_store.h"
 
 namespace {
 
@@ -148,9 +148,10 @@ int main() {
     int arrived =
         shared->barrier_arrived.fetch_add(1, std::memory_order_acq_rel) + 1;
     if (arrived == n) {
-        auto warmup_until =
-            std::chrono::steady_clock::now() + sas::bench::ARCH_WARMUP;
-        auto measure_until = warmup_until + sas::bench::ARCH_DURATION;
+        auto warmup_until = std::chrono::steady_clock::now() +
+                            std::chrono::seconds(cfg.warmup_secs);
+        auto measure_until =
+            warmup_until + std::chrono::seconds(cfg.bench_secs);
         shared->warmup_until_ns.store(warmup_until.time_since_epoch().count(),
                                       std::memory_order_release);
         shared->measure_until_ns.store(measure_until.time_since_epoch().count(),
@@ -180,7 +181,8 @@ int main() {
             total_tlb += shared->tlb_misses[i].load(std::memory_order_relaxed);
         }
         double secs =
-            std::chrono::duration<double>(sas::bench::ARCH_DURATION).count();
+            std::chrono::duration<double>(std::chrono::seconds(cfg.bench_secs))
+                .count();
         double tlb_per_op =
             total_ops > 0 ? double(total_tlb) / double(total_ops) : 0.0;
         sas::bench::arch_emit_throughput_json(

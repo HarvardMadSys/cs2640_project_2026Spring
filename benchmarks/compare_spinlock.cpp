@@ -3,8 +3,8 @@
 
 #include "benchmark.h"
 #include "hazard.h"
-#include "spinlock_store.h"
-#include "store.h"
+#include "hp_store.h"
+#include "spinlock.h"
 
 std::unique_ptr<sas::hazard_domain> sas::g_domain;
 std::unique_ptr<sas::object_store> sas::g_store;
@@ -31,5 +31,5 @@ int main() {
 
     sas::bench::register_mixed(cfg, "spinlock", get, put);
 
-    sas::bench::run_benchmarks();
+    sas::bench::run_benchmarks(cfg);
 }

@@ -5,10 +5,9 @@
 #include <string_view>
 
 #include "handle.h"
+#include "hash_table.h"
 
-namespace sas {
-
-struct hash_table;
+namespace sas::hp {
 
 class object_store {
   public:
@@ -20,14 +19,12 @@ class object_store {
     void put(std::string_view key, void* value, dtor_fn dtor);
 
   private:
-    void trigger_resize(hash_table* old);
-    void help_migrate_one(hash_table* old, hash_table* next);
-    void migrate_bucket(hash_table* old, hash_table* next, size_t idx);
-    void try_complete_resize(hash_table* old, hash_table* next);
-
     std::atomic<hash_table*> table_;
 };
 
-extern std::unique_ptr<object_store> g_store;
+} // namespace sas::hp
 
+namespace sas {
+using object_store = hp::object_store;
+extern std::unique_ptr<object_store> g_store;
 } // namespace sas

@@ -9,7 +9,7 @@ plots declared in PLOTS by overlaying series from multiple targets.
 Usage:
     ./benchmarks/run_benchmarks.py
     ./benchmarks/run_benchmarks.py --rerun
-    ./benchmarks/run_benchmarks.py --target compare_lockfree
+    ./benchmarks/run_benchmarks.py --target compare_hp
     ./benchmarks/run_benchmarks.py --plot arch
     ./benchmarks/run_benchmarks.py --skip read_ratio zipf_theta
 """
@@ -59,7 +59,8 @@ TARGETS: dict[str, dict] = {
 
 PLOTS: dict[str, dict] = {
     "backends": {
-        "targets": ["compare_lockfree", "compare_sharded", "compare_spinlock"],
+        "targets": ["compare_hp", "compare_ebr",
+                    "compare_sharded", "compare_spinlock"],
         "axes": ["num_threads", "num_keys", "read_ratio", "zipf_theta"],
     },
     "arch": {
@@ -69,13 +70,14 @@ PLOTS: dict[str, dict] = {
         "secondary_label": "Page walks per op",
     },
     "client_overhead": {
-        "targets": ["compare_lockfree", "bench_end_to_end"],
+        "targets": ["compare_hp", "bench_end_to_end"],
         "axes": ["num_threads", "num_keys", "read_ratio", "zipf_theta"],
     },
 }
 
 SERIES_STYLES: dict[str, dict] = {
-    "lockfree":   {"color": "#1F4E79", "marker": "o"},
+    "hp":         {"color": "#1F4E79", "marker": "o"},
+    "ebr":        {"color": "#F0E442", "marker": "v"},
     "sharded":    {"color": "#B85450", "marker": "s"},
     "spinlock":   {"color": "#355E3B", "marker": "^"},
     "end_to_end": {"color": "#6B4C9A", "marker": "D"},
@@ -84,7 +86,8 @@ SERIES_STYLES: dict[str, dict] = {
 }
 
 SERIES_LABELS: dict[str, str] = {
-    "lockfree":   "Lock-free",
+    "hp":         "Lock-free (HP)",
+    "ebr":        "Lock-free (EBR)",
     "sharded":    "Sharded",
     "spinlock":   "Spinlock",
     "end_to_end": "End-to-end",
@@ -383,7 +386,7 @@ def plot_latency(rows: list, axis: str, scenario: str, series_list: list[str],
             if b is None:
                 continue
             y = b.get(f"{op}_{percentile}")
-            if y is None:
+            if not y:
                 continue
             xs.append(v)
             ys.append(y / 1000.0)

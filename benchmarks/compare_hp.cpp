@@ -3,7 +3,7 @@
 
 #include "benchmark.h"
 #include "hazard.h"
-#include "store.h"
+#include "hp_store.h"
 
 std::unique_ptr<sas::hazard_domain> sas::g_domain;
 std::unique_ptr<sas::object_store> sas::g_store;
@@ -35,11 +35,11 @@ int main() {
     };
     auto destroy = []() { sas::g_store.reset(); };
 
-    sas::bench::register_mixed(cfg, "lockfree", get, put);
-    sas::bench::register_fill(cfg, "lockfree_fill_presized", fill_presized_cap,
+    sas::bench::register_mixed(cfg, "hp", get, put);
+    sas::bench::register_fill(cfg, "hp_fill_presized", fill_presized_cap,
                               fill_inserts, create, destroy, put);
-    sas::bench::register_fill(cfg, "lockfree_fill_resize", fill_resize_cap,
+    sas::bench::register_fill(cfg, "hp_fill_resize", fill_resize_cap,
                               fill_inserts, create, destroy, put);
 
-    sas::bench::run_benchmarks();
+    sas::bench::run_benchmarks(cfg);
 }
