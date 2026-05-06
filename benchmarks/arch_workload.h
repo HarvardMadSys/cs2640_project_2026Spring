@@ -13,6 +13,7 @@
 #include <unistd.h>
 
 #include "hp_store.h"
+#include "memory.h"
 #include "workload.h"
 
 namespace sas::bench {
@@ -128,9 +129,10 @@ inline void arch_emit_throughput_json(const char* mode, int n, double ips,
                  "    {{\"name\":\"{}/real_time/threads:{}\","
                  "\"run_type\":\"iteration\",\"iterations\":1,"
                  "\"items_per_second\":{},"
-                 "\"page_walks_per_op\":{}}}\n"
+                 "\"page_walks_per_op\":{},"
+                 "\"peak_rss_mb\":{}}}\n"
                  "  ]\n}}",
-                 mode, n, ips, tlb_per_op);
+                 mode, n, ips, tlb_per_op, peak_rss_mb());
 }
 
 } // namespace sas::bench

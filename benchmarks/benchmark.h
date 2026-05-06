@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 
+#include "memory.h"
 #include "timing.h"
 #include "workload.h"
 
@@ -57,6 +58,7 @@ void mixed_benchmark(benchmark::State& state, const bench_config& cfg,
     if (state.thread_index() == 0) {
         read_hist.reset_locked();
         write_hist.reset_locked();
+        reset_peak_rss();
     }
     workload.sync.arrive_and_wait();
 
@@ -87,6 +89,7 @@ void mixed_benchmark(benchmark::State& state, const bench_config& cfg,
 
     read_hist.report(state, "rd_");
     write_hist.report(state, "wr_");
+    state.counters["peak_rss_mb"] = peak_rss_mb();
     state.SetItemsProcessed(total_ops);
     workload.sync.arrive_and_wait();
 }
@@ -98,6 +101,7 @@ void fill_benchmark(benchmark::State& state, const bench_config& cfg,
                     DestroyFn destroy, PutFn put) {
     if (state.thread_index() == 0) {
         write_hist.reset_locked();
+        reset_peak_rss();
     }
     keys.sync.arrive_and_wait();
 
@@ -133,6 +137,7 @@ void fill_benchmark(benchmark::State& state, const bench_config& cfg,
     keys.sync.arrive_and_wait();
 
     write_hist.report(state, "wr_");
+    state.counters["peak_rss_mb"] = peak_rss_mb();
     state.SetItemsProcessed(total_ops);
     keys.sync.arrive_and_wait();
 }

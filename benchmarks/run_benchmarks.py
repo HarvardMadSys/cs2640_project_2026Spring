@@ -63,7 +63,7 @@ TARGETS: dict[str, dict] = {
 PLOTS: dict[str, dict] = {
     "backends": {
         "targets": ["compare_hp", "compare_ebr",
-                    "compare_sharded", "compare_spinlock"],
+                    "compare_sharded", "compare_hybrid", "compare_spinlock"],
         "axes": ["num_threads", "num_keys", "read_ratio", "zipf_theta"],
     },
     "arch": {
@@ -82,6 +82,7 @@ SERIES_STYLES: dict[str, dict] = {
     "hp":         {"color": "#1F4E79", "marker": "o"},
     "ebr":        {"color": "#F0E442", "marker": "v"},
     "sharded":    {"color": "#B85450", "marker": "s"},
+    "hybrid":     {"color": "#D98E04", "marker": "P"},
     "spinlock":   {"color": "#355E3B", "marker": "^"},
     "end_to_end": {"color": "#6B4C9A", "marker": "D"},
     "sas":        {"color": "#1F4E79", "marker": "o"},
@@ -92,6 +93,7 @@ SERIES_LABELS: dict[str, str] = {
     "hp":         "Lock-free (HP)",
     "ebr":        "Lock-free (EBR)",
     "sharded":    "Sharded",
+    "hybrid":     "Hybrid",
     "spinlock":   "Spinlock",
     "end_to_end": "End-to-end",
     "sas":        "SAS",
@@ -376,6 +378,39 @@ def plot_throughput(rows: list, axis: str, scenario: str,
     plt.close(fig)
 
 
+def plot_memory(rows: list, axis: str, scenario: str, series_list: list[str],
+                out_base: Path, log_x: bool = False) -> None:
+    fig, ax = plt.subplots()
+    plotted = False
+    for series in series_list:
+        bench_name = series if scenario == "mixed" else f"{series}_{scenario}"
+        xs, ys = [], []
+        for v, result in rows:
+            b = find_bench(result, bench_name)
+            if b is None:
+                continue
+            y = b.get("peak_rss_mb")
+            if y is None:
+                continue
+            xs.append(v)
+            ys.append(y)
+        if xs:
+            ax.plot(xs, ys, label=label_for(series), alpha=0.92, zorder=3,
+                    **(style_for(series) or {"marker": "o"}))
+            plotted = True
+    if not plotted:
+        plt.close(fig)
+        return
+    if log_x:
+        ax.set_xscale("log", base=2)
+    ax.set_xlabel(AXIS_LABELS.get(axis, axis))
+    ax.set_ylabel("Peak RSS (MB)")
+    ax.legend(loc="best")
+    fig.tight_layout()
+    _save(fig, out_base)
+    plt.close(fig)
+
+
 def plot_latency(rows: list, axis: str, scenario: str, series_list: list[str],
                  op: str, percentile: str, out_base: Path,
                  log_x: bool = False) -> None:
@@ -429,6 +464,8 @@ def render_plot(plot_key: str, plot_spec: dict, axis: str,
                         plot_dir / f"{scenario}_throughput", log_x=log_x,
                         secondary_metric=sec_metric,
                         secondary_label=sec_label)
+        plot_memory(rows, axis, scenario, series_list,
+                    plot_dir / f"{scenario}_peak_rss", log_x=log_x)
         for op in ("rd", "wr"):
             for pct in PERCENTILES:
                 plot_latency(rows, axis, scenario, series_list, op, pct,
