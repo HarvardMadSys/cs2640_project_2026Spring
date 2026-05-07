@@ -4,14 +4,15 @@
 For every (store, workload, thread-count) combination this script invokes the
 corresponding `make ycsb-bench` target, parses the load/run Mops/s lines,
 caches one JSON result per cell under results/ycsb/, then renders a per-
-workload bar chart comparing SAS vs Lightning at each thread count.
+thread-count bar chart with workloads (A, B, C, D, F) on the x-axis comparing
+SAS vs Lightning.
 
 Usage:
     ./benchmarks/run_ycsb.py
     ./benchmarks/run_ycsb.py --rerun
     ./benchmarks/run_ycsb.py --store sas
     ./benchmarks/run_ycsb.py --workload workloada workloadb
-    ./benchmarks/run_ycsb.py --threads 1 24
+    ./benchmarks/run_ycsb.py --threads 1 2
 """
 
 from __future__ import annotations
@@ -40,8 +41,8 @@ THREAD_COUNTS = [1, 2, 4, 8]
 STORES = ["sas", "lightning"]
 
 DEFAULTS = {
-    "YCSB_RECORDS": "10000",
-    "YCSB_OPS": "1000000",
+    "YCSB_RECORDS": "50000",
+    "YCSB_OPS": "500000",
     "YCSB_BACKEND": "hybrid",
 }
 
@@ -159,15 +160,15 @@ def get_or_run(store: str, workload: str, threads: int, rerun: bool) -> dict:
     return result
 
 
-def plot_workload(workload: str, stores: list[str], threads_list: list[int],
-                  cells: dict, out_base: Path) -> None:
+def plot_threads(threads: int, stores: list[str], workloads: list[str],
+                 cells: dict, out_base: Path) -> None:
     for phase in ("run", "load"):
         fig, ax = plt.subplots()
-        x = np.arange(len(threads_list))
+        x = np.arange(len(workloads))
         width = 0.8 / max(1, len(stores))
         plotted = False
         for i, store in enumerate(stores):
-            vals = [cells.get((store, t), {}).get(phase, 0.0) for t in threads_list]
+            vals = [cells.get((store, w), {}).get(phase, 0.0) for w in workloads]
             if not any(v > 0 for v in vals):
                 continue
             offset = (i - (len(stores) - 1) / 2) * width
@@ -178,11 +179,12 @@ def plot_workload(workload: str, stores: list[str], threads_list: list[int],
         if not plotted:
             plt.close(fig)
             continue
+        labels = [w.replace("workload", "").upper() for w in workloads]
         ax.set_xticks(x)
-        ax.set_xticklabels([str(t) for t in threads_list])
-        ax.set_xlabel("Threads")
+        ax.set_xticklabels(labels)
+        ax.set_xlabel("Workload")
         ax.set_ylabel("Throughput (M ops/s)")
-        ax.set_title(f"{workload.replace('workload', 'YCSB-').upper()} "
+        ax.set_title(f"YCSB at {threads} thread{'s' if threads != 1 else ''} "
                      f"({PHASE_LABELS[phase]})")
         ax.legend(loc="best")
         fig.tight_layout()
@@ -205,7 +207,7 @@ def main() -> None:
     p.add_argument("--workload", choices=WORKLOADS, action="append",
                    help="Restrict to these workloads (default: a/b/c/d/f).")
     p.add_argument("--threads", type=int, action="append",
-                   help="Restrict to these thread counts (default: 1, 24, 64).")
+                   help="Restrict to these thread counts (default: 1, 2, 4, 8).")
     args = p.parse_args()
 
     stores = args.store or STORES
@@ -222,11 +224,11 @@ def main() -> None:
                 cells[(store, workload, threads)] = get_or_run(
                     store, workload, threads, args.rerun)
 
-    for workload in workloads:
-        per = {(s, t): cells.get((s, workload, t), {})
-               for s in stores for t in threads_list}
-        plot_workload(workload, stores, threads_list, per,
-                      RESULTS_DIR / workload)
+    for threads in threads_list:
+        per = {(s, w): cells.get((s, w, threads), {})
+               for s in stores for w in workloads}
+        plot_threads(threads, stores, workloads, per,
+                     RESULTS_DIR / f"threads_{threads}")
 
 
 if __name__ == "__main__":
