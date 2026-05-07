@@ -22,9 +22,6 @@ class object_store {
     std::atomic<hash_table*> table_;
 };
 
-} // namespace sas::hp
-
-namespace sas {
-using object_store = hp::object_store;
 extern std::unique_ptr<object_store> g_store;
-} // namespace sas
+
+} // namespace sas::hp

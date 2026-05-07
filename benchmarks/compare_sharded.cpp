@@ -3,11 +3,9 @@
 
 #include "benchmark.h"
 #include "hazard.h"
-#include "hp_store.h"
 #include "sharded.h"
 
 std::unique_ptr<sas::hazard_domain> sas::g_domain;
-std::unique_ptr<sas::object_store> sas::g_store;
 static std::unique_ptr<sas::bench::sharded_store> g_sharded;
 
 int main() {

@@ -9,7 +9,7 @@
 #include "handle.h"
 #include "hazard.h"
 
-namespace sas::bench {
+namespace sas {
 
 struct atomic_handle_slot {
     mutable std::atomic<sas::object_handle*> ptr;
@@ -84,4 +84,6 @@ struct hybrid_store {
     }
 };
 
-} // namespace sas::bench
+extern std::unique_ptr<hybrid_store> g_store;
+
+} // namespace sas

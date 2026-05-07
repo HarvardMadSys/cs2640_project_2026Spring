@@ -7,16 +7,18 @@
 #include "hp_store.h"
 namespace sas {
 std::unique_ptr<hazard_domain> g_domain;
-std::unique_ptr<object_store> g_store;
 } // namespace sas
+namespace sas::hp {
+std::unique_ptr<object_store> g_store;
+} // namespace sas::hp
 namespace sas::host_driver {
-inline auto* store() noexcept { return sas::g_store.get(); }
+inline auto* store() noexcept { return sas::hp::g_store.get(); }
 inline void setup(size_t initial_capacity = 1024) {
     sas::g_domain = std::make_unique<sas::hazard_domain>();
-    sas::g_store = std::make_unique<sas::object_store>(initial_capacity);
+    sas::hp::g_store = std::make_unique<sas::hp::object_store>(initial_capacity);
 }
 inline void teardown() {
-    sas::g_store.reset();
+    sas::hp::g_store.reset();
     sas::g_domain.reset();
 }
 } // namespace sas::host_driver
@@ -68,16 +70,16 @@ inline void teardown() { g_store.reset(); }
 #include "hybrid.h"
 namespace sas {
 std::unique_ptr<hazard_domain> g_domain;
+std::unique_ptr<hybrid_store> g_store;
 } // namespace sas
 namespace sas::host_driver {
-inline std::unique_ptr<sas::bench::hybrid_store> g_store;
-inline auto* store() noexcept { return g_store.get(); }
+inline auto* store() noexcept { return sas::g_store.get(); }
 inline void setup(size_t initial_capacity = 1024) {
     sas::g_domain = std::make_unique<sas::hazard_domain>();
-    g_store = std::make_unique<sas::bench::hybrid_store>(initial_capacity);
+    sas::g_store = std::make_unique<sas::hybrid_store>(initial_capacity);
 }
 inline void teardown() {
-    g_store.reset();
+    sas::g_store.reset();
     sas::g_domain.reset();
 }
 } // namespace sas::host_driver

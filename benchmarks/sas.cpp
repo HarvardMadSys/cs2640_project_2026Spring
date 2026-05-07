@@ -10,10 +10,6 @@
 #include "arch_workload.h"
 #include "hybrid.h"
 
-namespace sas::host_driver {
-extern std::unique_ptr<sas::bench::hybrid_store> g_store;
-}
-
 namespace {
 
 std::atomic<bool> g_setup_done{false};
@@ -31,7 +27,7 @@ std::array<std::atomic<int64_t>, sas::bench::ARCH_MAX_WORKERS> g_tlb_counters{};
 } // namespace
 
 extern "C" void entry(int idx) {
-    auto* store = sas::host_driver::g_store.get();
+    auto* store = sas::g_store.get();
 
     if (idx == 0) {
         g_cfg = sas::bench::load_config();

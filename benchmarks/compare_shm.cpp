@@ -17,7 +17,7 @@
 
 #include "arch_workload.h"
 #include "hazard.h"
-#include "hp_store.h"
+#include "hybrid.h"
 
 namespace {
 
@@ -39,7 +39,7 @@ struct shared_state {
     std::atomic<int64_t> warmup_until_ns{0};
     std::atomic<int64_t> measure_until_ns{0};
     sas::hazard_domain* domain_ptr{nullptr};
-    sas::object_store* store_ptr{nullptr};
+    sas::hybrid_store* store_ptr{nullptr};
     sas::bench::steady_workload* work_ptr{nullptr};
     std::atomic<int64_t> ops[sas::bench::ARCH_MAX_WORKERS]{};
     std::atomic<int64_t> tlb_misses[sas::bench::ARCH_MAX_WORKERS]{};
@@ -72,7 +72,7 @@ bool register_slice(int slice_idx) {
 } // namespace
 
 std::unique_ptr<sas::hazard_domain> sas::g_domain;
-std::unique_ptr<sas::object_store> sas::g_store;
+std::unique_ptr<sas::hybrid_store> sas::g_store;
 
 int main() {
     auto cfg = sas::bench::load_config();
@@ -118,7 +118,7 @@ int main() {
             return 1;
         }
         sas::g_domain = std::make_unique<sas::hazard_domain>();
-        sas::g_store = std::make_unique<sas::object_store>();
+        sas::g_store = std::make_unique<sas::hybrid_store>();
 
         auto* work = new sas::bench::steady_workload(
             cfg, [](std::string_view k, int* v) {
