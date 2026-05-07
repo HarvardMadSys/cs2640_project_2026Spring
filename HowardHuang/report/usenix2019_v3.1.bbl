@@ -1,0 +1,29 @@
+\begin{thebibliography}{1}
+
+\bibitem{berg2020cachelib}
+Benjamin Berg et~al.
+\newblock The cachelib caching engine: Design and experiences at scale.
+\newblock In {\em USENIX OSDI '20}, 2020.
+
+\bibitem{bjorling2021zns}
+Matias Bj{\o}rling et~al.
+\newblock Zns: Avoiding the block interface tax for flash-based ssds.
+\newblock In {\em USENIX ATC '21}, 2021.
+
+\bibitem{cooper2010ycsb}
+Brian~F. Cooper et~al.
+\newblock Benchmarking cloud serving systems with ycsb.
+\newblock In {\em Proceedings of the 1st ACM symposium on Cloud computing},
+  2010.
+
+\bibitem{park2025fdpvirt}
+Joonyeop Park and Hyeonsang Eom.
+\newblock Fdpvirt+: Emulated flexible data placement for sustainable ssds.
+\newblock {\em IEEE Access}, 2025.
+
+\bibitem{purandare2025valet}
+Devashish~R. Purandare et~al.
+\newblock Valet: Efficient data placement on modern ssds.
+\newblock SoCC '25 / arXiv:2501.00977, 2025.
+
+\end{thebibliography}
