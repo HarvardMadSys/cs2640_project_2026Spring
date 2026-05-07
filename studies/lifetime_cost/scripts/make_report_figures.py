@@ -386,40 +386,97 @@ def fig_chain_firing():
 # ---------------------------------------------------------------------------
 
 def fig_cliff_amplification():
-    """Conceptual + measured: show the cliff cost amplification.
+    """Conceptual + measured: cliff cost amplification with worked example.
 
-    Use Phase E v1 data: per compaction event in plain consumption_evict,
-    estimate the cliff dollars added (input_uncached over the next K steps
-    minus what cached would have been).
+    Left panel: bar chart of next-call cost before vs. after cliff.
+    Right panel: worked example for a typical compaction event.
     """
-    fig, ax = plt.subplots(figsize=(8, 5.5))
+    fig, (ax, axE) = plt.subplots(1, 2, figsize=(13, 5.5),
+                                  gridspec_kw={"width_ratios": [1.0, 1.05]})
 
-    # Realistic per-event cliff: 30K-token prefix invalidated, then K
-    # tokens/step for n_steps follow-on calls billed at uncached rate.
-    K = 30000  # the prefix bytes that lose their cache after the cliff
-    cached_cost = K * P_IN_CACHED / 1e6
+    # Left panel: 25K-token suffix invalidated by a typical mid-trajectory fire
+    K = 25000  # bytes from compaction position to prompt tail
+    cached_cost   = K * P_IN_CACHED   / 1e6
     uncached_cost = K * P_IN_UNCACHED / 1e6
+    delta         = uncached_cost - cached_cost
+    save_per_step = 5000 * P_IN_CACHED / 1e6   # 5K-token obs replaced by 50-tok placeholder
+    breakeven     = delta / save_per_step
 
-    bars = ax.bar(["next call BEFORE cliff\n(prefix cached)", "next call AFTER cliff\n(prefix re-uncached)"],
+    bars = ax.bar(["next call BEFORE cliff\n(prefix cached)",
+                   "next call AFTER cliff\n(prefix re-uncached)"],
                   [cached_cost, uncached_cost],
-                  color=["#56B4E9", "#D55E00"], edgecolor="black", linewidth=0.7, width=0.55)
+                  color=["#56B4E9", "#D55E00"], edgecolor="black",
+                  linewidth=0.7, width=0.55)
     for b, v in zip(bars, [cached_cost, uncached_cost]):
-        ax.text(b.get_x() + b.get_width()/2, v + uncached_cost * 0.03, f"${v:.4f}",
-                ha="center", fontsize=12, fontweight="bold")
+        ax.text(b.get_x() + b.get_width()/2, v + uncached_cost * 0.03,
+                f"${v:.4f}", ha="center", fontsize=12, fontweight="bold")
 
-    ax.set_ylabel("Cost of next API call's 30K-token prefix (USD)")
-    ax.set_title(r"The cliff tax — 10$\times$ cost amplification per compaction event" "\n"
-                 "Compaction invalidates the cached prefix; subsequent input tokens are\n"
-                 r"re-billed at \$1.00/MTok (uncached) instead of \$0.10/MTok (cached).",
-                 pad=14)
+    ax.set_ylabel("Cost of next API call's 25K-token suffix (USD)")
+    ax.set_title(r"The cliff tax — 10$\times$ amplification" "\n"
+                 r"\$1.00/MTok (uncached) vs \$0.10/MTok (cached)",
+                 pad=10, fontsize=11.5)
 
-    # Add annotation
-    ax.annotate("", xy=(1, uncached_cost * 0.95), xytext=(0, cached_cost * 1.1),
+    ax.annotate("", xy=(1, uncached_cost * 0.95),
+                xytext=(0, cached_cost * 1.1),
                 arrowprops=dict(arrowstyle="->", color="#D55E00", lw=2.5))
     ax.text(0.5, (cached_cost + uncached_cost) / 2, "10×\namplification",
             ha="center", fontsize=14, fontweight="bold", color="#D55E00",
             bbox=dict(boxstyle="round,pad=0.5", fc="white", ec="#D55E00", lw=1.5))
     ax.set_ylim(0, uncached_cost * 1.25)
+
+    # Right panel: worked example
+    axE.set_axis_off()
+    axE.set_xlim(0, 10)
+    axE.set_ylim(0, 10)
+    axE.add_patch(plt.Rectangle((0.2, 0.2), 9.6, 9.6, fill=True,
+                                facecolor="#FFF8E7", edgecolor="#D55E00",
+                                linewidth=1.5))
+    axE.text(5.0, 9.3, "Worked example: one compaction event",
+             ha="center", fontsize=12, fontweight="bold", color="#222")
+    axE.text(5.0, 8.7, "(Anthropic Haiku 4.5 pricing, mid-trajectory fire)",
+             ha="center", fontsize=9.5, color="#444", style="italic")
+
+    rows = [
+        ("Setup",                                    ""),
+        ("• Prompt size at fire time",               "30,000 tokens"),
+        ("• Tool obs being compacted",               "5,000 tokens at byte position 5,000"),
+        ("• Placeholder it leaves behind",           "~50 tokens"),
+        ("• Suffix re-billed (positions 5K → 30K)",  "25,000 tokens"),
+        ("",                                          ""),
+        ("Next-call cost",                           ""),
+        ("• Without cliff (cached)",                 f"25,000 × $0.10/MTok = ${cached_cost:.4f}"),
+        ("• With cliff (uncached)",                  f"25,000 × $1.00/MTok = ${uncached_cost:.4f}"),
+        ("• Δ extra cost on next call",              f"${delta:.4f}"),
+        ("",                                          ""),
+        ("Future-step savings (per step)",           ""),
+        ("• 5K fewer cached tokens × $0.10/MTok",    f"${save_per_step:.4f}/step"),
+        ("",                                          ""),
+        ("Break-even",                               ""),
+        (f"  ${delta:.4f} ÷ ${save_per_step:.4f}/step",
+                                                     f"≈ {breakeven:.0f} steps required"),
+    ]
+    y = 8.2
+    for label, value in rows:
+        if label == "":
+            y -= 0.18
+            continue
+        if value == "" and not label.startswith("•") and not label.startswith(" "):
+            axE.text(0.55, y, label, fontsize=10, fontweight="bold", color="#222")
+        else:
+            axE.text(0.55, y, label, fontsize=9.5, color="#222")
+            if value:
+                axE.text(9.45, y, value, fontsize=9.5, color="#222",
+                         ha="right", family="monospace")
+        y -= 0.42
+
+    axE.add_patch(plt.Rectangle((0.4, 0.7), 9.2, 0.95, fill=True,
+                                facecolor="#FFE3D1", edgecolor="#D55E00",
+                                linewidth=1.0))
+    axE.text(5.0, 1.35, "Typical agent trajectory length: ~26 steps total.",
+             ha="center", fontsize=10, color="#222")
+    axE.text(5.0, 0.95,
+             f"Compaction needs {breakeven:.0f}+ remaining steps to amortize → cliff is structurally unrecoverable.",
+             ha="center", fontsize=10, color="#D55E00", fontweight="bold")
 
     plt.tight_layout()
     plt.savefig(OUT_DIR / "fig5_cliff_amplification.png", bbox_inches="tight")

@@ -1,0 +1,264 @@
+{
+  "diagram_type": "system architecture",
+  "style": "clean technical block diagram, USENIX paper figure, white background, sans-serif labels, rounded rectangles, directional arrows with labels, two clearly delineated swimlanes for the two processes",
+  "orientation": "landscape, two columns: main process on the left, engine subprocess on the right, IPC queues vertically stacked between them",
+  "title": "KV-pointer recall: agent loop + inference engine over IPC",
+  "swimlanes": [
+    {
+      "id": "main",
+      "label": "main process (agent harness)",
+      "color": "soft blue",
+      "position": "left third",
+      "contains": ["agent_loop", "compaction_policy", "renderer"]
+    },
+    {
+      "id": "ipc",
+      "label": "IPC (JSONL files in shared tmpfs)",
+      "color": "soft red",
+      "position": "center vertical strip",
+      "contains": ["queue_capture", "queue_restore", "queue_rotate", "queue_dualkey"]
+    },
+    {
+      "id": "engine",
+      "label": "inference engine subprocess",
+      "color": "soft amber",
+      "position": "right two-thirds",
+      "contains": ["scheduler", "gpu_worker", "page_tensors", "block_pool", "side_cache", "rotary_kernel"]
+    }
+  ],
+  "components": [
+    {
+      "id": "agent_loop",
+      "label": "Agent loop",
+      "sub": "ReAct-style: assemble prompt, call engine, parse tool calls, append tool obs",
+      "in_swimlane": "main",
+      "row": 1
+    },
+    {
+      "id": "compaction_policy",
+      "label": "Compaction policy",
+      "sub": "decides which obs to compact and which to recall;\ncomputes obs_id with the engine's tokenizer",
+      "in_swimlane": "main",
+      "row": 2
+    },
+    {
+      "id": "renderer",
+      "label": "Prompt renderer",
+      "sub": "produces the next prompt with placeholders\nin place of compacted observations",
+      "in_swimlane": "main",
+      "row": 3
+    },
+    {
+      "id": "queue_capture",
+      "label": "kv_capture",
+      "sub": "obs_id, request_id, [start, end]",
+      "in_swimlane": "ipc",
+      "row": 1
+    },
+    {
+      "id": "queue_restore",
+      "label": "kv_restore",
+      "sub": "obs_id, request_id, insert_block_idx",
+      "in_swimlane": "ipc",
+      "row": 2
+    },
+    {
+      "id": "queue_rotate",
+      "label": "kv_rotate",
+      "sub": "suffix_block_ids, delta_tokens",
+      "in_swimlane": "ipc",
+      "row": 3
+    },
+    {
+      "id": "queue_dualkey",
+      "label": "auxiliary chain-hash insert",
+      "sub": "recall_chain_hashes, physical_block_ids",
+      "in_swimlane": "ipc",
+      "row": 4
+    },
+    {
+      "id": "scheduler",
+      "label": "Scheduler",
+      "sub": "drains all four IPC queues each step;\nallocates fresh blocks; splices request block tables (REPLACE)",
+      "in_swimlane": "engine",
+      "row": 1
+    },
+    {
+      "id": "gpu_worker",
+      "label": "GPU worker",
+      "sub": "executes capture / restore / rotate ops\nagainst per-layer page tensors",
+      "in_swimlane": "engine",
+      "row": 2
+    },
+    {
+      "id": "page_tensors",
+      "label": "Paged KV cache (GPU)",
+      "sub": "per-layer K and V page tensors;\nblocks indexed by physical_block_id",
+      "in_swimlane": "engine",
+      "row": 3,
+      "note": "draw as a stack of layered slabs to suggest per-layer pages"
+    },
+    {
+      "id": "block_pool",
+      "label": "Block pool + prefix-cache hash table",
+      "sub": "chain_hash -> physical_block_id;\nLRU free queue;\nappend-only auxiliary keys (never invalidated)",
+      "in_swimlane": "engine",
+      "row": 4
+    },
+    {
+      "id": "side_cache",
+      "label": "Side cache (CPU pinned)",
+      "sub": "obs_id (content hash) -> KV bytes per layer;\nholds released observation KV between compaction and recall",
+      "in_swimlane": "engine",
+      "row": 5
+    },
+    {
+      "id": "rotary_kernel",
+      "label": "Rotary kernel (engine-shipped)",
+      "sub": "applies R(delta) per token in place;\nreused via the identity R(p+delta) = R(delta) o R(p)",
+      "in_swimlane": "engine",
+      "row": 6
+    }
+  ],
+  "edges": [
+    {
+      "from": "agent_loop",
+      "to": "compaction_policy",
+      "label": "trajectory state",
+      "kind": "internal"
+    },
+    {
+      "from": "compaction_policy",
+      "to": "renderer",
+      "label": "placeholder decisions",
+      "kind": "internal"
+    },
+    {
+      "from": "compaction_policy",
+      "to": "queue_capture",
+      "label": "enqueue capture\non compaction",
+      "kind": "ipc_write"
+    },
+    {
+      "from": "compaction_policy",
+      "to": "queue_restore",
+      "label": "enqueue restore\non recall",
+      "kind": "ipc_write"
+    },
+    {
+      "from": "renderer",
+      "to": "scheduler",
+      "label": "next prompt (HTTP/RPC)",
+      "kind": "request"
+    },
+    {
+      "from": "queue_capture",
+      "to": "scheduler",
+      "label": "drain",
+      "kind": "ipc_read"
+    },
+    {
+      "from": "queue_restore",
+      "to": "scheduler",
+      "label": "drain",
+      "kind": "ipc_read"
+    },
+    {
+      "from": "queue_rotate",
+      "to": "gpu_worker",
+      "label": "drain",
+      "kind": "ipc_read"
+    },
+    {
+      "from": "queue_dualkey",
+      "to": "block_pool",
+      "label": "drain (insert new keys)",
+      "kind": "ipc_read"
+    },
+    {
+      "from": "scheduler",
+      "to": "queue_rotate",
+      "label": "enqueue rotate after restore",
+      "kind": "ipc_write"
+    },
+    {
+      "from": "scheduler",
+      "to": "queue_dualkey",
+      "label": "enqueue auxiliary keys",
+      "kind": "ipc_write"
+    },
+    {
+      "from": "scheduler",
+      "to": "gpu_worker",
+      "label": "scheduled ops + step",
+      "kind": "internal"
+    },
+    {
+      "from": "gpu_worker",
+      "to": "page_tensors",
+      "label": "read / write K and V\n(capture, restore, rotate)",
+      "kind": "internal"
+    },
+    {
+      "from": "page_tensors",
+      "to": "side_cache",
+      "label": "GPU -> CPU pinned\non capture",
+      "kind": "data_copy"
+    },
+    {
+      "from": "side_cache",
+      "to": "page_tensors",
+      "label": "CPU pinned -> fresh GPU blocks\non restore",
+      "kind": "data_copy"
+    },
+    {
+      "from": "rotary_kernel",
+      "to": "page_tensors",
+      "label": "in-place K rotation\nby delta tokens",
+      "kind": "internal"
+    },
+    {
+      "from": "block_pool",
+      "to": "page_tensors",
+      "label": "block_id -> physical block",
+      "kind": "internal"
+    }
+  ],
+  "annotations": [
+    {
+      "anchor": "between renderer and scheduler",
+      "text": "request boundary"
+    },
+    {
+      "anchor": "above the IPC swimlane",
+      "text": "four append-only queues; scheduler drains at start of each step"
+    },
+    {
+      "anchor": "next to block_pool",
+      "text": "auxiliary chain-hash entries are inserted, never removed"
+    },
+    {
+      "anchor": "next to side_cache",
+      "text": "released GPU blocks fall to LRU free queue;\nKV bytes survive on CPU pinned memory"
+    },
+    {
+      "anchor": "next to rotary_kernel",
+      "text": "no model forward pass;\nper-layer tensor op only"
+    }
+  ],
+  "legend": {
+    "arrow_styles": {
+      "ipc_write": "dashed arrow into a stacked-cylinder queue",
+      "ipc_read": "dashed arrow out of a stacked-cylinder queue",
+      "data_copy": "thick solid arrow",
+      "internal": "thin solid arrow",
+      "request": "thin solid arrow with double-line head"
+    },
+    "shapes": {
+      "process_box": "rounded rectangle, swimlane color",
+      "queue": "stacked-cylinder",
+      "page_tensors": "layered slabs",
+      "hash_table": "small rounded rectangle with grid lines"
+    }
+  }
+}

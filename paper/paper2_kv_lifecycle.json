@@ -1,0 +1,56 @@
+{
+  "diagram_type": "three-panel timeline figure",
+  "style": "USENIX systems paper figure. White background, sans-serif, restrained colour palette. Three panels arranged left-to-right under a single shared baseline, each labelled with a step index (t_0, t_1, t_2). Each panel shows the prompt as a strip of token-block rectangles, plus one terse caption and one one-line technical note in monospace below.",
+  "title": "Lifecycle of a tool observation under KV-pointer recall.",
+  "subtitle": "The observation's KV state is captured to a side cache on compaction (t_1) and restored to its original logical positions on recall (t_2); the prefix cache is preserved across both transitions.",
+  "panels": [
+    {
+      "id": "t0",
+      "label": "t_0",
+      "caption": "Steady state. The observation is in the prompt; its KV blocks are resident in the engine's paged KV cache and indexed by the prefix-cache hash table.",
+      "tech_note": "obs KV in paged GPU blocks; chain hash H_obs entries point to those blocks.",
+      "prompt_blocks": [
+        {"label": "prefix",      "color": "gray",  "size": "small"},
+        {"label": "tool obs",    "color": "green", "size": "large", "highlight": true},
+        {"label": "suffix",      "color": "blue",  "size": "medium"}
+      ]
+    },
+    {
+      "id": "t1",
+      "label": "t_1",
+      "caption": "Compaction. The renderer substitutes a fixed-size placeholder for the observation. The observation's KV blocks are copied to a content-addressed CPU pinned side cache and released; the suffix's KV blocks remain physically resident.",
+      "tech_note": "side cache: obs_id (content hash) -> per-layer K/V on pinned host memory. Released blocks fall to the engine's LRU free queue.",
+      "prompt_blocks": [
+        {"label": "prefix",       "color": "gray",   "size": "small"},
+        {"label": "[placeholder]","color": "orange", "size": "tiny"},
+        {"label": "suffix",       "color": "blue",   "size": "medium"}
+      ]
+    },
+    {
+      "id": "t2",
+      "label": "t_2",
+      "caption": "Recall. The renderer re-emits the observation at its original logical positions. The scheduler allocates fresh blocks, copies the saved KV from the side cache, rotates the suffix's K vectors in place to compensate for the position shift, and registers the existing suffix blocks under the recall-prompt's chain hash.",
+      "tech_note": "splice + rotate-by-Δ + auxiliary chain-hash insert. Rotation reuses the engine's rotary kernel via R(p+Δ) = R(Δ)·R(p). Hash table insertion is append-only; existing entries are not invalidated.",
+      "prompt_blocks": [
+        {"label": "prefix",      "color": "gray",  "size": "small"},
+        {"label": "tool obs",    "color": "green", "size": "large", "highlight": true},
+        {"label": "suffix",      "color": "blue",  "size": "medium"}
+      ]
+    }
+  ],
+  "transitions": [
+    {"from": "t_0", "to": "t_1", "label": "capture (GPU -> pinned host)"},
+    {"from": "t_1", "to": "t_2", "label": "restore + rotate + dual-key"}
+  ],
+  "invariants_callout": [
+    "The observation's KV is captured, not recomputed.",
+    "Suffix KV blocks are physically retained across the compacted period.",
+    "Cache entries are append-only: keys are added on recall, never removed."
+  ],
+  "color_legend": {
+    "gray":   "prefix region (system + early turns)",
+    "green":  "tool observation under management",
+    "orange": "compaction placeholder",
+    "blue":   "suffix region"
+  }
+}
