@@ -39,7 +39,7 @@ LIGHTNING_SOCKET ?= /tmp/lightning
 LIGHTNING_PIDFILE = /tmp/lightning.pid
 
 .PHONY: all configure build host test bench clean ycsb ycsb-bench \
-        lightning-daemon-start lightning-daemon-stop
+        ycsb-bench-only lightning-daemon-start lightning-daemon-stop
 
 all: build
 
@@ -62,7 +62,9 @@ ycsb: build
 	@javac -cp "$(YCSB_CORE_JAR):$(LIGHTNING_BUILD)" \
 	    -d $(YCSB_CLASSES) $(wildcard benchmarks/ycsb/*.java)
 
-ycsb-bench: ycsb
+ycsb-bench: ycsb ycsb-bench-only
+
+ycsb-bench-only:
 	@java -cp "$(abspath $(YCSB_HOME))/lib/*:$(abspath $(YCSB_CLASSES)):$(LIGHTNING_BUILD)" \
 	    -Djava.library.path=$(abspath $(BUILD_DIR)/benchmarks/ycsb):$(LIGHTNING_BUILD) \
 	    $(YCSB_SYS_PROPS) \

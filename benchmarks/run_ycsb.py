@@ -75,13 +75,19 @@ def make_invoke(env: dict[str, str], target: str) -> str:
     return r.stdout
 
 
+def build_ycsb() -> None:
+    print("[build] make ycsb", file=sys.stderr)
+    subprocess.run(["make", "ycsb"], cwd=REPO_ROOT, check=True,
+                   stdout=subprocess.DEVNULL, stderr=sys.stderr)
+
+
 def run_sas(workload: str, threads: int) -> dict[str, float]:
     out = make_invoke({
         **DEFAULTS,
         "YCSB_STORE":    "sas",
         "YCSB_WORKLOAD": workload,
         "YCSB_THREADS":  str(threads),
-    }, "ycsb-bench")
+    }, "ycsb-bench-only")
     return parse_output(out)
 
 
@@ -106,7 +112,7 @@ def run_lightning(workload: str, threads: int) -> dict[str, float]:
         procs = []
         for i in range(threads):
             env = {**base_env, "YCSB_PROCID": str(i)}
-            cmd = ["make", "ycsb-bench"] + [f"{k}={v}" for k, v in env.items()]
+            cmd = ["make", "ycsb-bench-only"] + [f"{k}={v}" for k, v in env.items()]
             if i == 0:
                 print(f"[run × {threads}]", " ".join(cmd), file=sys.stderr)
             p = subprocess.Popen(cmd, cwd=REPO_ROOT,
@@ -206,6 +212,7 @@ def main() -> None:
     threads_list = args.threads or THREAD_COUNTS
 
     configure_style()
+    build_ycsb()
 
     cells: dict[tuple, dict] = {}
     for workload in workloads:
