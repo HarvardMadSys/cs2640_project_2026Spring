@@ -19,6 +19,9 @@ public class LightningClient extends DB {
     private static volatile JlightningClient sharedClient;
     private static final Object initLock = new Object();
 
+    private static final int ID_BITS = 56;
+    private static final long ID_MASK = (1L << ID_BITS) - 1;
+
     private JlightningClient client;
     private long pendingId = -1;
     private long idPrefix;
@@ -43,7 +46,7 @@ public class LightningClient extends DB {
         client = sharedClient;
         int procid = Integer.parseInt(
             getProperties().getProperty("procid", "0"));
-        idPrefix = (long) procid << 48;
+        idPrefix = (long) procid << ID_BITS;
     }
 
     @Override
@@ -66,7 +69,7 @@ public class LightningClient extends DB {
         for (int i = start; i < key.length(); i++) {
             n = n * 10 + (key.charAt(i) - '0');
         }
-        return idPrefix | n;
+        return idPrefix | (n & ID_MASK);
     }
 
     @Override
