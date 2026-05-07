@@ -1942,7 +1942,7 @@ index 09302a7..3400f96 100644
      def from_engine_core_request(
          cls,
 diff --git a/vllm/vllm/v1/worker/gpu_model_runner.py b/vllm/vllm/v1/worker/gpu_model_runner.py
-index f677b37..aae9212 100644
+index f677b37..16e540b 100644
 --- a/vllm/vllm/v1/worker/gpu_model_runner.py
 +++ b/vllm/vllm/v1/worker/gpu_model_runner.py
 @@ -866,6 +866,35 @@ class GPUModelRunner(
@@ -2032,7 +2032,7 @@ index f677b37..aae9212 100644
          # Wait until valid_sampled_tokens_count is copied to cpu,
          # then use it to update actual num_computed_tokens of each request.
          valid_sampled_token_count = self._get_valid_sampled_token_count()
-@@ -1041,6 +1114,394 @@ class GPUModelRunner(
+@@ -1041,6 +1114,442 @@ class GPUModelRunner(
          # Refresh batch metadata with any pending updates.
          self.input_batch.refresh_metadata()
  
@@ -2412,6 +2412,54 @@ index f677b37..aae9212 100644
 +                        kv_cache[idx, 0] = k_rot
 +
 +                total_blocks_rotated += n_blocks
++                # Phase 9 correctness: rotated blocks have new K vectors;
++                # the OLD chain hash in cached_block_hash_to_block points
++                # to them and serves the old (un-rotated) content. If a
++                # future request hash-matches that entry, it reads our
++                # rotated K → wrong RoPE → garbage attention → CUDA fault.
++                # Remove the stale hash entries so future requests don't
++                # match. They'll re-prefill those positions instead.
++                # Note: this lives on the SCHEDULER side via block_pool;
++                # we signal via a side-channel so the scheduler invalidates.
++                try:
++                    from vllm.v1.core.block_masking.memento_store import (
++                        get_num_free_blocks_or_neg1 as _gnfb,
++                    )
++                    # Best-effort: clear block.block_hash on every rotated
++                    # block so a future cache_full_blocks call doesn't
++                    # find them under the stale hash. (Direct mutation
++                    # via the registered block_pool — same process as
++                    # the worker for uniproc.)
++                    from vllm.v1.core.block_masking.memento_store import (
++                        _GLOBAL_BLOCK_POOL,
++                    )
++                    bp = _GLOBAL_BLOCK_POOL
++                    if bp is not None:
++                        n_invalidated = 0
++                        for bid in block_ids:
++                            blk = bp.blocks[bid] if 0 <= bid < len(bp.blocks) else None
++                            if blk is None:
++                                continue
++                            old_hash = getattr(blk, "block_hash", None)
++                            if old_hash is None:
++                                continue
++                            # pop the stale entry so future lookups miss
++                            try:
++                                bp.cached_block_hash_to_block.pop(
++                                    old_hash, blk.block_id,
++                                )
++                            except Exception:
++                                pass
++                            blk.block_hash = None
++                            n_invalidated += 1
++                        if n_invalidated:
++                            print(f"[v9-rotate-invalidate] "
++                                  f"req={req_id} cleared {n_invalidated} "
++                                  f"stale cache entries",
++                                  flush=True)
++                except Exception as _e:
++                    print(f"[v9-rotate-invalidate-err] {type(_e).__name__}: {_e}",
++                          flush=True)
 +                print(f"[v9-rotate] req={req_id} delta={delta} "
 +                      f"suffix_blocks={n_blocks} layers={len(self.kv_caches)}",
 +                      flush=True)
