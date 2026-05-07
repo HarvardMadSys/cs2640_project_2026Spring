@@ -16,6 +16,9 @@ import java.util.Vector;
 
 public class LightningClient extends DB {
 
+    private static volatile JlightningClient sharedClient;
+    private static final Object initLock = new Object();
+
     private JlightningClient client;
     private long pendingId = -1;
 
@@ -25,11 +28,18 @@ public class LightningClient extends DB {
 
     @Override
     public void init() throws DBException {
-        String socket = getProperties().getProperty(
-            "lightning.socket", "/tmp/lightning");
-        String password = getProperties().getProperty(
-            "lightning.password", "password");
-        client = new JlightningClient(socket, password);
+        if (sharedClient == null) {
+            synchronized (initLock) {
+                if (sharedClient == null) {
+                    String socket = getProperties().getProperty(
+                        "lightning.socket", "/tmp/lightning");
+                    String password = getProperties().getProperty(
+                        "lightning.password", "password");
+                    sharedClient = new JlightningClient(socket, password);
+                }
+            }
+        }
+        client = sharedClient;
     }
 
     @Override
