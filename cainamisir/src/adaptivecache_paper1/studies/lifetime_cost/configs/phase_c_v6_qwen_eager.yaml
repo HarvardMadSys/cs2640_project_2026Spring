@@ -1,0 +1,56 @@
+# Phase C v6 — eager-trigger compaction with Qwen3-30B-A3B agent.
+#
+# Same eager-trigger setup as v6 (Haiku) but uses Qwen3-30B-A3B since
+# Anthropic API is currently 500ing. This gives us the eager-trigger
+# data point on Qwen v4's same task set, where we can directly compare
+# lazy (v4) vs eager (v6) on the same agent.
+
+models:
+  - vllm:Qwen/Qwen3-30B-A3B-Instruct-2507
+
+summarizer_model: vllm:Qwen/Qwen3-4B-Instruct-2507
+
+model_kwargs:
+  vllm:Qwen/Qwen3-30B-A3B-Instruct-2507:
+    max_new_tokens: 800
+    temperature: 0.5
+    enable_thinking: false
+    dtype: bfloat16
+    gpu_memory_utilization: 0.80
+    max_model_len: 128000
+    enable_prefix_caching: true
+  vllm:Qwen/Qwen3-4B-Instruct-2507:
+    max_new_tokens: 600
+    temperature: 0.5
+    enable_thinking: false
+    dtype: bfloat16
+    gpu_memory_utilization: 0.13
+    max_model_len: 8000
+    enable_prefix_caching: true
+
+policies:
+  - name: none
+  - name: smart_evict
+    kwargs: { trigger_ratio: 0.85, target_ratio: 0.40, protect_recent: 3, min_obs_tokens: 300, use_hard_budget_trigger: false }
+  - name: llm_reorganizer
+    kwargs: { trigger_ratio: 0.85, target_ratio: 0.40, protect_recent: 3, min_obs_tokens: 300, use_hard_budget_trigger: false, max_score_input_msgs: 30 }
+  - name: prefix_preserving
+    kwargs: { keep_first_turns: 2, keep_recent_turns: 6, trigger_ratio: 0.85, cooldown_steps: 5 }
+
+benchmarks:
+  - name: swebench_live
+    kwargs:
+      cache_dir: /scratch/swebench_repos
+      max_steps_per_task: 80
+      instance_ids:
+        - psf__requests-3362
+        - pallets__flask-5063
+        - pylint-dev__pylint-7080
+        - pytest-dev__pytest-7490
+
+# Eager: trigger at 0.85 × 35K = ~30K (vs lazy v4's 0.85 × 100K = 85K)
+budget_tokens: 35000
+hard_budget_tokens: 100000
+max_tasks: null
+n_workers: 1
+out_dir: studies/lifetime_cost/out/phase_c_v6_qwen_eager

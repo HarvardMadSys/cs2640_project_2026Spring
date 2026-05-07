@@ -1,0 +1,45 @@
+# Phase D v0 — action-graph supersession (Paper 2 Phase 0 stepping stone)
+#
+# `consumption_evict`: tag tool obs as consumed via subsequent agent actions
+# (edit_file consumes prior read of same path, read_file consumes prior
+# search hit for same path, run_tests consumes prior run_tests, etc.).
+# Drop only confirmed-exhaust obs; if nothing's consumed, tie `none`.
+#
+# Compared against:
+#   - none: baseline
+#   - smart_evict: heuristic Tier-1 winner from v7 (with max_drop_score gate)
+#   - consumption_evict: this paper's Phase 0 contribution
+
+models:
+  - anthropic/claude-haiku-4-5
+
+summarizer_model: anthropic/claude-haiku-4-5
+
+model_kwargs:
+  anthropic/claude-haiku-4-5:
+    max_new_tokens: 800
+    temperature: 0.5
+
+policies:
+  - name: none
+  - name: smart_evict
+    kwargs: { trigger_ratio: 0.85, target_ratio: 0.55, protect_recent: 3, min_obs_tokens: 300, use_hard_budget_trigger: false, max_drop_score: 0.4, emergency_ratio: 0.95 }
+  - name: consumption_evict
+    kwargs: { drop_threshold_tokens: 5000, protect_recent: 3, min_obs_tokens: 200, trigger_ratio: 0.85, use_hard_budget_trigger: false }
+
+benchmarks:
+  - name: swebench_live
+    kwargs:
+      cache_dir: /scratch/swebench_repos
+      max_steps_per_task: 80
+      instance_ids:
+        - psf__requests-3362
+        - pallets__flask-5063
+        - pylint-dev__pylint-7080
+        - pytest-dev__pytest-7490
+
+budget_tokens: 35000
+hard_budget_tokens: 100000
+max_tasks: null
+n_workers: 4
+out_dir: studies/lifetime_cost/out/phase_d_v1_consumption_lazy

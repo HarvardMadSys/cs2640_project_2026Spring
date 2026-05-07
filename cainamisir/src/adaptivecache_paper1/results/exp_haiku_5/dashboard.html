@@ -1,0 +1,7687 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta http-equiv="refresh" content="10">
+<title>AdaptiveCache Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'SF Mono', 'Menlo', 'Monaco', monospace; background: #0d1117; color: #c9d1d9; padding: 20px; font-size: 13px; }
+  h1 { color: #58a6ff; margin-bottom: 5px; font-size: 20px; }
+  h2 { color: #8b949e; font-size: 16px; margin: 25px 0 10px; border-bottom: 1px solid #21262d; padding-bottom: 5px; }
+  h3 { color: #58a6ff; font-size: 14px; margin: 15px 0 8px; cursor: pointer; }
+  h3:hover { color: #79c0ff; }
+  .meta { color: #8b949e; margin-bottom: 20px; }
+  .meta span { margin-right: 20px; }
+  .cost { color: #f0883e; }
+  .good { color: #3fb950; }
+  .warn { color: #d29922; }
+  .bad { color: #f85149; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+  th { background: #161b22; color: #8b949e; text-align: left; padding: 8px 12px; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 6px 12px; border-bottom: 1px solid #21262d; }
+  tr:hover td { background: #161b22; }
+  .bar-container { width: 120px; height: 14px; background: #21262d; border-radius: 3px; display: inline-block; vertical-align: middle; }
+  .bar { height: 100%; border-radius: 3px; transition: width 0.3s; }
+  .bar-green { background: linear-gradient(90deg, #238636, #3fb950); }
+  .bar-yellow { background: linear-gradient(90deg, #9e6a03, #d29922); }
+  .bar-red { background: linear-gradient(90deg, #da3633, #f85149); }
+  .bar-blue { background: linear-gradient(90deg, #1f6feb, #58a6ff); }
+  .sparkline { font-size: 11px; letter-spacing: -1px; color: #3fb950; }
+  .collapsible { display: none; margin-left: 15px; }
+  .collapsible.open { display: block; }
+  .toggle { cursor: pointer; user-select: none; }
+  .toggle::before { content: "▶ "; font-size: 10px; }
+  .toggle.open::before { content: "▼ "; }
+  .step-row td { font-size: 12px; padding: 3px 8px; }
+  .step-row:nth-child(even) td { background: #0d1117; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .pill-green { background: #238636; color: #fff; }
+  .pill-red { background: #da3633; color: #fff; }
+  .pill-yellow { background: #9e6a03; color: #fff; }
+  .pill-blue { background: #1f6feb; color: #fff; }
+  .instance-section { background: #161b22; border: 1px solid #21262d; border-radius: 6px; padding: 12px; margin: 10px 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; }
+  .metric-card { background: #0d1117; border: 1px solid #21262d; border-radius: 6px; padding: 12px; text-align: center; }
+  .metric-value { font-size: 28px; font-weight: bold; }
+  .metric-label { color: #8b949e; font-size: 11px; margin-top: 4px; }
+</style>
+<script>
+function toggle(id) {
+  var el = document.getElementById(id);
+  var btn = document.getElementById('btn-' + id);
+  if (el.classList.contains('open')) {
+    el.classList.remove('open');
+    btn.classList.remove('open');
+  } else {
+    el.classList.add('open');
+    btn.classList.add('open');
+  }
+}
+</script>
+</head><body>
+<h1>AdaptiveCache Experiment Dashboard</h1>
+<div class="meta">
+  <span>20 trajectories</span>
+  <span class="cost">$4.73 total cost</span>
+  <span>2026-04-06 23:08:32</span>
+  <span>exp_haiku_5</span>
+</div>
+
+<div class="grid" style="margin-bottom: 20px;">
+  <div class="metric-card"><div class="metric-value">20</div><div class="metric-label">Trajectories</div></div>
+  <div class="metric-card"><div class="metric-value">800</div><div class="metric-label">Total Steps</div></div>
+  <div class="metric-card"><div class="metric-value cost">$4.73</div><div class="metric-label">Total Cost</div></div>
+  <div class="metric-card"><div class="metric-value">10,632,757</div><div class="metric-label">Total Prompt Tokens</div></div>
+  <div class="metric-card"><div class="metric-value good">76.2%</div><div class="metric-label">Overall Cache Hit Rate</div></div>
+</div>
+<h2>Config Comparison</h2><table><tr><th>Config</th><th>Instances</th><th>Patches</th><th>Avg Cost</th><th>Avg Steps</th><th>Avg Prompt Tok</th><th>Avg Cache Read</th><th>Cache Hit Rate</th><th>Evicted Msgs</th></tr><tr>
+  <td><strong>adaptive/8000</strong></td>
+  <td>5</td>
+  <td><span class="pill pill-red">0</span></td>
+  <td class="cost">$0.166</td>
+  <td>30</td>
+  <td>263,259</td>
+  <td>160,933</td>
+  <td><span class="good">61.1%</span> <div class="bar-container"><div class="bar bar-green" style="width:61%"></div></div></td>
+  <td>296</td>
+</tr><tr>
+  <td><strong>fifo/8000</strong></td>
+  <td>5</td>
+  <td><span class="pill pill-green">5</span></td>
+  <td class="cost">$0.396</td>
+  <td>51</td>
+  <td>545,802</td>
+  <td>292,444</td>
+  <td><span class="good">53.6%</span> <div class="bar-container"><div class="bar bar-green" style="width:54%"></div></div></td>
+  <td>1087</td>
+</tr><tr>
+  <td><strong>none/999999</strong></td>
+  <td>5</td>
+  <td><span class="pill pill-green">5</span></td>
+  <td class="cost">$0.237</td>
+  <td>49</td>
+  <td>1,146,392</td>
+  <td>1,091,594</td>
+  <td><span class="good">95.2%</span> <div class="bar-container"><div class="bar bar-green" style="width:95%"></div></div></td>
+  <td>0</td>
+</tr><tr>
+  <td><strong>summarize/8000</strong></td>
+  <td>5</td>
+  <td><span class="pill pill-red">0</span></td>
+  <td class="cost">$0.146</td>
+  <td>30</td>
+  <td>171,098</td>
+  <td>76,178</td>
+  <td><span class="warn">44.5%</span> <div class="bar-container"><div class="bar bar-yellow" style="width:45%"></div></div></td>
+  <td>549</td>
+</tr></table><h2>Per-Instance Comparison</h2>
+<div class="instance-section">
+  <h3 class="toggle" id="btn-astropy_astropy_12907" onclick="toggle('astropy_astropy_12907')">astropy__astropy-12907</h3>
+  <div class="collapsible" id="astropy_astropy_12907">
+    <table>
+    <tr><th>Policy</th><th>Status</th><th>Steps</th><th>Cost</th><th>Prompt Tok</th><th>Cache Read</th><th>Hit Rate</th><th>Evicted</th><th>Cache Hit Sparkline</th></tr>
+<tr>
+  <td><strong>adaptive/8000</strong></td>
+  <td><span class="pill pill-yellow">LimitsExceeded</span></td>
+  <td>30</td>
+  <td class="cost">$0.150</td>
+  <td>251,820</td>
+  <td>162,207</td>
+  <td class="good">64.4%</td>
+  <td>320</td>
+  <td class="sparkline">       ▆ ▇ ▇ ▇ ▇ ▇ ▇ ▇ ▇ ▇ ▇ ▇</td>
+</tr><tr>
+  <td><strong>fifo/8000</strong></td>
+  <td><span class="pill pill-green">PATCH</span></td>
+  <td>56</td>
+  <td class="cost">$0.430</td>
+  <td>584,169</td>
+  <td>319,941</td>
+  <td class="good">54.8%</td>
+  <td>2096</td>
+  <td class="sparkline">▇ ▇ ▇  ▇▆▇▇  ▇  ▇    ▇▇▇▇ ▇▇▇ </td>
+</tr><tr>
+  <td><strong>none/999999</strong></td>
+  <td><span class="pill pill-green">PATCH</span></td>
+  <td>36</td>
+  <td class="cost">$0.188</td>
+  <td>769,721</td>
+  <td>718,377</td>
+  <td class="good">93.3%</td>
+  <td>0</td>
+  <td class="sparkline">▇▆▇▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇</td>
+</tr><tr>
+  <td><strong>summarize/8000</strong></td>
+  <td><span class="pill pill-yellow">LimitsExceeded</span></td>
+  <td>30</td>
+  <td class="cost">$0.170</td>
+  <td>165,072</td>
+  <td>55,966</td>
+  <td class="warn">33.9%</td>
+  <td>627</td>
+  <td class="sparkline">     ▆▇▇▇▇▇                   </td>
+</tr></table>
+    <h3 class="toggle" id="btn-astropy_astropy_12907_adaptive" onclick="toggle('astropy_astropy_12907_adaptive')" style="font-size:12px; color:#8b949e;">
+      Step trace: adaptive/8000
+    </h3>
+    <div class="collapsible" id="astropy_astropy_12907_adaptive">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>2,036</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0026</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>4</td>
+  <td class="">0</td>
+  <td>2,181</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0025</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>6</td>
+  <td class="">0</td>
+  <td>3,460</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0039</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>3,591</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0040</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>10</td>
+  <td class="">0</td>
+  <td>6,656</td>
+  <td>0</td>
+  <td>6,651</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0087</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>12</td>
+  <td class="">0</td>
+  <td>8,572</td>
+  <td>0</td>
+  <td>8,567</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0132</td>
+</tr><tr class="step-row">
+  <td>7</td>
+  <td>10</td>
+  <td class="bad">4</td>
+  <td>7,884</td>
+  <td>0</td>
+  <td>7,879</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0123</td>
+</tr><tr class="step-row">
+  <td>8</td>
+  <td>16</td>
+  <td class="">0</td>
+  <td>10,065</td>
+  <td>8,567</td>
+  <td>1,494</td>
+  <td class="good">85.1%</td>
+  <td>$0.0032</td>
+</tr><tr class="step-row">
+  <td>9</td>
+  <td>10</td>
+  <td class="bad">8</td>
+  <td>5,579</td>
+  <td>0</td>
+  <td>5,574</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0074</td>
+</tr><tr class="step-row">
+  <td>10</td>
+  <td>20</td>
+  <td class="">0</td>
+  <td>10,325</td>
+  <td>10,061</td>
+  <td>261</td>
+  <td class="good">97.4%</td>
+  <td>$0.0019</td>
+</tr><tr class="step-row">
+  <td>11</td>
+  <td>10</td>
+  <td class="bad">12</td>
+  <td>4,773</td>
+  <td>0</td>
+  <td>4,768</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0063</td>
+</tr><tr class="step-row">
+  <td>12</td>
+  <td>24</td>
+  <td class="">0</td>
+  <td>11,678</td>
+  <td>10,322</td>
+  <td>1,354</td>
+  <td class="good">88.4%</td>
+  <td>$0.0034</td>
+</tr><tr class="step-row">
+  <td>13</td>
+  <td>10</td>
+  <td class="bad">16</td>
+  <td>5,706</td>
+  <td>0</td>
+  <td>5,701</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0079</td>
+</tr><tr class="step-row">
+  <td>14</td>
+  <td>28</td>
+  <td class="">0</td>
+  <td>12,475</td>
+  <td>11,676</td>
+  <td>798</td>
+  <td class="good">93.6%</td>
+  <td>$0.0028</td>
+</tr><tr class="step-row">
+  <td>15</td>
+  <td>8</td>
+  <td class="bad">22</td>
+  <td>3,099</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0037</td>
+</tr><tr class="step-row">
+  <td>16</td>
+  <td>32</td>
+  <td class="">0</td>
+  <td>13,078</td>
+  <td>12,474</td>
+  <td>604</td>
+  <td class="good">95.4%</td>
+  <td>$0.0026</td>
+</tr><tr class="step-row">
+  <td>17</td>
+  <td>12</td>
+  <td class="bad">22</td>
+  <td>5,109</td>
+  <td>0</td>
+  <td>5,104</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0070</td>
+</tr><tr class="step-row">
+  <td>18</td>
+  <td>36</td>
+  <td class="">0</td>
+  <td>13,475</td>
+  <td>13,078</td>
+  <td>397</td>
+  <td class="good">97.1%</td>
+  <td>$0.0024</td>
+</tr><tr class="step-row">
+  <td>19</td>
+  <td>8</td>
+  <td class="bad">30</td>
+  <td>3,114</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0038</td>
+</tr><tr class="step-row">
+  <td>20</td>
+  <td>40</td>
+  <td class="">0</td>
+  <td>14,536</td>
+  <td>13,475</td>
+  <td>1,061</td>
+  <td class="good">92.7%</td>
+  <td>$0.0038</td>
+</tr><tr class="step-row">
+  <td>21</td>
+  <td>8</td>
+  <td class="bad">34</td>
+  <td>3,512</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0041</td>
+</tr><tr class="step-row">
+  <td>22</td>
+  <td>44</td>
+  <td class="">0</td>
+  <td>15,258</td>
+  <td>14,536</td>
+  <td>722</td>
+  <td class="good">95.3%</td>
+  <td>$0.0056</td>
+</tr><tr class="step-row">
+  <td>23</td>
+  <td>12</td>
+  <td class="bad">34</td>
+  <td>4,804</td>
+  <td>0</td>
+  <td>4,799</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0089</td>
+</tr><tr class="step-row">
+  <td>24</td>
+  <td>48</td>
+  <td class="">0</td>
+  <td>17,137</td>
+  <td>15,258</td>
+  <td>1,879</td>
+  <td class="good">89.0%</td>
+  <td>$0.0047</td>
+</tr><tr class="step-row">
+  <td>25</td>
+  <td>8</td>
+  <td class="bad">42</td>
+  <td>4,287</td>
+  <td>0</td>
+  <td>4,282</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0058</td>
+</tr><tr class="step-row">
+  <td>26</td>
+  <td>52</td>
+  <td class="">0</td>
+  <td>17,642</td>
+  <td>17,137</td>
+  <td>505</td>
+  <td class="good">97.1%</td>
+  <td>$0.0029</td>
+</tr><tr class="step-row">
+  <td>27</td>
+  <td>8</td>
+  <td class="bad">46</td>
+  <td>2,707</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0034</td>
+</tr><tr class="step-row">
+  <td>28</td>
+  <td>56</td>
+  <td class="">0</td>
+  <td>17,981</td>
+  <td>17,642</td>
+  <td>339</td>
+  <td class="good">98.1%</td>
+  <td>$0.0028</td>
+</tr><tr class="step-row">
+  <td>29</td>
+  <td>8</td>
+  <td class="bad">50</td>
+  <td>2,545</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0031</td>
+</tr><tr class="step-row">
+  <td>30</td>
+  <td>60</td>
+  <td class="">0</td>
+  <td>18,555</td>
+  <td>17,981</td>
+  <td>574</td>
+  <td class="good">96.9%</td>
+  <td>$0.0054</td>
+</tr></table></div>
+    <h3 class="toggle" id="btn-astropy_astropy_12907_fifo" onclick="toggle('astropy_astropy_12907_fifo')" style="font-size:12px; color:#8b949e;">
+      Step trace: fifo/8000
+    </h3>
+    <div class="collapsible" id="astropy_astropy_12907_fifo">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>2,036</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0026</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>4</td>
+  <td class="">0</td>
+  <td>2,181</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0025</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>6</td>
+  <td class="">0</td>
+  <td>3,462</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0039</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>3,593</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0040</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>10</td>
+  <td class="">0</td>
+  <td>6,658</td>
+  <td>0</td>
+  <td>6,653</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0087</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>12</td>
+  <td class="">0</td>
+  <td>8,574</td>
+  <td>6,653</td>
+  <td>1,917</td>
+  <td class="good">77.6%</td>
+  <td>$0.0050</td>
+</tr><tr class="step-row">
+  <td>7</td>
+  <td>14</td>
+  <td class="">0</td>
+  <td>9,046</td>
+  <td>8,570</td>
+  <td>473</td>
+  <td class="good">94.7%</td>
+  <td>$0.0020</td>
+</tr><tr class="step-row">
+  <td>8</td>
+  <td>16</td>
+  <td class="">0</td>
+  <td>10,347</td>
+  <td>9,043</td>
+  <td>1,302</td>
+  <td class="good">87.4%</td>
+  <td>$0.0032</td>
+</tr><tr class="step-row">
+  <td>9</td>
+  <td>18</td>
+  <td class="">0</td>
+  <td>10,949</td>
+  <td>10,345</td>
+  <td>603</td>
+  <td class="good">94.5%</td>
+  <td>$0.0024</td>
+</tr><tr class="step-row">
+  <td>10</td>
+  <td>12</td>
+  <td class="bad">8</td>
+  <td>10,930</td>
+  <td>0</td>
+  <td>10,925</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0143</td>
+</tr><tr class="step-row">
+  <td>11</td>
+  <td>14</td>
+  <td class="bad">8</td>
+  <td>11,225</td>
+  <td>10,925</td>
+  <td>296</td>
+  <td class="good">97.3%</td>
+  <td>$0.0022</td>
+</tr><tr class="step-row">
+  <td>12</td>
+  <td>16</td>
+  <td class="bad">8</td>
+  <td>11,447</td>
+  <td>10,925</td>
+  <td>518</td>
+  <td class="good">95.4%</td>
+  <td>$0.0024</td>
+</tr><tr class="step-row">
+  <td>13</td>
+  <td>12</td>
+  <td class="bad">14</td>
+  <td>10,879</td>
+  <td>0</td>
+  <td>10,874</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0178</td>
+</tr><tr class="step-row">
+  <td>14</td>
+  <td>10</td>
+  <td class="bad">18</td>
+  <td>6,549</td>
+  <td>0</td>
+  <td>6,544</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0109</td>
+</tr><tr class="step-row">
+  <td>15</td>
+  <td>12</td>
+  <td class="bad">18</td>
+  <td>7,561</td>
+  <td>6,544</td>
+  <td>1,013</td>
+  <td class="good">86.5%</td>
+  <td>$0.0028</td>
+</tr><tr class="step-row">
+  <td>16</td>
+  <td>14</td>
+  <td class="bad">18</td>
+  <td>7,816</td>
+  <td>6,544</td>
+  <td>1,268</td>
+  <td class="good">83.7%</td>
+  <td>$0.0030</td>
+</tr><tr class="step-row">
+  <td>17</td>
+  <td>16</td>
+  <td class="bad">18</td>
+  <td>9,288</td>
+  <td>7,812</td>
+  <td>1,473</td>
+  <td class="good">84.1%</td>
+  <td>$0.0034</td>
+</tr><tr class="step-row">
+  <td>18</td>
+  <td>18</td>
+  <td class="bad">18</td>
+  <td>9,468</td>
+  <td>9,285</td>
+  <td>181</td>
+  <td class="good">98.1%</td>
+  <td>$0.0019</td>
+</tr><tr class="step-row">
+  <td>19</td>
+  <td>20</td>
+  <td class="bad">18</td>
+  <td>9,714</td>
+  <td>9,285</td>
+  <td>427</td>
+  <td class="good">95.6%</td>
+  <td>$0.0021</td>
+</tr><tr class="step-row">
+  <td>20</td>
+  <td>22</td>
+  <td class="bad">18</td>
+  <td>11,682</td>
+  <td>9,466</td>
+  <td>2,215</td>
+  <td class="good">81.0%</td>
+  <td>$0.0079</td>
+</tr><tr class="step-row">
+  <td>21</td>
+  <td>18</td>
+  <td class="bad">24</td>
+  <td>9,161</td>
+  <td>0</td>
+  <td>9,156</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0127</td>
+</tr><tr class="step-row">
+  <td>22</td>
+  <td>20</td>
+  <td class="bad">24</td>
+  <td>9,793</td>
+  <td>9,156</td>
+  <td>633</td>
+  <td class="good">93.5%</td>
+  <td>$0.0031</td>
+</tr><tr class="step-row">
+  <td>23</td>
+  <td>22</td>
+  <td class="bad">24</td>
+  <td>10,151</td>
+  <td>9,789</td>
+  <td>359</td>
+  <td class="good">96.4%</td>
+  <td>$0.0021</td>
+</tr><tr class="step-row">
+  <td>24</td>
+  <td>18</td>
+  <td class="bad">30</td>
+  <td>11,128</td>
+  <td>0</td>
+  <td>11,123</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0168</td>
+</tr><tr class="step-row">
+  <td>25</td>
+  <td>18</td>
+  <td class="bad">32</td>
+  <td>10,321</td>
+  <td>0</td>
+  <td>10,316</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0137</td>
+</tr><tr class="step-row">
+  <td>26</td>
+  <td>20</td>
+  <td class="bad">32</td>
+  <td>10,913</td>
+  <td>10,316</td>
+  <td>593</td>
+  <td class="good">94.5%</td>
+  <td>$0.0028</td>
+</tr><tr class="step-row">
+  <td>27</td>
+  <td>22</td>
+  <td class="bad">32</td>
+  <td>11,591</td>
+  <td>10,909</td>
+  <td>679</td>
+  <td class="good">94.1%</td>
+  <td>$0.0026</td>
+</tr><tr class="step-row">
+  <td>28</td>
+  <td>16</td>
+  <td class="bad">40</td>
+  <td>10,656</td>
+  <td>0</td>
+  <td>10,651</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0155</td>
+</tr><tr class="step-row">
+  <td>29</td>
+  <td>18</td>
+  <td class="bad">40</td>
+  <td>11,382</td>
+  <td>10,651</td>
+  <td>727</td>
+  <td class="good">93.6%</td>
+  <td>$0.0042</td>
+</tr><tr class="step-row">
+  <td>30</td>
+  <td>18</td>
+  <td class="bad">42</td>
+  <td>11,245</td>
+  <td>0</td>
+  <td>11,240</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0156</td>
+</tr><tr class="step-row">
+  <td>31</td>
+  <td>20</td>
+  <td class="bad">42</td>
+  <td>11,590</td>
+  <td>11,240</td>
+  <td>346</td>
+  <td class="good">97.0%</td>
+  <td>$0.0023</td>
+</tr><tr class="step-row">
+  <td>32</td>
+  <td>20</td>
+  <td class="bad">44</td>
+  <td>11,663</td>
+  <td>0</td>
+  <td>11,658</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0175</td>
+</tr><tr class="step-row">
+  <td>33</td>
+  <td>20</td>
+  <td class="bad">46</td>
+  <td>9,615</td>
+  <td>0</td>
+  <td>9,610</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0129</td>
+</tr><tr class="step-row">
+  <td>34</td>
+  <td>22</td>
+  <td class="bad">46</td>
+  <td>9,882</td>
+  <td>9,610</td>
+  <td>268</td>
+  <td class="good">97.2%</td>
+  <td>$0.0021</td>
+</tr><tr class="step-row">
+  <td>35</td>
+  <td>24</td>
+  <td class="bad">46</td>
+  <td>11,356</td>
+  <td>9,878</td>
+  <td>1,475</td>
+  <td class="good">87.0%</td>
+  <td>$0.0036</td>
+</tr><tr class="step-row">
+  <td>36</td>
+  <td>26</td>
+  <td class="bad">46</td>
+  <td>11,535</td>
+  <td>11,353</td>
+  <td>180</td>
+  <td class="good">98.4%</td>
+  <td>$0.0021</td>
+</tr><tr class="step-row">
+  <td>37</td>
+  <td>28</td>
+  <td class="bad">46</td>
+  <td>11,781</td>
+  <td>11,353</td>
+  <td>426</td>
+  <td class="good">96.4%</td>
+  <td>$0.0024</td>
+</tr><tr class="step-row">
+  <td>38</td>
+  <td>24</td>
+  <td class="bad">52</td>
+  <td>11,819</td>
+  <td>0</td>
+  <td>11,814</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0156</td>
+</tr><tr class="step-row">
+  <td>39</td>
+  <td>22</td>
+  <td class="bad">56</td>
+  <td>11,673</td>
+  <td>0</td>
+  <td>11,668</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0155</td>
+</tr><tr class="step-row">
+  <td>40</td>
+  <td>24</td>
+  <td class="bad">56</td>
+  <td>12,051</td>
+  <td>11,668</td>
+  <td>379</td>
+  <td class="good">96.8%</td>
+  <td>$0.0071</td>
+</tr><tr class="step-row">
+  <td>41</td>
+  <td>22</td>
+  <td class="bad">60</td>
+  <td>12,673</td>
+  <td>0</td>
+  <td>12,668</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0167</td>
+</tr><tr class="step-row">
+  <td>42</td>
+  <td>22</td>
+  <td class="bad">62</td>
+  <td>12,455</td>
+  <td>0</td>
+  <td>12,450</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0164</td>
+</tr><tr class="step-row">
+  <td>43</td>
+  <td>24</td>
+  <td class="bad">62</td>
+  <td>12,765</td>
+  <td>12,450</td>
+  <td>311</td>
+  <td class="good">97.5%</td>
+  <td>$0.0024</td>
+</tr><tr class="step-row">
+  <td>44</td>
+  <td>24</td>
+  <td class="bad">64</td>
+  <td>11,958</td>
+  <td>0</td>
+  <td>11,953</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0156</td>
+</tr><tr class="step-row">
+  <td>45</td>
+  <td>26</td>
+  <td class="bad">64</td>
+  <td>12,323</td>
+  <td>0</td>
+  <td>12,318</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0203</td>
+</tr><tr class="step-row">
+  <td>46</td>
+  <td>24</td>
+  <td class="bad">68</td>
+  <td>12,031</td>
+  <td>0</td>
+  <td>12,026</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0157</td>
+</tr><tr class="step-row">
+  <td>47</td>
+  <td>20</td>
+  <td class="bad">74</td>
+  <td>11,234</td>
+  <td>0</td>
+  <td>11,229</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0149</td>
+</tr><tr class="step-row">
+  <td>48</td>
+  <td>22</td>
+  <td class="bad">74</td>
+  <td>11,453</td>
+  <td>11,229</td>
+  <td>220</td>
+  <td class="good">98.0%</td>
+  <td>$0.0022</td>
+</tr><tr class="step-row">
+  <td>49</td>
+  <td>24</td>
+  <td class="bad">74</td>
+  <td>12,931</td>
+  <td>11,449</td>
+  <td>1,479</td>
+  <td class="good">88.5%</td>
+  <td>$0.0038</td>
+</tr><tr class="step-row">
+  <td>50</td>
+  <td>26</td>
+  <td class="bad">74</td>
+  <td>13,117</td>
+  <td>12,928</td>
+  <td>187</td>
+  <td class="good">98.6%</td>
+  <td>$0.0023</td>
+</tr><tr class="step-row">
+  <td>51</td>
+  <td>28</td>
+  <td class="bad">74</td>
+  <td>13,360</td>
+  <td>13,115</td>
+  <td>244</td>
+  <td class="good">98.2%</td>
+  <td>$0.0023</td>
+</tr><tr class="step-row">
+  <td>52</td>
+  <td>28</td>
+  <td class="bad">76</td>
+  <td>12,177</td>
+  <td>0</td>
+  <td>12,172</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0160</td>
+</tr><tr class="step-row">
+  <td>53</td>
+  <td>30</td>
+  <td class="bad">76</td>
+  <td>12,692</td>
+  <td>12,172</td>
+  <td>516</td>
+  <td class="good">95.9%</td>
+  <td>$0.0028</td>
+</tr><tr class="step-row">
+  <td>54</td>
+  <td>32</td>
+  <td class="bad">76</td>
+  <td>13,110</td>
+  <td>12,172</td>
+  <td>934</td>
+  <td class="good">92.8%</td>
+  <td>$0.0032</td>
+</tr><tr class="step-row">
+  <td>55</td>
+  <td>34</td>
+  <td class="bad">76</td>
+  <td>13,451</td>
+  <td>13,106</td>
+  <td>342</td>
+  <td class="good">97.4%</td>
+  <td>$0.0039</td>
+</tr><tr class="step-row">
+  <td>56</td>
+  <td>34</td>
+  <td class="bad">78</td>
+  <td>13,728</td>
+  <td>0</td>
+  <td>13,723</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0178</td>
+</tr></table></div>
+    <h3 class="toggle" id="btn-astropy_astropy_12907_none" onclick="toggle('astropy_astropy_12907_none')" style="font-size:12px; color:#8b949e;">
+      Step trace: none/999999
+    </h3>
+    <div class="collapsible" id="astropy_astropy_12907_none">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>2,036</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0026</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>4</td>
+  <td class="">0</td>
+  <td>2,181</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0025</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>6</td>
+  <td class="">0</td>
+  <td>3,460</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0039</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>3,591</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0040</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>10</td>
+  <td class="">0</td>
+  <td>6,656</td>
+  <td>0</td>
+  <td>6,651</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0087</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>12</td>
+  <td class="">0</td>
+  <td>8,572</td>
+  <td>6,651</td>
+  <td>1,917</td>
+  <td class="good">77.6%</td>
+  <td>$0.0050</td>
+</tr><tr class="step-row">
+  <td>7</td>
+  <td>14</td>
+  <td class="">0</td>
+  <td>9,044</td>
+  <td>8,568</td>
+  <td>473</td>
+  <td class="good">94.7%</td>
+  <td>$0.0020</td>
+</tr><tr class="step-row">
+  <td>8</td>
+  <td>16</td>
+  <td class="">0</td>
+  <td>10,336</td>
+  <td>9,041</td>
+  <td>1,293</td>
+  <td class="good">87.5%</td>
+  <td>$0.0032</td>
+</tr><tr class="step-row">
+  <td>9</td>
+  <td>18</td>
+  <td class="">0</td>
+  <td>10,928</td>
+  <td>10,334</td>
+  <td>593</td>
+  <td class="good">94.6%</td>
+  <td>$0.0024</td>
+</tr><tr class="step-row">
+  <td>10</td>
+  <td>20</td>
+  <td class="">0</td>
+  <td>15,529</td>
+  <td>10,927</td>
+  <td>4,602</td>
+  <td class="good">70.4%</td>
+  <td>$0.0075</td>
+</tr><tr class="step-row">
+  <td>11</td>
+  <td>22</td>
+  <td class="">0</td>
+  <td>17,120</td>
+  <td>15,529</td>
+  <td>1,591</td>
+  <td class="good">90.7%</td>
+  <td>$0.0041</td>
+</tr><tr class="step-row">
+  <td>12</td>
+  <td>24</td>
+  <td class="">0</td>
+  <td>17,270</td>
+  <td>17,120</td>
+  <td>150</td>
+  <td class="good">99.1%</td>
+  <td>$0.0022</td>
+</tr><tr class="step-row">
+  <td>13</td>
+  <td>26</td>
+  <td class="">0</td>
+  <td>19,190</td>
+  <td>17,270</td>
+  <td>1,920</td>
+  <td class="good">90.0%</td>
+  <td>$0.0046</td>
+</tr><tr class="step-row">
+  <td>14</td>
+  <td>28</td>
+  <td class="">0</td>
+  <td>19,324</td>
+  <td>19,190</td>
+  <td>134</td>
+  <td class="good">99.3%</td>
+  <td>$0.0024</td>
+</tr><tr class="step-row">
+  <td>15</td>
+  <td>30</td>
+  <td class="">0</td>
+  <td>19,653</td>
+  <td>19,190</td>
+  <td>463</td>
+  <td class="good">97.6%</td>
+  <td>$0.0104</td>
+</tr><tr class="step-row">
+  <td>16</td>
+  <td>32</td>
+  <td class="">0</td>
+  <td>21,500</td>
+  <td>19,653</td>
+  <td>1,847</td>
+  <td class="good">91.4%</td>
+  <td>$0.0095</td>
+</tr><tr class="step-row">
+  <td>17</td>
+  <td>34</td>
+  <td class="">0</td>
+  <td>23,111</td>
+  <td>21,500</td>
+  <td>1,611</td>
+  <td class="good">93.0%</td>
+  <td>$0.0049</td>
+</tr><tr class="step-row">
+  <td>18</td>
+  <td>36</td>
+  <td class="">0</td>
+  <td>23,537</td>
+  <td>23,111</td>
+  <td>426</td>
+  <td class="good">98.2%</td>
+  <td>$0.0049</td>
+</tr><tr class="step-row">
+  <td>19</td>
+  <td>38</td>
+  <td class="">0</td>
+  <td>24,020</td>
+  <td>23,537</td>
+  <td>483</td>
+  <td class="good">98.0%</td>
+  <td>$0.0034</td>
+</tr><tr class="step-row">
+  <td>20</td>
+  <td>40</td>
+  <td class="">0</td>
+  <td>24,390</td>
+  <td>24,020</td>
+  <td>370</td>
+  <td class="good">98.5%</td>
+  <td>$0.0036</td>
+</tr><tr class="step-row">
+  <td>21</td>
+  <td>42</td>
+  <td class="">0</td>
+  <td>24,781</td>
+  <td>24,390</td>
+  <td>391</td>
+  <td class="good">98.4%</td>
+  <td>$0.0065</td>
+</tr><tr class="step-row">
+  <td>22</td>
+  <td>44</td>
+  <td class="">0</td>
+  <td>25,963</td>
+  <td>24,781</td>
+  <td>1,182</td>
+  <td class="good">95.4%</td>
+  <td>$0.0079</td>
+</tr><tr class="step-row">
+  <td>23</td>
+  <td>46</td>
+  <td class="">0</td>
+  <td>26,842</td>
+  <td>25,963</td>
+  <td>879</td>
+  <td class="good">96.7%</td>
+  <td>$0.0042</td>
+</tr><tr class="step-row">
+  <td>24</td>
+  <td>48</td>
+  <td class="">0</td>
+  <td>27,006</td>
+  <td>25,963</td>
+  <td>1,043</td>
+  <td class="good">96.1%</td>
+  <td>$0.0044</td>
+</tr><tr class="step-row">
+  <td>25</td>
+  <td>50</td>
+  <td class="">0</td>
+  <td>27,441</td>
+  <td>27,006</td>
+  <td>435</td>
+  <td class="good">98.4%</td>
+  <td>$0.0039</td>
+</tr><tr class="step-row">
+  <td>26</td>
+  <td>52</td>
+  <td class="">0</td>
+  <td>28,892</td>
+  <td>27,441</td>
+  <td>1,451</td>
+  <td class="good">95.0%</td>
+  <td>$0.0099</td>
+</tr><tr class="step-row">
+  <td>27</td>
+  <td>54</td>
+  <td class="">0</td>
+  <td>30,261</td>
+  <td>28,892</td>
+  <td>1,369</td>
+  <td class="good">95.5%</td>
+  <td>$0.0053</td>
+</tr><tr class="step-row">
+  <td>28</td>
+  <td>56</td>
+  <td class="">0</td>
+  <td>30,619</td>
+  <td>30,261</td>
+  <td>358</td>
+  <td class="good">98.8%</td>
+  <td>$0.0042</td>
+</tr><tr class="step-row">
+  <td>29</td>
+  <td>58</td>
+  <td class="">0</td>
+  <td>30,986</td>
+  <td>30,261</td>
+  <td>725</td>
+  <td class="good">97.7%</td>
+  <td>$0.0043</td>
+</tr><tr class="step-row">
+  <td>30</td>
+  <td>60</td>
+  <td class="">0</td>
+  <td>31,182</td>
+  <td>30,619</td>
+  <td>563</td>
+  <td class="good">98.2%</td>
+  <td>$0.0043</td>
+</tr><tr class="step-row">
+  <td>31</td>
+  <td>62</td>
+  <td class="">0</td>
+  <td>31,484</td>
+  <td>31,182</td>
+  <td>302</td>
+  <td class="good">99.0%</td>
+  <td>$0.0130</td>
+</tr><tr class="step-row">
+  <td>32</td>
+  <td>64</td>
+  <td class="">0</td>
+  <td>33,950</td>
+  <td>31,484</td>
+  <td>2,466</td>
+  <td class="good">92.7%</td>
+  <td>$0.0066</td>
+</tr><tr class="step-row">
+  <td>33</td>
+  <td>66</td>
+  <td class="">0</td>
+  <td>34,256</td>
+  <td>31,484</td>
+  <td>2,772</td>
+  <td class="good">91.9%</td>
+  <td>$0.0072</td>
+</tr><tr class="step-row">
+  <td>34</td>
+  <td>68</td>
+  <td class="">0</td>
+  <td>34,497</td>
+  <td>34,256</td>
+  <td>241</td>
+  <td class="good">99.3%</td>
+  <td>$0.0044</td>
+</tr><tr class="step-row">
+  <td>35</td>
+  <td>70</td>
+  <td class="">0</td>
+  <td>34,852</td>
+  <td>34,256</td>
+  <td>596</td>
+  <td class="good">98.3%</td>
+  <td>$0.0048</td>
+</tr><tr class="step-row">
+  <td>36</td>
+  <td>72</td>
+  <td class="">0</td>
+  <td>35,261</td>
+  <td>34,497</td>
+  <td>764</td>
+  <td class="good">97.8%</td>
+  <td>$0.0051</td>
+</tr></table></div>
+    <h3 class="toggle" id="btn-astropy_astropy_12907_summarize" onclick="toggle('astropy_astropy_12907_summarize')" style="font-size:12px; color:#8b949e;">
+      Step trace: summarize/8000
+    </h3>
+    <div class="collapsible" id="astropy_astropy_12907_summarize">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>2,036</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0026</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>4</td>
+  <td class="">0</td>
+  <td>2,181</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0025</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>6</td>
+  <td class="">0</td>
+  <td>3,462</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0039</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>3,593</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0040</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>10</td>
+  <td class="">0</td>
+  <td>6,658</td>
+  <td>0</td>
+  <td>6,653</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0087</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>12</td>
+  <td class="">0</td>
+  <td>8,574</td>
+  <td>6,653</td>
+  <td>1,917</td>
+  <td class="good">77.6%</td>
+  <td>$0.0050</td>
+</tr><tr class="step-row">
+  <td>7</td>
+  <td>14</td>
+  <td class="">0</td>
+  <td>9,237</td>
+  <td>8,570</td>
+  <td>664</td>
+  <td class="good">92.8%</td>
+  <td>$0.0056</td>
+</tr><tr class="step-row">
+  <td>8</td>
+  <td>16</td>
+  <td class="">0</td>
+  <td>10,400</td>
+  <td>9,234</td>
+  <td>1,164</td>
+  <td class="good">88.8%</td>
+  <td>$0.0038</td>
+</tr><tr class="step-row">
+  <td>9</td>
+  <td>18</td>
+  <td class="">0</td>
+  <td>10,714</td>
+  <td>10,398</td>
+  <td>315</td>
+  <td class="good">97.1%</td>
+  <td>$0.0018</td>
+</tr><tr class="step-row">
+  <td>10</td>
+  <td>20</td>
+  <td class="">0</td>
+  <td>10,830</td>
+  <td>10,398</td>
+  <td>431</td>
+  <td class="good">96.0%</td>
+  <td>$0.0021</td>
+</tr><tr class="step-row">
+  <td>11</td>
+  <td>22</td>
+  <td class="">0</td>
+  <td>10,990</td>
+  <td>10,713</td>
+  <td>277</td>
+  <td class="good">97.5%</td>
+  <td>$0.0061</td>
+</tr><tr class="step-row">
+  <td>12</td>
+  <td>9</td>
+  <td class="bad">15</td>
+  <td>4,402</td>
+  <td>0</td>
+  <td>4,397</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0078</td>
+</tr><tr class="step-row">
+  <td>13</td>
+  <td>9</td>
+  <td class="bad">17</td>
+  <td>5,014</td>
+  <td>0</td>
+  <td>5,009</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0068</td>
+</tr><tr class="step-row">
+  <td>14</td>
+  <td>9</td>
+  <td class="bad">19</td>
+  <td>5,000</td>
+  <td>0</td>
+  <td>4,995</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0066</td>
+</tr><tr class="step-row">
+  <td>15</td>
+  <td>9</td>
+  <td class="bad">21</td>
+  <td>4,422</td>
+  <td>0</td>
+  <td>4,417</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0062</td>
+</tr><tr class="step-row">
+  <td>16</td>
+  <td>9</td>
+  <td class="bad">23</td>
+  <td>4,217</td>
+  <td>0</td>
+  <td>4,212</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0061</td>
+</tr><tr class="step-row">
+  <td>17</td>
+  <td>9</td>
+  <td class="bad">25</td>
+  <td>5,226</td>
+  <td>0</td>
+  <td>5,221</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0074</td>
+</tr><tr class="step-row">
+  <td>18</td>
+  <td>9</td>
+  <td class="bad">27</td>
+  <td>4,343</td>
+  <td>0</td>
+  <td>4,338</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0078</td>
+</tr><tr class="step-row">
+  <td>19</td>
+  <td>9</td>
+  <td class="bad">29</td>
+  <td>4,833</td>
+  <td>0</td>
+  <td>4,828</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0067</td>
+</tr><tr class="step-row">
+  <td>20</td>
+  <td>9</td>
+  <td class="bad">31</td>
+  <td>5,213</td>
+  <td>0</td>
+  <td>5,208</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0073</td>
+</tr><tr class="step-row">
+  <td>21</td>
+  <td>9</td>
+  <td class="bad">33</td>
+  <td>5,231</td>
+  <td>0</td>
+  <td>5,226</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0072</td>
+</tr><tr class="step-row">
+  <td>22</td>
+  <td>9</td>
+  <td class="bad">35</td>
+  <td>4,553</td>
+  <td>0</td>
+  <td>4,548</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0078</td>
+</tr><tr class="step-row">
+  <td>23</td>
+  <td>9</td>
+  <td class="bad">37</td>
+  <td>3,430</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0041</td>
+</tr><tr class="step-row">
+  <td>24</td>
+  <td>9</td>
+  <td class="bad">39</td>
+  <td>3,346</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0068</td>
+</tr><tr class="step-row">
+  <td>25</td>
+  <td>9</td>
+  <td class="bad">41</td>
+  <td>4,034</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0048</td>
+</tr><tr class="step-row">
+  <td>26</td>
+  <td>9</td>
+  <td class="bad">43</td>
+  <td>3,940</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0046</td>
+</tr><tr class="step-row">
+  <td>27</td>
+  <td>9</td>
+  <td class="bad">45</td>
+  <td>5,266</td>
+  <td>0</td>
+  <td>5,261</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0080</td>
+</tr><tr class="step-row">
+  <td>28</td>
+  <td>9</td>
+  <td class="bad">47</td>
+  <td>5,029</td>
+  <td>0</td>
+  <td>5,024</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0069</td>
+</tr><tr class="step-row">
+  <td>29</td>
+  <td>9</td>
+  <td class="bad">49</td>
+  <td>4,856</td>
+  <td>0</td>
+  <td>4,851</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0064</td>
+</tr><tr class="step-row">
+  <td>30</td>
+  <td>9</td>
+  <td class="bad">51</td>
+  <td>4,042</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0047</td>
+</tr></table></div></div></div>
+<div class="instance-section">
+  <h3 class="toggle" id="btn-astropy_astropy_14182" onclick="toggle('astropy_astropy_14182')">astropy__astropy-14182</h3>
+  <div class="collapsible" id="astropy_astropy_14182">
+    <table>
+    <tr><th>Policy</th><th>Status</th><th>Steps</th><th>Cost</th><th>Prompt Tok</th><th>Cache Read</th><th>Hit Rate</th><th>Evicted</th><th>Cache Hit Sparkline</th></tr>
+<tr>
+  <td><strong>adaptive/8000</strong></td>
+  <td><span class="pill pill-yellow">LimitsExceeded</span></td>
+  <td>30</td>
+  <td class="cost">$0.183</td>
+  <td>300,490</td>
+  <td>190,346</td>
+  <td class="good">63.3%</td>
+  <td>350</td>
+  <td class="sparkline">     ▇▅   ▅ ▇ ▇ ▇ ▇ ▇ ▇ ▇ ▇ ▇ </td>
+</tr><tr>
+  <td><strong>fifo/8000</strong></td>
+  <td><span class="pill pill-green">PATCH</span></td>
+  <td>53</td>
+  <td class="cost">$0.445</td>
+  <td>579,302</td>
+  <td>279,785</td>
+  <td class="warn">48.3%</td>
+  <td>1156</td>
+  <td class="sparkline">▇ ▇     ▇ ▇   ▇▇▇▇▇▇  ▇  ▇▇▇  </td>
+</tr><tr>
+  <td><strong>none/999999</strong></td>
+  <td><span class="pill pill-green">PATCH</span></td>
+  <td>93</td>
+  <td class="cost">$0.499</td>
+  <td>2,971,463</td>
+  <td>2,891,965</td>
+  <td class="good">97.3%</td>
+  <td>0</td>
+  <td class="sparkline">▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇</td>
+</tr><tr>
+  <td><strong>summarize/8000</strong></td>
+  <td><span class="pill pill-yellow">LimitsExceeded</span></td>
+  <td>30</td>
+  <td class="cost">$0.139</td>
+  <td>182,150</td>
+  <td>91,262</td>
+  <td class="good">50.1%</td>
+  <td>555</td>
+  <td class="sparkline">     ▇▅▇▇▇▇▇▇▇▇               </td>
+</tr></table>
+    <h3 class="toggle" id="btn-astropy_astropy_14182_adaptive" onclick="toggle('astropy_astropy_14182_adaptive')" style="font-size:12px; color:#8b949e;">
+      Step trace: adaptive/8000
+    </h3>
+    <div class="collapsible" id="astropy_astropy_14182_adaptive">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>2,289</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0035</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>4</td>
+  <td class="">0</td>
+  <td>2,573</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0029</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>6</td>
+  <td class="">0</td>
+  <td>3,855</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0045</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>5,199</td>
+  <td>0</td>
+  <td>5,194</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0071</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>10</td>
+  <td class="">0</td>
+  <td>6,183</td>
+  <td>0</td>
+  <td>6,178</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0083</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>12</td>
+  <td class="">0</td>
+  <td>6,845</td>
+  <td>6,178</td>
+  <td>663</td>
+  <td class="good">90.3%</td>
+  <td>$0.0021</td>
+</tr><tr class="step-row">
+  <td>7</td>
+  <td>14</td>
+  <td class="">0</td>
+  <td>9,920</td>
+  <td>6,841</td>
+  <td>3,076</td>
+  <td class="good">69.0%</td>
+  <td>$0.0053</td>
+</tr><tr class="step-row">
+  <td>8</td>
+  <td>10</td>
+  <td class="bad">6</td>
+  <td>8,904</td>
+  <td>0</td>
+  <td>8,899</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0131</td>
+</tr><tr class="step-row">
+  <td>9</td>
+  <td>14</td>
+  <td class="bad">4</td>
+  <td>11,076</td>
+  <td>0</td>
+  <td>11,071</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0145</td>
+</tr><tr class="step-row">
+  <td>10</td>
+  <td>10</td>
+  <td class="bad">10</td>
+  <td>6,232</td>
+  <td>0</td>
+  <td>6,227</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0085</td>
+</tr><tr class="step-row">
+  <td>11</td>
+  <td>22</td>
+  <td class="">0</td>
+  <td>13,947</td>
+  <td>9,917</td>
+  <td>4,028</td>
+  <td class="good">71.1%</td>
+  <td>$0.0067</td>
+</tr><tr class="step-row">
+  <td>12</td>
+  <td>10</td>
+  <td class="bad">14</td>
+  <td>6,427</td>
+  <td>0</td>
+  <td>6,422</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0093</td>
+</tr><tr class="step-row">
+  <td>13</td>
+  <td>26</td>
+  <td class="">0</td>
+  <td>15,569</td>
+  <td>13,945</td>
+  <td>1,623</td>
+  <td class="good">89.6%</td>
+  <td>$0.0041</td>
+</tr><tr class="step-row">
+  <td>14</td>
+  <td>10</td>
+  <td class="bad">18</td>
+  <td>5,253</td>
+  <td>0</td>
+  <td>5,248</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0073</td>
+</tr><tr class="step-row">
+  <td>15</td>
+  <td>30</td>
+  <td class="">0</td>
+  <td>16,499</td>
+  <td>15,568</td>
+  <td>931</td>
+  <td class="good">94.4%</td>
+  <td>$0.0034</td>
+</tr><tr class="step-row">
+  <td>16</td>
+  <td>8</td>
+  <td class="bad">24</td>
+  <td>3,984</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0049</td>
+</tr><tr class="step-row">
+  <td>17</td>
+  <td>34</td>
+  <td class="">0</td>
+  <td>17,513</td>
+  <td>16,499</td>
+  <td>1,014</td>
+  <td class="good">94.2%</td>
+  <td>$0.0038</td>
+</tr><tr class="step-row">
+  <td>18</td>
+  <td>12</td>
+  <td class="bad">24</td>
+  <td>4,748</td>
+  <td>0</td>
+  <td>4,743</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0067</td>
+</tr><tr class="step-row">
+  <td>19</td>
+  <td>38</td>
+  <td class="">0</td>
+  <td>18,205</td>
+  <td>17,513</td>
+  <td>692</td>
+  <td class="good">96.2%</td>
+  <td>$0.0032</td>
+</tr><tr class="step-row">
+  <td>20</td>
+  <td>10</td>
+  <td class="bad">30</td>
+  <td>4,334</td>
+  <td>0</td>
+  <td>4,329</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0061</td>
+</tr><tr class="step-row">
+  <td>21</td>
+  <td>42</td>
+  <td class="">0</td>
+  <td>19,316</td>
+  <td>18,205</td>
+  <td>1,111</td>
+  <td class="good">94.2%</td>
+  <td>$0.0071</td>
+</tr><tr class="step-row">
+  <td>22</td>
+  <td>8</td>
+  <td class="bad">36</td>
+  <td>4,730</td>
+  <td>0</td>
+  <td>4,725</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0068</td>
+</tr><tr class="step-row">
+  <td>23</td>
+  <td>46</td>
+  <td class="">0</td>
+  <td>20,849</td>
+  <td>19,316</td>
+  <td>1,533</td>
+  <td class="good">92.6%</td>
+  <td>$0.0071</td>
+</tr><tr class="step-row">
+  <td>24</td>
+  <td>8</td>
+  <td class="bad">40</td>
+  <td>4,495</td>
+  <td>0</td>
+  <td>4,490</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0062</td>
+</tr><tr class="step-row">
+  <td>25</td>
+  <td>50</td>
+  <td class="">0</td>
+  <td>22,091</td>
+  <td>20,849</td>
+  <td>1,242</td>
+  <td class="good">94.4%</td>
+  <td>$0.0043</td>
+</tr><tr class="step-row">
+  <td>26</td>
+  <td>8</td>
+  <td class="bad">44</td>
+  <td>4,624</td>
+  <td>0</td>
+  <td>4,619</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0065</td>
+</tr><tr class="step-row">
+  <td>27</td>
+  <td>54</td>
+  <td class="">0</td>
+  <td>23,424</td>
+  <td>22,091</td>
+  <td>1,333</td>
+  <td class="good">94.3%</td>
+  <td>$0.0046</td>
+</tr><tr class="step-row">
+  <td>28</td>
+  <td>8</td>
+  <td class="bad">48</td>
+  <td>3,906</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0046</td>
+</tr><tr class="step-row">
+  <td>29</td>
+  <td>58</td>
+  <td class="">0</td>
+  <td>24,011</td>
+  <td>23,424</td>
+  <td>587</td>
+  <td class="good">97.6%</td>
+  <td>$0.0039</td>
+</tr><tr class="step-row">
+  <td>30</td>
+  <td>8</td>
+  <td class="bad">52</td>
+  <td>3,489</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0071</td>
+</tr></table></div>
+    <h3 class="toggle" id="btn-astropy_astropy_14182_fifo" onclick="toggle('astropy_astropy_14182_fifo')" style="font-size:12px; color:#8b949e;">
+      Step trace: fifo/8000
+    </h3>
+    <div class="collapsible" id="astropy_astropy_14182_fifo">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>2,289</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0036</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>4</td>
+  <td class="">0</td>
+  <td>2,585</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0029</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>6</td>
+  <td class="">0</td>
+  <td>3,869</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0043</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>4,292</td>
+  <td>0</td>
+  <td>4,287</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0058</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>10</td>
+  <td class="">0</td>
+  <td>4,428</td>
+  <td>0</td>
+  <td>4,423</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0060</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>12</td>
+  <td class="">0</td>
+  <td>5,062</td>
+  <td>4,287</td>
+  <td>771</td>
+  <td class="good">84.7%</td>
+  <td>$0.0018</td>
+</tr><tr class="step-row">
+  <td>7</td>
+  <td>14</td>
+  <td class="">0</td>
+  <td>7,229</td>
+  <td>4,423</td>
+  <td>2,802</td>
+  <td class="good">61.2%</td>
+  <td>$0.0044</td>
+</tr><tr class="step-row">
+  <td>8</td>
+  <td>16</td>
+  <td class="">0</td>
+  <td>7,575</td>
+  <td>7,225</td>
+  <td>347</td>
+  <td class="good">95.4%</td>
+  <td>$0.0015</td>
+</tr><tr class="step-row">
+  <td>9</td>
+  <td>18</td>
+  <td class="">0</td>
+  <td>8,119</td>
+  <td>7,225</td>
+  <td>891</td>
+  <td class="good">89.0%</td>
+  <td>$0.0024</td>
+</tr><tr class="step-row">
+  <td>10</td>
+  <td>20</td>
+  <td class="">0</td>
+  <td>8,291</td>
+  <td>8,116</td>
+  <td>173</td>
+  <td class="good">97.9%</td>
+  <td>$0.0014</td>
+</tr><tr class="step-row">
+  <td>11</td>
+  <td>22</td>
+  <td class="">0</td>
+  <td>8,760</td>
+  <td>8,289</td>
+  <td>470</td>
+  <td class="good">94.6%</td>
+  <td>$0.0018</td>
+</tr><tr class="step-row">
+  <td>12</td>
+  <td>24</td>
+  <td class="">0</td>
+  <td>10,587</td>
+  <td>8,759</td>
+  <td>1,828</td>
+  <td class="good">82.7%</td>
+  <td>$0.0037</td>
+</tr><tr class="step-row">
+  <td>13</td>
+  <td>24</td>
+  <td class="bad">2</td>
+  <td>11,009</td>
+  <td>0</td>
+  <td>11,004</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0159</td>
+</tr><tr class="step-row">
+  <td>14</td>
+  <td>26</td>
+  <td class="bad">2</td>
+  <td>11,517</td>
+  <td>11,004</td>
+  <td>509</td>
+  <td class="good">95.5%</td>
+  <td>$0.0024</td>
+</tr><tr class="step-row">
+  <td>15</td>
+  <td>26</td>
+  <td class="bad">4</td>
+  <td>10,791</td>
+  <td>0</td>
+  <td>10,786</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0139</td>
+</tr><tr class="step-row">
+  <td>16</td>
+  <td>28</td>
+  <td class="bad">4</td>
+  <td>11,310</td>
+  <td>0</td>
+  <td>11,305</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0146</td>
+</tr><tr class="step-row">
+  <td>17</td>
+  <td>30</td>
+  <td class="bad">4</td>
+  <td>11,441</td>
+  <td>10,786</td>
+  <td>651</td>
+  <td class="good">94.3%</td>
+  <td>$0.0022</td>
+</tr><tr class="step-row">
+  <td>18</td>
+  <td>26</td>
+  <td class="bad">10</td>
+  <td>11,041</td>
+  <td>0</td>
+  <td>11,036</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0145</td>
+</tr><tr class="step-row">
+  <td>19</td>
+  <td>26</td>
+  <td class="bad">12</td>
+  <td>10,441</td>
+  <td>0</td>
+  <td>10,436</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0135</td>
+</tr><tr class="step-row">
+  <td>20</td>
+  <td>28</td>
+  <td class="bad">12</td>
+  <td>11,083</td>
+  <td>10,436</td>
+  <td>643</td>
+  <td class="good">94.2%</td>
+  <td>$0.0025</td>
+</tr><tr class="step-row">
+  <td>21</td>
+  <td>30</td>
+  <td class="bad">12</td>
+  <td>11,435</td>
+  <td>11,079</td>
+  <td>353</td>
+  <td class="good">96.9%</td>
+  <td>$0.0021</td>
+</tr><tr class="step-row">
+  <td>22</td>
+  <td>32</td>
+  <td class="bad">12</td>
+  <td>11,646</td>
+  <td>11,432</td>
+  <td>212</td>
+  <td class="good">98.2%</td>
+  <td>$0.0019</td>
+</tr><tr class="step-row">
+  <td>23</td>
+  <td>30</td>
+  <td class="bad">16</td>
+  <td>11,370</td>
+  <td>0</td>
+  <td>11,365</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0147</td>
+</tr><tr class="step-row">
+  <td>24</td>
+  <td>32</td>
+  <td class="bad">16</td>
+  <td>11,711</td>
+  <td>11,365</td>
+  <td>342</td>
+  <td class="good">97.0%</td>
+  <td>$0.0027</td>
+</tr><tr class="step-row">
+  <td>25</td>
+  <td>32</td>
+  <td class="bad">18</td>
+  <td>11,912</td>
+  <td>0</td>
+  <td>11,907</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0164</td>
+</tr><tr class="step-row">
+  <td>26</td>
+  <td>34</td>
+  <td class="bad">18</td>
+  <td>12,255</td>
+  <td>11,907</td>
+  <td>344</td>
+  <td class="good">97.2%</td>
+  <td>$0.0020</td>
+</tr><tr class="step-row">
+  <td>27</td>
+  <td>32</td>
+  <td class="bad">22</td>
+  <td>10,587</td>
+  <td>0</td>
+  <td>10,582</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0137</td>
+</tr><tr class="step-row">
+  <td>28</td>
+  <td>32</td>
+  <td class="bad">24</td>
+  <td>11,704</td>
+  <td>0</td>
+  <td>11,699</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0151</td>
+</tr><tr class="step-row">
+  <td>29</td>
+  <td>34</td>
+  <td class="bad">24</td>
+  <td>12,104</td>
+  <td>0</td>
+  <td>12,099</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0156</td>
+</tr><tr class="step-row">
+  <td>30</td>
+  <td>34</td>
+  <td class="bad">26</td>
+  <td>11,996</td>
+  <td>0</td>
+  <td>11,991</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0154</td>
+</tr><tr class="step-row">
+  <td>31</td>
+  <td>34</td>
+  <td class="bad">28</td>
+  <td>11,556</td>
+  <td>0</td>
+  <td>11,551</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0150</td>
+</tr><tr class="step-row">
+  <td>32</td>
+  <td>36</td>
+  <td class="bad">28</td>
+  <td>11,717</td>
+  <td>11,551</td>
+  <td>162</td>
+  <td class="good">98.6%</td>
+  <td>$0.0038</td>
+</tr><tr class="step-row">
+  <td>33</td>
+  <td>36</td>
+  <td class="bad">30</td>
+  <td>12,163</td>
+  <td>0</td>
+  <td>12,158</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0182</td>
+</tr><tr class="step-row">
+  <td>34</td>
+  <td>38</td>
+  <td class="bad">30</td>
+  <td>12,836</td>
+  <td>12,158</td>
+  <td>674</td>
+  <td class="good">94.7%</td>
+  <td>$0.0026</td>
+</tr><tr class="step-row">
+  <td>35</td>
+  <td>36</td>
+  <td class="bad">34</td>
+  <td>13,019</td>
+  <td>0</td>
+  <td>13,014</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0168</td>
+</tr><tr class="step-row">
+  <td>36</td>
+  <td>36</td>
+  <td class="bad">36</td>
+  <td>11,747</td>
+  <td>0</td>
+  <td>11,742</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0153</td>
+</tr><tr class="step-row">
+  <td>37</td>
+  <td>38</td>
+  <td class="bad">36</td>
+  <td>11,889</td>
+  <td>0</td>
+  <td>11,884</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0154</td>
+</tr><tr class="step-row">
+  <td>38</td>
+  <td>40</td>
+  <td class="bad">36</td>
+  <td>12,195</td>
+  <td>11,884</td>
+  <td>307</td>
+  <td class="good">97.4%</td>
+  <td>$0.0022</td>
+</tr><tr class="step-row">
+  <td>39</td>
+  <td>42</td>
+  <td class="bad">36</td>
+  <td>12,458</td>
+  <td>11,884</td>
+  <td>570</td>
+  <td class="good">95.4%</td>
+  <td>$0.0025</td>
+</tr><tr class="step-row">
+  <td>40</td>
+  <td>44</td>
+  <td class="bad">36</td>
+  <td>12,800</td>
+  <td>12,454</td>
+  <td>343</td>
+  <td class="good">97.3%</td>
+  <td>$0.0023</td>
+</tr><tr class="step-row">
+  <td>41</td>
+  <td>46</td>
+  <td class="bad">36</td>
+  <td>13,349</td>
+  <td>12,797</td>
+  <td>550</td>
+  <td class="good">95.9%</td>
+  <td>$0.0028</td>
+</tr><tr class="step-row">
+  <td>42</td>
+  <td>48</td>
+  <td class="bad">36</td>
+  <td>13,568</td>
+  <td>13,347</td>
+  <td>220</td>
+  <td class="good">98.4%</td>
+  <td>$0.0022</td>
+</tr><tr class="step-row">
+  <td>43</td>
+  <td>50</td>
+  <td class="bad">36</td>
+  <td>13,715</td>
+  <td>13,347</td>
+  <td>367</td>
+  <td class="good">97.3%</td>
+  <td>$0.0022</td>
+</tr><tr class="step-row">
+  <td>44</td>
+  <td>50</td>
+  <td class="bad">38</td>
+  <td>13,390</td>
+  <td>0</td>
+  <td>13,385</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0171</td>
+</tr><tr class="step-row">
+  <td>45</td>
+  <td>50</td>
+  <td class="bad">40</td>
+  <td>13,678</td>
+  <td>0</td>
+  <td>13,673</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0178</td>
+</tr><tr class="step-row">
+  <td>46</td>
+  <td>52</td>
+  <td class="bad">40</td>
+  <td>13,870</td>
+  <td>13,673</td>
+  <td>193</td>
+  <td class="good">98.6%</td>
+  <td>$0.0019</td>
+</tr><tr class="step-row">
+  <td>47</td>
+  <td>48</td>
+  <td class="bad">46</td>
+  <td>13,491</td>
+  <td>0</td>
+  <td>13,486</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0177</td>
+</tr><tr class="step-row">
+  <td>48</td>
+  <td>44</td>
+  <td class="bad">52</td>
+  <td>12,730</td>
+  <td>0</td>
+  <td>12,725</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0193</td>
+</tr><tr class="step-row">
+  <td>49</td>
+  <td>46</td>
+  <td class="bad">52</td>
+  <td>13,517</td>
+  <td>12,725</td>
+  <td>788</td>
+  <td class="good">94.1%</td>
+  <td>$0.0047</td>
+</tr><tr class="step-row">
+  <td>50</td>
+  <td>48</td>
+  <td class="bad">52</td>
+  <td>14,122</td>
+  <td>13,513</td>
+  <td>606</td>
+  <td class="good">95.7%</td>
+  <td>$0.0071</td>
+</tr><tr class="step-row">
+  <td>51</td>
+  <td>50</td>
+  <td class="bad">52</td>
+  <td>15,215</td>
+  <td>14,119</td>
+  <td>1,094</td>
+  <td class="good">92.8%</td>
+  <td>$0.0035</td>
+</tr><tr class="step-row">
+  <td>52</td>
+  <td>50</td>
+  <td class="bad">54</td>
+  <td>13,763</td>
+  <td>0</td>
+  <td>13,758</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0176</td>
+</tr><tr class="step-row">
+  <td>53</td>
+  <td>52</td>
+  <td class="bad">54</td>
+  <td>14,075</td>
+  <td>0</td>
+  <td>14,070</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0180</td>
+</tr></table></div>
+    <h3 class="toggle" id="btn-astropy_astropy_14182_none" onclick="toggle('astropy_astropy_14182_none')" style="font-size:12px; color:#8b949e;">
+      Step trace: none/999999
+    </h3>
+    <div class="collapsible" id="astropy_astropy_14182_none">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>2,289</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0035</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>4</td>
+  <td class="">0</td>
+  <td>2,573</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0029</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>6</td>
+  <td class="">0</td>
+  <td>3,855</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0045</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>5,199</td>
+  <td>0</td>
+  <td>5,194</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0071</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>10</td>
+  <td class="">0</td>
+  <td>6,183</td>
+  <td>0</td>
+  <td>6,178</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0083</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>12</td>
+  <td class="">0</td>
+  <td>6,845</td>
+  <td>5,194</td>
+  <td>1,647</td>
+  <td class="good">75.9%</td>
+  <td>$0.0032</td>
+</tr><tr class="step-row">
+  <td>7</td>
+  <td>14</td>
+  <td class="">0</td>
+  <td>9,920</td>
+  <td>6,178</td>
+  <td>3,738</td>
+  <td class="good">62.3%</td>
+  <td>$0.0061</td>
+</tr><tr class="step-row">
+  <td>8</td>
+  <td>16</td>
+  <td class="">0</td>
+  <td>11,814</td>
+  <td>9,916</td>
+  <td>1,895</td>
+  <td class="good">83.9%</td>
+  <td>$0.0056</td>
+</tr><tr class="step-row">
+  <td>9</td>
+  <td>18</td>
+  <td class="">0</td>
+  <td>12,348</td>
+  <td>11,811</td>
+  <td>535</td>
+  <td class="good">95.7%</td>
+  <td>$0.0025</td>
+</tr><tr class="step-row">
+  <td>10</td>
+  <td>20</td>
+  <td class="">0</td>
+  <td>12,906</td>
+  <td>12,346</td>
+  <td>559</td>
+  <td class="good">95.7%</td>
+  <td>$0.0026</td>
+</tr><tr class="step-row">
+  <td>11</td>
+  <td>22</td>
+  <td class="">0</td>
+  <td>13,080</td>
+  <td>12,905</td>
+  <td>175</td>
+  <td class="good">98.7%</td>
+  <td>$0.0022</td>
+</tr><tr class="step-row">
+  <td>12</td>
+  <td>24</td>
+  <td class="">0</td>
+  <td>13,639</td>
+  <td>13,080</td>
+  <td>559</td>
+  <td class="good">95.9%</td>
+  <td>$0.0027</td>
+</tr><tr class="step-row">
+  <td>13</td>
+  <td>26</td>
+  <td class="">0</td>
+  <td>14,025</td>
+  <td>13,080</td>
+  <td>945</td>
+  <td class="good">93.3%</td>
+  <td>$0.0032</td>
+</tr><tr class="step-row">
+  <td>14</td>
+  <td>28</td>
+  <td class="">0</td>
+  <td>14,632</td>
+  <td>14,025</td>
+  <td>607</td>
+  <td class="good">95.9%</td>
+  <td>$0.0029</td>
+</tr><tr class="step-row">
+  <td>15</td>
+  <td>30</td>
+  <td class="">0</td>
+  <td>15,328</td>
+  <td>14,025</td>
+  <td>1,303</td>
+  <td class="good">91.5%</td>
+  <td>$0.0039</td>
+</tr><tr class="step-row">
+  <td>16</td>
+  <td>32</td>
+  <td class="">0</td>
+  <td>15,878</td>
+  <td>15,328</td>
+  <td>550</td>
+  <td class="good">96.5%</td>
+  <td>$0.0031</td>
+</tr><tr class="step-row">
+  <td>17</td>
+  <td>34</td>
+  <td class="">0</td>
+  <td>16,361</td>
+  <td>15,878</td>
+  <td>483</td>
+  <td class="good">97.0%</td>
+  <td>$0.0029</td>
+</tr><tr class="step-row">
+  <td>18</td>
+  <td>36</td>
+  <td class="">0</td>
+  <td>17,031</td>
+  <td>16,361</td>
+  <td>670</td>
+  <td class="good">96.1%</td>
+  <td>$0.0033</td>
+</tr><tr class="step-row">
+  <td>19</td>
+  <td>38</td>
+  <td class="">0</td>
+  <td>17,215</td>
+  <td>17,031</td>
+  <td>184</td>
+  <td class="good">98.9%</td>
+  <td>$0.0026</td>
+</tr><tr class="step-row">
+  <td>20</td>
+  <td>40</td>
+  <td class="">0</td>
+  <td>17,371</td>
+  <td>17,215</td>
+  <td>156</td>
+  <td class="good">99.1%</td>
+  <td>$0.0026</td>
+</tr><tr class="step-row">
+  <td>21</td>
+  <td>42</td>
+  <td class="">0</td>
+  <td>17,969</td>
+  <td>17,371</td>
+  <td>598</td>
+  <td class="good">96.7%</td>
+  <td>$0.0045</td>
+</tr><tr class="step-row">
+  <td>22</td>
+  <td>44</td>
+  <td class="">0</td>
+  <td>18,410</td>
+  <td>17,969</td>
+  <td>441</td>
+  <td class="good">97.6%</td>
+  <td>$0.0029</td>
+</tr><tr class="step-row">
+  <td>23</td>
+  <td>46</td>
+  <td class="">0</td>
+  <td>19,082</td>
+  <td>18,410</td>
+  <td>672</td>
+  <td class="good">96.5%</td>
+  <td>$0.0035</td>
+</tr><tr class="step-row">
+  <td>24</td>
+  <td>48</td>
+  <td class="">0</td>
+  <td>19,833</td>
+  <td>19,082</td>
+  <td>751</td>
+  <td class="good">96.2%</td>
+  <td>$0.0051</td>
+</tr><tr class="step-row">
+  <td>25</td>
+  <td>50</td>
+  <td class="">0</td>
+  <td>20,730</td>
+  <td>19,833</td>
+  <td>897</td>
+  <td class="good">95.7%</td>
+  <td>$0.0037</td>
+</tr><tr class="step-row">
+  <td>26</td>
+  <td>52</td>
+  <td class="">0</td>
+  <td>22,290</td>
+  <td>20,730</td>
+  <td>1,560</td>
+  <td class="good">93.0%</td>
+  <td>$0.0048</td>
+</tr><tr class="step-row">
+  <td>27</td>
+  <td>54</td>
+  <td class="">0</td>
+  <td>22,470</td>
+  <td>22,290</td>
+  <td>180</td>
+  <td class="good">99.2%</td>
+  <td>$0.0032</td>
+</tr><tr class="step-row">
+  <td>28</td>
+  <td>56</td>
+  <td class="">0</td>
+  <td>22,768</td>
+  <td>22,290</td>
+  <td>478</td>
+  <td class="good">97.9%</td>
+  <td>$0.0036</td>
+</tr><tr class="step-row">
+  <td>29</td>
+  <td>58</td>
+  <td class="">0</td>
+  <td>23,131</td>
+  <td>22,470</td>
+  <td>661</td>
+  <td class="good">97.1%</td>
+  <td>$0.0037</td>
+</tr><tr class="step-row">
+  <td>30</td>
+  <td>60</td>
+  <td class="">0</td>
+  <td>23,358</td>
+  <td>22,768</td>
+  <td>590</td>
+  <td class="good">97.5%</td>
+  <td>$0.0036</td>
+</tr><tr class="step-row">
+  <td>31</td>
+  <td>62</td>
+  <td class="">0</td>
+  <td>23,887</td>
+  <td>23,131</td>
+  <td>756</td>
+  <td class="good">96.8%</td>
+  <td>$0.0039</td>
+</tr><tr class="step-row">
+  <td>32</td>
+  <td>64</td>
+  <td class="">0</td>
+  <td>24,065</td>
+  <td>23,887</td>
+  <td>178</td>
+  <td class="good">99.3%</td>
+  <td>$0.0033</td>
+</tr><tr class="step-row">
+  <td>33</td>
+  <td>66</td>
+  <td class="">0</td>
+  <td>24,297</td>
+  <td>24,065</td>
+  <td>232</td>
+  <td class="good">99.0%</td>
+  <td>$0.0034</td>
+</tr><tr class="step-row">
+  <td>34</td>
+  <td>68</td>
+  <td class="">0</td>
+  <td>24,506</td>
+  <td>24,297</td>
+  <td>209</td>
+  <td class="good">99.1%</td>
+  <td>$0.0033</td>
+</tr><tr class="step-row">
+  <td>35</td>
+  <td>70</td>
+  <td class="">0</td>
+  <td>24,891</td>
+  <td>24,297</td>
+  <td>594</td>
+  <td class="good">97.6%</td>
+  <td>$0.0039</td>
+</tr><tr class="step-row">
+  <td>36</td>
+  <td>72</td>
+  <td class="">0</td>
+  <td>25,066</td>
+  <td>24,891</td>
+  <td>175</td>
+  <td class="good">99.3%</td>
+  <td>$0.0035</td>
+</tr><tr class="step-row">
+  <td>37</td>
+  <td>74</td>
+  <td class="">0</td>
+  <td>25,249</td>
+  <td>25,066</td>
+  <td>183</td>
+  <td class="good">99.3%</td>
+  <td>$0.0036</td>
+</tr><tr class="step-row">
+  <td>38</td>
+  <td>76</td>
+  <td class="">0</td>
+  <td>25,681</td>
+  <td>25,249</td>
+  <td>432</td>
+  <td class="good">98.3%</td>
+  <td>$0.0049</td>
+</tr><tr class="step-row">
+  <td>39</td>
+  <td>78</td>
+  <td class="">0</td>
+  <td>26,611</td>
+  <td>25,681</td>
+  <td>930</td>
+  <td class="good">96.5%</td>
+  <td>$0.0049</td>
+</tr><tr class="step-row">
+  <td>40</td>
+  <td>80</td>
+  <td class="">0</td>
+  <td>27,346</td>
+  <td>26,611</td>
+  <td>735</td>
+  <td class="good">97.3%</td>
+  <td>$0.0052</td>
+</tr><tr class="step-row">
+  <td>41</td>
+  <td>82</td>
+  <td class="">0</td>
+  <td>28,137</td>
+  <td>27,346</td>
+  <td>791</td>
+  <td class="good">97.2%</td>
+  <td>$0.0076</td>
+</tr><tr class="step-row">
+  <td>42</td>
+  <td>84</td>
+  <td class="">0</td>
+  <td>28,966</td>
+  <td>28,137</td>
+  <td>829</td>
+  <td class="good">97.1%</td>
+  <td>$0.0061</td>
+</tr><tr class="step-row">
+  <td>43</td>
+  <td>86</td>
+  <td class="">0</td>
+  <td>29,454</td>
+  <td>28,966</td>
+  <td>488</td>
+  <td class="good">98.3%</td>
+  <td>$0.0041</td>
+</tr><tr class="step-row">
+  <td>44</td>
+  <td>88</td>
+  <td class="">0</td>
+  <td>30,192</td>
+  <td>29,454</td>
+  <td>738</td>
+  <td class="good">97.6%</td>
+  <td>$0.0045</td>
+</tr><tr class="step-row">
+  <td>45</td>
+  <td>90</td>
+  <td class="">0</td>
+  <td>30,353</td>
+  <td>29,454</td>
+  <td>899</td>
+  <td class="good">97.0%</td>
+  <td>$0.0104</td>
+</tr><tr class="step-row">
+  <td>46</td>
+  <td>92</td>
+  <td class="">0</td>
+  <td>32,067</td>
+  <td>30,353</td>
+  <td>1,714</td>
+  <td class="good">94.7%</td>
+  <td>$0.0097</td>
+</tr><tr class="step-row">
+  <td>47</td>
+  <td>94</td>
+  <td class="">0</td>
+  <td>33,439</td>
+  <td>32,067</td>
+  <td>1,372</td>
+  <td class="good">95.9%</td>
+  <td>$0.0082</td>
+</tr><tr class="step-row">
+  <td>48</td>
+  <td>96</td>
+  <td class="">0</td>
+  <td>34,315</td>
+  <td>33,439</td>
+  <td>876</td>
+  <td class="good">97.4%</td>
+  <td>$0.0053</td>
+</tr><tr class="step-row">
+  <td>49</td>
+  <td>98</td>
+  <td class="">0</td>
+  <td>34,627</td>
+  <td>33,439</td>
+  <td>1,188</td>
+  <td class="good">96.6%</td>
+  <td>$0.0056</td>
+</tr><tr class="step-row">
+  <td>50</td>
+  <td>100</td>
+  <td class="">0</td>
+  <td>34,946</td>
+  <td>34,627</td>
+  <td>319</td>
+  <td class="good">99.1%</td>
+  <td>$0.0048</td>
+</tr><tr class="step-row">
+  <td>51</td>
+  <td>102</td>
+  <td class="">0</td>
+  <td>35,605</td>
+  <td>34,946</td>
+  <td>659</td>
+  <td class="good">98.1%</td>
+  <td>$0.0058</td>
+</tr><tr class="step-row">
+  <td>52</td>
+  <td>104</td>
+  <td class="">0</td>
+  <td>36,395</td>
+  <td>35,605</td>
+  <td>790</td>
+  <td class="good">97.8%</td>
+  <td>$0.0066</td>
+</tr><tr class="step-row">
+  <td>53</td>
+  <td>106</td>
+  <td class="">0</td>
+  <td>37,438</td>
+  <td>36,395</td>
+  <td>1,043</td>
+  <td class="good">97.2%</td>
+  <td>$0.0062</td>
+</tr><tr class="step-row">
+  <td>54</td>
+  <td>108</td>
+  <td class="">0</td>
+  <td>37,938</td>
+  <td>37,438</td>
+  <td>500</td>
+  <td class="good">98.7%</td>
+  <td>$0.0050</td>
+</tr><tr class="step-row">
+  <td>55</td>
+  <td>110</td>
+  <td class="">0</td>
+  <td>38,632</td>
+  <td>37,938</td>
+  <td>694</td>
+  <td class="good">98.2%</td>
+  <td>$0.0066</td>
+</tr><tr class="step-row">
+  <td>56</td>
+  <td>112</td>
+  <td class="">0</td>
+  <td>39,066</td>
+  <td>38,632</td>
+  <td>434</td>
+  <td class="good">98.9%</td>
+  <td>$0.0051</td>
+</tr><tr class="step-row">
+  <td>57</td>
+  <td>114</td>
+  <td class="">0</td>
+  <td>39,338</td>
+  <td>38,632</td>
+  <td>706</td>
+  <td class="good">98.2%</td>
+  <td>$0.0056</td>
+</tr><tr class="step-row">
+  <td>58</td>
+  <td>116</td>
+  <td class="">0</td>
+  <td>39,568</td>
+  <td>39,066</td>
+  <td>502</td>
+  <td class="good">98.7%</td>
+  <td>$0.0052</td>
+</tr><tr class="step-row">
+  <td>59</td>
+  <td>118</td>
+  <td class="">0</td>
+  <td>40,084</td>
+  <td>39,338</td>
+  <td>746</td>
+  <td class="good">98.1%</td>
+  <td>$0.0056</td>
+</tr><tr class="step-row">
+  <td>60</td>
+  <td>120</td>
+  <td class="">0</td>
+  <td>40,259</td>
+  <td>40,084</td>
+  <td>175</td>
+  <td class="good">99.6%</td>
+  <td>$0.0049</td>
+</tr><tr class="step-row">
+  <td>61</td>
+  <td>122</td>
+  <td class="">0</td>
+  <td>40,506</td>
+  <td>40,259</td>
+  <td>247</td>
+  <td class="good">99.4%</td>
+  <td>$0.0050</td>
+</tr><tr class="step-row">
+  <td>62</td>
+  <td>124</td>
+  <td class="">0</td>
+  <td>41,229</td>
+  <td>40,506</td>
+  <td>723</td>
+  <td class="good">98.2%</td>
+  <td>$0.0065</td>
+</tr><tr class="step-row">
+  <td>63</td>
+  <td>126</td>
+  <td class="">0</td>
+  <td>41,568</td>
+  <td>41,229</td>
+  <td>339</td>
+  <td class="good">99.2%</td>
+  <td>$0.0052</td>
+</tr><tr class="step-row">
+  <td>64</td>
+  <td>128</td>
+  <td class="">0</td>
+  <td>41,764</td>
+  <td>41,568</td>
+  <td>196</td>
+  <td class="good">99.5%</td>
+  <td>$0.0050</td>
+</tr><tr class="step-row">
+  <td>65</td>
+  <td>130</td>
+  <td class="">0</td>
+  <td>42,290</td>
+  <td>41,764</td>
+  <td>526</td>
+  <td class="good">98.8%</td>
+  <td>$0.0060</td>
+</tr><tr class="step-row">
+  <td>66</td>
+  <td>132</td>
+  <td class="">0</td>
+  <td>42,555</td>
+  <td>42,290</td>
+  <td>265</td>
+  <td class="good">99.4%</td>
+  <td>$0.0052</td>
+</tr><tr class="step-row">
+  <td>67</td>
+  <td>134</td>
+  <td class="">0</td>
+  <td>43,443</td>
+  <td>42,290</td>
+  <td>1,153</td>
+  <td class="good">97.3%</td>
+  <td>$0.0074</td>
+</tr><tr class="step-row">
+  <td>68</td>
+  <td>136</td>
+  <td class="">0</td>
+  <td>43,903</td>
+  <td>43,443</td>
+  <td>460</td>
+  <td class="good">99.0%</td>
+  <td>$0.0068</td>
+</tr><tr class="step-row">
+  <td>69</td>
+  <td>138</td>
+  <td class="">0</td>
+  <td>44,311</td>
+  <td>43,903</td>
+  <td>408</td>
+  <td class="good">99.1%</td>
+  <td>$0.0057</td>
+</tr><tr class="step-row">
+  <td>70</td>
+  <td>140</td>
+  <td class="">0</td>
+  <td>44,942</td>
+  <td>44,311</td>
+  <td>631</td>
+  <td class="good">98.6%</td>
+  <td>$0.0060</td>
+</tr><tr class="step-row">
+  <td>71</td>
+  <td>142</td>
+  <td class="">0</td>
+  <td>45,119</td>
+  <td>44,311</td>
+  <td>808</td>
+  <td class="good">98.2%</td>
+  <td>$0.0063</td>
+</tr><tr class="step-row">
+  <td>72</td>
+  <td>144</td>
+  <td class="">0</td>
+  <td>45,889</td>
+  <td>44,942</td>
+  <td>947</td>
+  <td class="good">97.9%</td>
+  <td>$0.0074</td>
+</tr><tr class="step-row">
+  <td>73</td>
+  <td>146</td>
+  <td class="">0</td>
+  <td>46,278</td>
+  <td>45,889</td>
+  <td>389</td>
+  <td class="good">99.2%</td>
+  <td>$0.0057</td>
+</tr><tr class="step-row">
+  <td>74</td>
+  <td>148</td>
+  <td class="">0</td>
+  <td>46,614</td>
+  <td>45,889</td>
+  <td>725</td>
+  <td class="good">98.4%</td>
+  <td>$0.0075</td>
+</tr><tr class="step-row">
+  <td>75</td>
+  <td>150</td>
+  <td class="">0</td>
+  <td>47,188</td>
+  <td>46,614</td>
+  <td>574</td>
+  <td class="good">98.8%</td>
+  <td>$0.0073</td>
+</tr><tr class="step-row">
+  <td>76</td>
+  <td>152</td>
+  <td class="">0</td>
+  <td>47,749</td>
+  <td>47,188</td>
+  <td>561</td>
+  <td class="good">98.8%</td>
+  <td>$0.0064</td>
+</tr><tr class="step-row">
+  <td>77</td>
+  <td>154</td>
+  <td class="">0</td>
+  <td>47,969</td>
+  <td>47,749</td>
+  <td>220</td>
+  <td class="good">99.5%</td>
+  <td>$0.0060</td>
+</tr><tr class="step-row">
+  <td>78</td>
+  <td>156</td>
+  <td class="">0</td>
+  <td>48,179</td>
+  <td>47,749</td>
+  <td>430</td>
+  <td class="good">99.1%</td>
+  <td>$0.0073</td>
+</tr><tr class="step-row">
+  <td>79</td>
+  <td>158</td>
+  <td class="">0</td>
+  <td>48,743</td>
+  <td>48,179</td>
+  <td>564</td>
+  <td class="good">98.8%</td>
+  <td>$0.0081</td>
+</tr><tr class="step-row">
+  <td>80</td>
+  <td>160</td>
+  <td class="">0</td>
+  <td>49,294</td>
+  <td>48,743</td>
+  <td>551</td>
+  <td class="good">98.9%</td>
+  <td>$0.0062</td>
+</tr><tr class="step-row">
+  <td>81</td>
+  <td>162</td>
+  <td class="">0</td>
+  <td>49,495</td>
+  <td>48,743</td>
+  <td>752</td>
+  <td class="good">98.5%</td>
+  <td>$0.0065</td>
+</tr><tr class="step-row">
+  <td>82</td>
+  <td>164</td>
+  <td class="">0</td>
+  <td>49,684</td>
+  <td>49,495</td>
+  <td>189</td>
+  <td class="good">99.6%</td>
+  <td>$0.0058</td>
+</tr><tr class="step-row">
+  <td>83</td>
+  <td>166</td>
+  <td class="">0</td>
+  <td>49,879</td>
+  <td>49,684</td>
+  <td>195</td>
+  <td class="good">99.6%</td>
+  <td>$0.0058</td>
+</tr><tr class="step-row">
+  <td>84</td>
+  <td>168</td>
+  <td class="">0</td>
+  <td>50,463</td>
+  <td>49,879</td>
+  <td>584</td>
+  <td class="good">98.8%</td>
+  <td>$0.0067</td>
+</tr><tr class="step-row">
+  <td>85</td>
+  <td>170</td>
+  <td class="">0</td>
+  <td>50,710</td>
+  <td>50,463</td>
+  <td>247</td>
+  <td class="good">99.5%</td>
+  <td>$0.0060</td>
+</tr><tr class="step-row">
+  <td>86</td>
+  <td>172</td>
+  <td class="">0</td>
+  <td>51,052</td>
+  <td>50,710</td>
+  <td>342</td>
+  <td class="good">99.3%</td>
+  <td>$0.0067</td>
+</tr><tr class="step-row">
+  <td>87</td>
+  <td>174</td>
+  <td class="">0</td>
+  <td>51,804</td>
+  <td>51,052</td>
+  <td>752</td>
+  <td class="good">98.5%</td>
+  <td>$0.0122</td>
+</tr><tr class="step-row">
+  <td>88</td>
+  <td>176</td>
+  <td class="">0</td>
+  <td>53,073</td>
+  <td>51,804</td>
+  <td>1,269</td>
+  <td class="good">97.6%</td>
+  <td>$0.0073</td>
+</tr><tr class="step-row">
+  <td>89</td>
+  <td>178</td>
+  <td class="">0</td>
+  <td>53,831</td>
+  <td>53,073</td>
+  <td>758</td>
+  <td class="good">98.6%</td>
+  <td>$0.0069</td>
+</tr><tr class="step-row">
+  <td>90</td>
+  <td>180</td>
+  <td class="">0</td>
+  <td>53,992</td>
+  <td>53,831</td>
+  <td>161</td>
+  <td class="good">99.7%</td>
+  <td>$0.0098</td>
+</tr><tr class="step-row">
+  <td>91</td>
+  <td>182</td>
+  <td class="">0</td>
+  <td>55,153</td>
+  <td>53,992</td>
+  <td>1,161</td>
+  <td class="good">97.9%</td>
+  <td>$0.0076</td>
+</tr><tr class="step-row">
+  <td>92</td>
+  <td>184</td>
+  <td class="">0</td>
+  <td>55,690</td>
+  <td>55,153</td>
+  <td>537</td>
+  <td class="good">99.0%</td>
+  <td>$0.0065</td>
+</tr><tr class="step-row">
+  <td>93</td>
+  <td>186</td>
+  <td class="">0</td>
+  <td>56,153</td>
+  <td>55,153</td>
+  <td>1,000</td>
+  <td class="good">98.2%</td>
+  <td>$0.0072</td>
+</tr></table></div>
+    <h3 class="toggle" id="btn-astropy_astropy_14182_summarize" onclick="toggle('astropy_astropy_14182_summarize')" style="font-size:12px; color:#8b949e;">
+      Step trace: summarize/8000
+    </h3>
+    <div class="collapsible" id="astropy_astropy_14182_summarize">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>2,289</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0035</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>4</td>
+  <td class="">0</td>
+  <td>2,573</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0029</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>6</td>
+  <td class="">0</td>
+  <td>3,857</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0045</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>5,244</td>
+  <td>0</td>
+  <td>5,239</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0072</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>10</td>
+  <td class="">0</td>
+  <td>5,462</td>
+  <td>0</td>
+  <td>5,457</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0075</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>12</td>
+  <td class="">0</td>
+  <td>6,142</td>
+  <td>5,457</td>
+  <td>681</td>
+  <td class="good">88.8%</td>
+  <td>$0.0021</td>
+</tr><tr class="step-row">
+  <td>7</td>
+  <td>14</td>
+  <td class="">0</td>
+  <td>8,355</td>
+  <td>6,138</td>
+  <td>2,214</td>
+  <td class="good">73.5%</td>
+  <td>$0.0041</td>
+</tr><tr class="step-row">
+  <td>8</td>
+  <td>16</td>
+  <td class="">0</td>
+  <td>8,747</td>
+  <td>8,352</td>
+  <td>393</td>
+  <td class="good">95.5%</td>
+  <td>$0.0019</td>
+</tr><tr class="step-row">
+  <td>9</td>
+  <td>18</td>
+  <td class="">0</td>
+  <td>9,337</td>
+  <td>8,745</td>
+  <td>591</td>
+  <td class="good">93.7%</td>
+  <td>$0.0024</td>
+</tr><tr class="step-row">
+  <td>10</td>
+  <td>20</td>
+  <td class="">0</td>
+  <td>9,549</td>
+  <td>9,336</td>
+  <td>213</td>
+  <td class="good">97.8%</td>
+  <td>$0.0034</td>
+</tr><tr class="step-row">
+  <td>11</td>
+  <td>22</td>
+  <td class="">0</td>
+  <td>10,198</td>
+  <td>9,549</td>
+  <td>649</td>
+  <td class="good">93.6%</td>
+  <td>$0.0025</td>
+</tr><tr class="step-row">
+  <td>12</td>
+  <td>24</td>
+  <td class="">0</td>
+  <td>10,888</td>
+  <td>10,198</td>
+  <td>690</td>
+  <td class="good">93.7%</td>
+  <td>$0.0034</td>
+</tr><tr class="step-row">
+  <td>13</td>
+  <td>26</td>
+  <td class="">0</td>
+  <td>11,244</td>
+  <td>10,888</td>
+  <td>356</td>
+  <td class="good">96.8%</td>
+  <td>$0.0019</td>
+</tr><tr class="step-row">
+  <td>14</td>
+  <td>28</td>
+  <td class="">0</td>
+  <td>11,355</td>
+  <td>11,244</td>
+  <td>111</td>
+  <td class="good">99.0%</td>
+  <td>$0.0021</td>
+</tr><tr class="step-row">
+  <td>15</td>
+  <td>30</td>
+  <td class="">0</td>
+  <td>11,963</td>
+  <td>11,355</td>
+  <td>608</td>
+  <td class="good">94.9%</td>
+  <td>$0.0025</td>
+</tr><tr class="step-row">
+  <td>16</td>
+  <td>9</td>
+  <td class="bad">23</td>
+  <td>3,818</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0042</td>
+</tr><tr class="step-row">
+  <td>17</td>
+  <td>9</td>
+  <td class="bad">25</td>
+  <td>5,247</td>
+  <td>0</td>
+  <td>5,242</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0072</td>
+</tr><tr class="step-row">
+  <td>18</td>
+  <td>9</td>
+  <td class="bad">27</td>
+  <td>5,101</td>
+  <td>0</td>
+  <td>5,096</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0071</td>
+</tr><tr class="step-row">
+  <td>19</td>
+  <td>9</td>
+  <td class="bad">29</td>
+  <td>4,769</td>
+  <td>0</td>
+  <td>4,764</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0066</td>
+</tr><tr class="step-row">
+  <td>20</td>
+  <td>9</td>
+  <td class="bad">31</td>
+  <td>3,925</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0048</td>
+</tr><tr class="step-row">
+  <td>21</td>
+  <td>9</td>
+  <td class="bad">33</td>
+  <td>4,094</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0047</td>
+</tr><tr class="step-row">
+  <td>22</td>
+  <td>9</td>
+  <td class="bad">35</td>
+  <td>4,488</td>
+  <td>0</td>
+  <td>4,483</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0065</td>
+</tr><tr class="step-row">
+  <td>23</td>
+  <td>9</td>
+  <td class="bad">37</td>
+  <td>4,198</td>
+  <td>0</td>
+  <td>4,193</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0074</td>
+</tr><tr class="step-row">
+  <td>24</td>
+  <td>9</td>
+  <td class="bad">39</td>
+  <td>4,038</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0048</td>
+</tr><tr class="step-row">
+  <td>25</td>
+  <td>9</td>
+  <td class="bad">41</td>
+  <td>3,571</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0038</td>
+</tr><tr class="step-row">
+  <td>26</td>
+  <td>9</td>
+  <td class="bad">43</td>
+  <td>4,628</td>
+  <td>0</td>
+  <td>4,623</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0064</td>
+</tr><tr class="step-row">
+  <td>27</td>
+  <td>9</td>
+  <td class="bad">45</td>
+  <td>4,249</td>
+  <td>0</td>
+  <td>4,244</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0060</td>
+</tr><tr class="step-row">
+  <td>28</td>
+  <td>9</td>
+  <td class="bad">47</td>
+  <td>4,948</td>
+  <td>0</td>
+  <td>4,943</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0070</td>
+</tr><tr class="step-row">
+  <td>29</td>
+  <td>9</td>
+  <td class="bad">49</td>
+  <td>3,942</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0046</td>
+</tr><tr class="step-row">
+  <td>30</td>
+  <td>9</td>
+  <td class="bad">51</td>
+  <td>3,931</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0063</td>
+</tr></table></div></div></div>
+<div class="instance-section">
+  <h3 class="toggle" id="btn-astropy_astropy_14365" onclick="toggle('astropy_astropy_14365')">astropy__astropy-14365</h3>
+  <div class="collapsible" id="astropy_astropy_14365">
+    <table>
+    <tr><th>Policy</th><th>Status</th><th>Steps</th><th>Cost</th><th>Prompt Tok</th><th>Cache Read</th><th>Hit Rate</th><th>Evicted</th><th>Cache Hit Sparkline</th></tr>
+<tr>
+  <td><strong>adaptive/8000</strong></td>
+  <td><span class="pill pill-yellow">LimitsExceeded</span></td>
+  <td>30</td>
+  <td class="cost">$0.144</td>
+  <td>275,665</td>
+  <td>188,635</td>
+  <td class="good">68.4%</td>
+  <td>310</td>
+  <td class="sparkline">     ▇▆ ▇▇▇▆▆ ▇ ▇ ▇ ▇ ▇ ▇ ▇ ▇ </td>
+</tr><tr>
+  <td><strong>fifo/8000</strong></td>
+  <td><span class="pill pill-green">PATCH</span></td>
+  <td>47</td>
+  <td class="cost">$0.362</td>
+  <td>569,501</td>
+  <td>348,488</td>
+  <td class="good">61.2%</td>
+  <td>652</td>
+  <td class="sparkline">▇  ▇▇▇▇▇▇ ▇▇▇▇▇▇▇ ▇▇▇▇ ▇   ▇  </td>
+</tr><tr>
+  <td><strong>none/999999</strong></td>
+  <td><span class="pill pill-green">PATCH</span></td>
+  <td>35</td>
+  <td class="cost">$0.160</td>
+  <td>550,076</td>
+  <td>500,322</td>
+  <td class="good">91.0%</td>
+  <td>0</td>
+  <td class="sparkline"> ▆▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇</td>
+</tr><tr>
+  <td><strong>summarize/8000</strong></td>
+  <td><span class="pill pill-yellow">LimitsExceeded</span></td>
+  <td>30</td>
+  <td class="cost">$0.164</td>
+  <td>173,555</td>
+  <td>61,694</td>
+  <td class="warn">35.5%</td>
+  <td>612</td>
+  <td class="sparkline">     ▇▅▅▇▇▇▇                  </td>
+</tr></table>
+    <h3 class="toggle" id="btn-astropy_astropy_14365_adaptive" onclick="toggle('astropy_astropy_14365_adaptive')" style="font-size:12px; color:#8b949e;">
+      Step trace: adaptive/8000
+    </h3>
+    <div class="collapsible" id="astropy_astropy_14365_adaptive">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>2,172</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0027</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>4</td>
+  <td class="">0</td>
+  <td>2,307</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0026</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>6</td>
+  <td class="">0</td>
+  <td>3,554</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0040</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>3,693</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0041</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>10</td>
+  <td class="">0</td>
+  <td>7,036</td>
+  <td>0</td>
+  <td>7,031</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0092</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>12</td>
+  <td class="">0</td>
+  <td>7,856</td>
+  <td>7,031</td>
+  <td>821</td>
+  <td class="good">89.5%</td>
+  <td>$0.0022</td>
+</tr><tr class="step-row">
+  <td>7</td>
+  <td>14</td>
+  <td class="">0</td>
+  <td>9,575</td>
+  <td>7,852</td>
+  <td>1,720</td>
+  <td class="good">82.0%</td>
+  <td>$0.0035</td>
+</tr><tr class="step-row">
+  <td>8</td>
+  <td>8</td>
+  <td class="bad">8</td>
+  <td>4,870</td>
+  <td>0</td>
+  <td>4,865</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0068</td>
+</tr><tr class="step-row">
+  <td>9</td>
+  <td>18</td>
+  <td class="">0</td>
+  <td>9,931</td>
+  <td>9,572</td>
+  <td>357</td>
+  <td class="good">96.4%</td>
+  <td>$0.0017</td>
+</tr><tr class="step-row">
+  <td>10</td>
+  <td>12</td>
+  <td class="bad">8</td>
+  <td>5,199</td>
+  <td>4,865</td>
+  <td>330</td>
+  <td class="good">93.6%</td>
+  <td>$0.0016</td>
+</tr><tr class="step-row">
+  <td>11</td>
+  <td>22</td>
+  <td class="">0</td>
+  <td>10,466</td>
+  <td>9,929</td>
+  <td>536</td>
+  <td class="good">94.9%</td>
+  <td>$0.0023</td>
+</tr><tr class="step-row">
+  <td>12</td>
+  <td>16</td>
+  <td class="bad">8</td>
+  <td>6,158</td>
+  <td>5,195</td>
+  <td>960</td>
+  <td class="good">84.4%</td>
+  <td>$0.0022</td>
+</tr><tr class="step-row">
+  <td>13</td>
+  <td>26</td>
+  <td class="">0</td>
+  <td>12,115</td>
+  <td>10,465</td>
+  <td>1,650</td>
+  <td class="good">86.4%</td>
+  <td>$0.0040</td>
+</tr><tr class="step-row">
+  <td>14</td>
+  <td>16</td>
+  <td class="bad">12</td>
+  <td>5,773</td>
+  <td>0</td>
+  <td>5,768</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0077</td>
+</tr><tr class="step-row">
+  <td>15</td>
+  <td>30</td>
+  <td class="">0</td>
+  <td>13,338</td>
+  <td>12,115</td>
+  <td>1,223</td>
+  <td class="good">90.8%</td>
+  <td>$0.0034</td>
+</tr><tr class="step-row">
+  <td>16</td>
+  <td>22</td>
+  <td class="bad">10</td>
+  <td>7,618</td>
+  <td>0</td>
+  <td>7,613</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0102</td>
+</tr><tr class="step-row">
+  <td>17</td>
+  <td>34</td>
+  <td class="">0</td>
+  <td>14,712</td>
+  <td>13,338</td>
+  <td>1,374</td>
+  <td class="good">90.7%</td>
+  <td>$0.0039</td>
+</tr><tr class="step-row">
+  <td>18</td>
+  <td>14</td>
+  <td class="bad">22</td>
+  <td>6,726</td>
+  <td>0</td>
+  <td>6,721</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0089</td>
+</tr><tr class="step-row">
+  <td>19</td>
+  <td>38</td>
+  <td class="">0</td>
+  <td>16,300</td>
+  <td>14,712</td>
+  <td>1,588</td>
+  <td class="good">90.3%</td>
+  <td>$0.0041</td>
+</tr><tr class="step-row">
+  <td>20</td>
+  <td>10</td>
+  <td class="bad">30</td>
+  <td>5,063</td>
+  <td>0</td>
+  <td>5,058</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0085</td>
+</tr><tr class="step-row">
+  <td>21</td>
+  <td>42</td>
+  <td class="">0</td>
+  <td>17,286</td>
+  <td>16,300</td>
+  <td>986</td>
+  <td class="good">94.3%</td>
+  <td>$0.0043</td>
+</tr><tr class="step-row">
+  <td>22</td>
+  <td>14</td>
+  <td class="bad">30</td>
+  <td>5,910</td>
+  <td>0</td>
+  <td>5,905</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0080</td>
+</tr><tr class="step-row">
+  <td>23</td>
+  <td>46</td>
+  <td class="">0</td>
+  <td>19,201</td>
+  <td>17,286</td>
+  <td>1,915</td>
+  <td class="good">90.0%</td>
+  <td>$0.0045</td>
+</tr><tr class="step-row">
+  <td>24</td>
+  <td>8</td>
+  <td class="bad">40</td>
+  <td>4,229</td>
+  <td>0</td>
+  <td>4,224</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0059</td>
+</tr><tr class="step-row">
+  <td>25</td>
+  <td>50</td>
+  <td class="">0</td>
+  <td>19,741</td>
+  <td>19,201</td>
+  <td>540</td>
+  <td class="good">97.3%</td>
+  <td>$0.0031</td>
+</tr><tr class="step-row">
+  <td>26</td>
+  <td>10</td>
+  <td class="bad">42</td>
+  <td>3,987</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0047</td>
+</tr><tr class="step-row">
+  <td>27</td>
+  <td>54</td>
+  <td class="">0</td>
+  <td>21,033</td>
+  <td>19,741</td>
+  <td>1,292</td>
+  <td class="good">93.9%</td>
+  <td>$0.0047</td>
+</tr><tr class="step-row">
+  <td>28</td>
+  <td>8</td>
+  <td class="bad">48</td>
+  <td>4,137</td>
+  <td>0</td>
+  <td>4,132</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0067</td>
+</tr><tr class="step-row">
+  <td>29</td>
+  <td>58</td>
+  <td class="">0</td>
+  <td>22,061</td>
+  <td>21,033</td>
+  <td>1,028</td>
+  <td class="good">95.3%</td>
+  <td>$0.0038</td>
+</tr><tr class="step-row">
+  <td>30</td>
+  <td>8</td>
+  <td class="bad">52</td>
+  <td>3,618</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0046</td>
+</tr></table></div>
+    <h3 class="toggle" id="btn-astropy_astropy_14365_fifo" onclick="toggle('astropy_astropy_14365_fifo')" style="font-size:12px; color:#8b949e;">
+      Step trace: fifo/8000
+    </h3>
+    <div class="collapsible" id="astropy_astropy_14365_fifo">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>2,172</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0027</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>4</td>
+  <td class="">0</td>
+  <td>2,307</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0026</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>6</td>
+  <td class="">0</td>
+  <td>3,556</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0040</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>3,695</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0041</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>10</td>
+  <td class="">0</td>
+  <td>7,038</td>
+  <td>0</td>
+  <td>7,033</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0092</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>12</td>
+  <td class="">0</td>
+  <td>7,858</td>
+  <td>0</td>
+  <td>7,853</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0103</td>
+</tr><tr class="step-row">
+  <td>7</td>
+  <td>14</td>
+  <td class="">0</td>
+  <td>9,577</td>
+  <td>7,033</td>
+  <td>2,540</td>
+  <td class="good">73.4%</td>
+  <td>$0.0044</td>
+</tr><tr class="step-row">
+  <td>8</td>
+  <td>16</td>
+  <td class="">0</td>
+  <td>9,736</td>
+  <td>9,573</td>
+  <td>160</td>
+  <td class="good">98.3%</td>
+  <td>$0.0019</td>
+</tr><tr class="step-row">
+  <td>9</td>
+  <td>18</td>
+  <td class="">0</td>
+  <td>9,948</td>
+  <td>9,733</td>
+  <td>213</td>
+  <td class="good">97.8%</td>
+  <td>$0.0018</td>
+</tr><tr class="step-row">
+  <td>10</td>
+  <td>16</td>
+  <td class="bad">4</td>
+  <td>9,885</td>
+  <td>0</td>
+  <td>9,880</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0127</td>
+</tr><tr class="step-row">
+  <td>11</td>
+  <td>16</td>
+  <td class="bad">6</td>
+  <td>10,536</td>
+  <td>0</td>
+  <td>10,531</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0149</td>
+</tr><tr class="step-row">
+  <td>12</td>
+  <td>16</td>
+  <td class="bad">8</td>
+  <td>8,264</td>
+  <td>0</td>
+  <td>8,259</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0110</td>
+</tr><tr class="step-row">
+  <td>13</td>
+  <td>18</td>
+  <td class="bad">8</td>
+  <td>9,206</td>
+  <td>8,259</td>
+  <td>943</td>
+  <td class="good">89.7%</td>
+  <td>$0.0030</td>
+</tr><tr class="step-row">
+  <td>14</td>
+  <td>20</td>
+  <td class="bad">8</td>
+  <td>9,564</td>
+  <td>9,202</td>
+  <td>359</td>
+  <td class="good">96.2%</td>
+  <td>$0.0042</td>
+</tr><tr class="step-row">
+  <td>15</td>
+  <td>22</td>
+  <td class="bad">8</td>
+  <td>10,418</td>
+  <td>9,561</td>
+  <td>855</td>
+  <td class="good">91.8%</td>
+  <td>$0.0038</td>
+</tr><tr class="step-row">
+  <td>16</td>
+  <td>24</td>
+  <td class="bad">8</td>
+  <td>10,933</td>
+  <td>10,416</td>
+  <td>516</td>
+  <td class="good">95.3%</td>
+  <td>$0.0025</td>
+</tr><tr class="step-row">
+  <td>17</td>
+  <td>26</td>
+  <td class="bad">8</td>
+  <td>11,186</td>
+  <td>10,416</td>
+  <td>769</td>
+  <td class="good">93.1%</td>
+  <td>$0.0027</td>
+</tr><tr class="step-row">
+  <td>18</td>
+  <td>28</td>
+  <td class="bad">8</td>
+  <td>12,089</td>
+  <td>10,932</td>
+  <td>1,157</td>
+  <td class="good">90.4%</td>
+  <td>$0.0045</td>
+</tr><tr class="step-row">
+  <td>19</td>
+  <td>28</td>
+  <td class="bad">10</td>
+  <td>11,697</td>
+  <td>0</td>
+  <td>11,692</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0153</td>
+</tr><tr class="step-row">
+  <td>20</td>
+  <td>28</td>
+  <td class="bad">12</td>
+  <td>10,884</td>
+  <td>0</td>
+  <td>10,879</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0165</td>
+</tr><tr class="step-row">
+  <td>21</td>
+  <td>30</td>
+  <td class="bad">12</td>
+  <td>11,613</td>
+  <td>10,879</td>
+  <td>730</td>
+  <td class="good">93.7%</td>
+  <td>$0.0028</td>
+</tr><tr class="step-row">
+  <td>22</td>
+  <td>32</td>
+  <td class="bad">12</td>
+  <td>11,824</td>
+  <td>11,609</td>
+  <td>212</td>
+  <td class="good">98.2%</td>
+  <td>$0.0023</td>
+</tr><tr class="step-row">
+  <td>23</td>
+  <td>34</td>
+  <td class="bad">12</td>
+  <td>12,598</td>
+  <td>11,821</td>
+  <td>775</td>
+  <td class="good">93.8%</td>
+  <td>$0.0029</td>
+</tr><tr class="step-row">
+  <td>24</td>
+  <td>36</td>
+  <td class="bad">12</td>
+  <td>12,790</td>
+  <td>11,821</td>
+  <td>967</td>
+  <td class="good">92.4%</td>
+  <td>$0.0030</td>
+</tr><tr class="step-row">
+  <td>25</td>
+  <td>38</td>
+  <td class="bad">12</td>
+  <td>13,132</td>
+  <td>12,596</td>
+  <td>535</td>
+  <td class="good">95.9%</td>
+  <td>$0.0027</td>
+</tr><tr class="step-row">
+  <td>26</td>
+  <td>40</td>
+  <td class="bad">12</td>
+  <td>13,797</td>
+  <td>13,131</td>
+  <td>666</td>
+  <td class="good">95.2%</td>
+  <td>$0.0037</td>
+</tr><tr class="step-row">
+  <td>27</td>
+  <td>36</td>
+  <td class="bad">18</td>
+  <td>12,527</td>
+  <td>0</td>
+  <td>12,522</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0186</td>
+</tr><tr class="step-row">
+  <td>28</td>
+  <td>38</td>
+  <td class="bad">18</td>
+  <td>13,243</td>
+  <td>12,522</td>
+  <td>717</td>
+  <td class="good">94.6%</td>
+  <td>$0.0042</td>
+</tr><tr class="step-row">
+  <td>29</td>
+  <td>40</td>
+  <td class="bad">18</td>
+  <td>13,689</td>
+  <td>13,239</td>
+  <td>447</td>
+  <td class="good">96.7%</td>
+  <td>$0.0025</td>
+</tr><tr class="step-row">
+  <td>30</td>
+  <td>42</td>
+  <td class="bad">18</td>
+  <td>13,926</td>
+  <td>13,686</td>
+  <td>238</td>
+  <td class="good">98.3%</td>
+  <td>$0.0024</td>
+</tr><tr class="step-row">
+  <td>31</td>
+  <td>44</td>
+  <td class="bad">18</td>
+  <td>14,133</td>
+  <td>13,924</td>
+  <td>208</td>
+  <td class="good">98.5%</td>
+  <td>$0.0023</td>
+</tr><tr class="step-row">
+  <td>32</td>
+  <td>46</td>
+  <td class="bad">18</td>
+  <td>14,379</td>
+  <td>14,132</td>
+  <td>247</td>
+  <td class="good">98.3%</td>
+  <td>$0.0025</td>
+</tr><tr class="step-row">
+  <td>33</td>
+  <td>48</td>
+  <td class="bad">18</td>
+  <td>14,644</td>
+  <td>14,132</td>
+  <td>512</td>
+  <td class="good">96.5%</td>
+  <td>$0.0028</td>
+</tr><tr class="step-row">
+  <td>34</td>
+  <td>50</td>
+  <td class="bad">18</td>
+  <td>14,839</td>
+  <td>14,644</td>
+  <td>195</td>
+  <td class="good">98.7%</td>
+  <td>$0.0054</td>
+</tr><tr class="step-row">
+  <td>35</td>
+  <td>50</td>
+  <td class="bad">20</td>
+  <td>15,052</td>
+  <td>0</td>
+  <td>15,047</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0224</td>
+</tr><tr class="step-row">
+  <td>36</td>
+  <td>52</td>
+  <td class="bad">20</td>
+  <td>15,996</td>
+  <td>15,047</td>
+  <td>945</td>
+  <td class="good">94.1%</td>
+  <td>$0.0035</td>
+</tr><tr class="step-row">
+  <td>37</td>
+  <td>54</td>
+  <td class="bad">20</td>
+  <td>16,212</td>
+  <td>15,047</td>
+  <td>1,161</td>
+  <td class="good">92.8%</td>
+  <td>$0.0037</td>
+</tr><tr class="step-row">
+  <td>38</td>
+  <td>56</td>
+  <td class="bad">20</td>
+  <td>16,527</td>
+  <td>16,208</td>
+  <td>316</td>
+  <td class="good">98.1%</td>
+  <td>$0.0028</td>
+</tr><tr class="step-row">
+  <td>39</td>
+  <td>58</td>
+  <td class="bad">20</td>
+  <td>16,762</td>
+  <td>16,524</td>
+  <td>236</td>
+  <td class="good">98.6%</td>
+  <td>$0.0026</td>
+</tr><tr class="step-row">
+  <td>40</td>
+  <td>58</td>
+  <td class="bad">22</td>
+  <td>16,132</td>
+  <td>0</td>
+  <td>16,127</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0211</td>
+</tr><tr class="step-row">
+  <td>41</td>
+  <td>60</td>
+  <td class="bad">22</td>
+  <td>16,585</td>
+  <td>16,127</td>
+  <td>454</td>
+  <td class="good">97.2%</td>
+  <td>$0.0028</td>
+</tr><tr class="step-row">
+  <td>42</td>
+  <td>58</td>
+  <td class="bad">26</td>
+  <td>16,590</td>
+  <td>0</td>
+  <td>16,585</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0260</td>
+</tr><tr class="step-row">
+  <td>43</td>
+  <td>56</td>
+  <td class="bad">30</td>
+  <td>16,800</td>
+  <td>0</td>
+  <td>16,795</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0220</td>
+</tr><tr class="step-row">
+  <td>44</td>
+  <td>54</td>
+  <td class="bad">34</td>
+  <td>16,279</td>
+  <td>0</td>
+  <td>16,274</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0211</td>
+</tr><tr class="step-row">
+  <td>45</td>
+  <td>56</td>
+  <td class="bad">34</td>
+  <td>16,864</td>
+  <td>16,274</td>
+  <td>586</td>
+  <td class="good">96.5%</td>
+  <td>$0.0027</td>
+</tr><tr class="step-row">
+  <td>46</td>
+  <td>54</td>
+  <td class="bad">38</td>
+  <td>16,040</td>
+  <td>0</td>
+  <td>16,035</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0205</td>
+</tr><tr class="step-row">
+  <td>47</td>
+  <td>52</td>
+  <td class="bad">42</td>
+  <td>15,979</td>
+  <td>0</td>
+  <td>15,974</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0205</td>
+</tr></table></div>
+    <h3 class="toggle" id="btn-astropy_astropy_14365_none" onclick="toggle('astropy_astropy_14365_none')" style="font-size:12px; color:#8b949e;">
+      Step trace: none/999999
+    </h3>
+    <div class="collapsible" id="astropy_astropy_14365_none">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>2,172</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0027</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>4</td>
+  <td class="">0</td>
+  <td>2,307</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0026</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>6</td>
+  <td class="">0</td>
+  <td>3,554</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0040</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>3,693</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0041</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>10</td>
+  <td class="">0</td>
+  <td>7,036</td>
+  <td>0</td>
+  <td>7,031</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0092</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>12</td>
+  <td class="">0</td>
+  <td>7,856</td>
+  <td>0</td>
+  <td>7,851</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0102</td>
+</tr><tr class="step-row">
+  <td>7</td>
+  <td>14</td>
+  <td class="">0</td>
+  <td>9,575</td>
+  <td>7,851</td>
+  <td>1,720</td>
+  <td class="good">82.0%</td>
+  <td>$0.0035</td>
+</tr><tr class="step-row">
+  <td>8</td>
+  <td>16</td>
+  <td class="">0</td>
+  <td>9,734</td>
+  <td>9,571</td>
+  <td>160</td>
+  <td class="good">98.3%</td>
+  <td>$0.0019</td>
+</tr><tr class="step-row">
+  <td>9</td>
+  <td>18</td>
+  <td class="">0</td>
+  <td>9,946</td>
+  <td>9,571</td>
+  <td>372</td>
+  <td class="good">96.2%</td>
+  <td>$0.0020</td>
+</tr><tr class="step-row">
+  <td>10</td>
+  <td>20</td>
+  <td class="">0</td>
+  <td>11,265</td>
+  <td>9,943</td>
+  <td>1,320</td>
+  <td class="good">88.3%</td>
+  <td>$0.0046</td>
+</tr><tr class="step-row">
+  <td>11</td>
+  <td>22</td>
+  <td class="">0</td>
+  <td>11,922</td>
+  <td>11,263</td>
+  <td>658</td>
+  <td class="good">94.5%</td>
+  <td>$0.0026</td>
+</tr><tr class="step-row">
+  <td>12</td>
+  <td>24</td>
+  <td class="">0</td>
+  <td>12,793</td>
+  <td>11,921</td>
+  <td>872</td>
+  <td class="good">93.2%</td>
+  <td>$0.0034</td>
+</tr><tr class="step-row">
+  <td>13</td>
+  <td>26</td>
+  <td class="">0</td>
+  <td>13,245</td>
+  <td>12,793</td>
+  <td>452</td>
+  <td class="good">96.6%</td>
+  <td>$0.0025</td>
+</tr><tr class="step-row">
+  <td>14</td>
+  <td>28</td>
+  <td class="">0</td>
+  <td>14,154</td>
+  <td>13,245</td>
+  <td>909</td>
+  <td class="good">93.6%</td>
+  <td>$0.0036</td>
+</tr><tr class="step-row">
+  <td>15</td>
+  <td>30</td>
+  <td class="">0</td>
+  <td>14,441</td>
+  <td>13,245</td>
+  <td>1,196</td>
+  <td class="good">91.7%</td>
+  <td>$0.0035</td>
+</tr><tr class="step-row">
+  <td>16</td>
+  <td>32</td>
+  <td class="">0</td>
+  <td>14,627</td>
+  <td>14,441</td>
+  <td>186</td>
+  <td class="good">98.7%</td>
+  <td>$0.0036</td>
+</tr><tr class="step-row">
+  <td>17</td>
+  <td>34</td>
+  <td class="">0</td>
+  <td>15,035</td>
+  <td>14,627</td>
+  <td>408</td>
+  <td class="good">97.3%</td>
+  <td>$0.0026</td>
+</tr><tr class="step-row">
+  <td>18</td>
+  <td>36</td>
+  <td class="">0</td>
+  <td>15,438</td>
+  <td>15,035</td>
+  <td>403</td>
+  <td class="good">97.4%</td>
+  <td>$0.0051</td>
+</tr><tr class="step-row">
+  <td>19</td>
+  <td>38</td>
+  <td class="">0</td>
+  <td>16,208</td>
+  <td>15,438</td>
+  <td>770</td>
+  <td class="good">95.2%</td>
+  <td>$0.0036</td>
+</tr><tr class="step-row">
+  <td>20</td>
+  <td>40</td>
+  <td class="">0</td>
+  <td>16,818</td>
+  <td>16,208</td>
+  <td>610</td>
+  <td class="good">96.4%</td>
+  <td>$0.0033</td>
+</tr><tr class="step-row">
+  <td>21</td>
+  <td>42</td>
+  <td class="">0</td>
+  <td>17,305</td>
+  <td>16,818</td>
+  <td>487</td>
+  <td class="good">97.2%</td>
+  <td>$0.0033</td>
+</tr><tr class="step-row">
+  <td>22</td>
+  <td>44</td>
+  <td class="">0</td>
+  <td>17,606</td>
+  <td>17,305</td>
+  <td>301</td>
+  <td class="good">98.3%</td>
+  <td>$0.0029</td>
+</tr><tr class="step-row">
+  <td>23</td>
+  <td>46</td>
+  <td class="">0</td>
+  <td>18,412</td>
+  <td>17,305</td>
+  <td>1,107</td>
+  <td class="good">94.0%</td>
+  <td>$0.0068</td>
+</tr><tr class="step-row">
+  <td>24</td>
+  <td>48</td>
+  <td class="">0</td>
+  <td>19,279</td>
+  <td>18,412</td>
+  <td>867</td>
+  <td class="good">95.5%</td>
+  <td>$0.0037</td>
+</tr><tr class="step-row">
+  <td>25</td>
+  <td>50</td>
+  <td class="">0</td>
+  <td>19,864</td>
+  <td>18,412</td>
+  <td>1,452</td>
+  <td class="good">92.7%</td>
+  <td>$0.0082</td>
+</tr><tr class="step-row">
+  <td>26</td>
+  <td>52</td>
+  <td class="">0</td>
+  <td>21,031</td>
+  <td>19,864</td>
+  <td>1,167</td>
+  <td class="good">94.5%</td>
+  <td>$0.0043</td>
+</tr><tr class="step-row">
+  <td>27</td>
+  <td>54</td>
+  <td class="">0</td>
+  <td>21,431</td>
+  <td>21,031</td>
+  <td>400</td>
+  <td class="good">98.1%</td>
+  <td>$0.0071</td>
+</tr><tr class="step-row">
+  <td>28</td>
+  <td>56</td>
+  <td class="">0</td>
+  <td>22,636</td>
+  <td>21,431</td>
+  <td>1,205</td>
+  <td class="good">94.7%</td>
+  <td>$0.0082</td>
+</tr><tr class="step-row">
+  <td>29</td>
+  <td>58</td>
+  <td class="">0</td>
+  <td>23,738</td>
+  <td>22,636</td>
+  <td>1,102</td>
+  <td class="good">95.4%</td>
+  <td>$0.0043</td>
+</tr><tr class="step-row">
+  <td>30</td>
+  <td>60</td>
+  <td class="">0</td>
+  <td>24,196</td>
+  <td>23,738</td>
+  <td>458</td>
+  <td class="good">98.1%</td>
+  <td>$0.0080</td>
+</tr><tr class="step-row">
+  <td>31</td>
+  <td>62</td>
+  <td class="">0</td>
+  <td>25,542</td>
+  <td>24,196</td>
+  <td>1,346</td>
+  <td class="good">94.7%</td>
+  <td>$0.0048</td>
+</tr><tr class="step-row">
+  <td>32</td>
+  <td>64</td>
+  <td class="">0</td>
+  <td>26,039</td>
+  <td>25,542</td>
+  <td>497</td>
+  <td class="good">98.1%</td>
+  <td>$0.0039</td>
+</tr><tr class="step-row">
+  <td>33</td>
+  <td>66</td>
+  <td class="">0</td>
+  <td>26,504</td>
+  <td>25,542</td>
+  <td>962</td>
+  <td class="good">96.4%</td>
+  <td>$0.0041</td>
+</tr><tr class="step-row">
+  <td>34</td>
+  <td>68</td>
+  <td class="">0</td>
+  <td>26,899</td>
+  <td>26,039</td>
+  <td>860</td>
+  <td class="good">96.8%</td>
+  <td>$0.0073</td>
+</tr><tr class="step-row">
+  <td>35</td>
+  <td>70</td>
+  <td class="">0</td>
+  <td>27,775</td>
+  <td>26,899</td>
+  <td>876</td>
+  <td class="good">96.8%</td>
+  <td>$0.0042</td>
+</tr></table></div>
+    <h3 class="toggle" id="btn-astropy_astropy_14365_summarize" onclick="toggle('astropy_astropy_14365_summarize')" style="font-size:12px; color:#8b949e;">
+      Step trace: summarize/8000
+    </h3>
+    <div class="collapsible" id="astropy_astropy_14365_summarize">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>2,172</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0027</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>4</td>
+  <td class="">0</td>
+  <td>2,307</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0026</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>6</td>
+  <td class="">0</td>
+  <td>3,556</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0040</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>3,695</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0041</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>10</td>
+  <td class="">0</td>
+  <td>7,038</td>
+  <td>0</td>
+  <td>7,033</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0092</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>12</td>
+  <td class="">0</td>
+  <td>7,858</td>
+  <td>7,033</td>
+  <td>821</td>
+  <td class="good">89.5%</td>
+  <td>$0.0022</td>
+</tr><tr class="step-row">
+  <td>7</td>
+  <td>14</td>
+  <td class="">0</td>
+  <td>9,577</td>
+  <td>7,033</td>
+  <td>2,540</td>
+  <td class="good">73.4%</td>
+  <td>$0.0044</td>
+</tr><tr class="step-row">
+  <td>8</td>
+  <td>16</td>
+  <td class="">0</td>
+  <td>9,736</td>
+  <td>7,033</td>
+  <td>2,699</td>
+  <td class="good">72.2%</td>
+  <td>$0.0048</td>
+</tr><tr class="step-row">
+  <td>9</td>
+  <td>18</td>
+  <td class="">0</td>
+  <td>9,974</td>
+  <td>9,732</td>
+  <td>239</td>
+  <td class="good">97.6%</td>
+  <td>$0.0029</td>
+</tr><tr class="step-row">
+  <td>10</td>
+  <td>20</td>
+  <td class="">0</td>
+  <td>10,379</td>
+  <td>9,971</td>
+  <td>406</td>
+  <td class="good">96.1%</td>
+  <td>$0.0020</td>
+</tr><tr class="step-row">
+  <td>11</td>
+  <td>22</td>
+  <td class="">0</td>
+  <td>10,516</td>
+  <td>10,377</td>
+  <td>138</td>
+  <td class="good">98.7%</td>
+  <td>$0.0017</td>
+</tr><tr class="step-row">
+  <td>12</td>
+  <td>24</td>
+  <td class="">0</td>
+  <td>10,650</td>
+  <td>10,515</td>
+  <td>135</td>
+  <td class="good">98.7%</td>
+  <td>$0.0017</td>
+</tr><tr class="step-row">
+  <td>13</td>
+  <td>9</td>
+  <td class="bad">17</td>
+  <td>3,243</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0041</td>
+</tr><tr class="step-row">
+  <td>14</td>
+  <td>9</td>
+  <td class="bad">19</td>
+  <td>3,370</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0040</td>
+</tr><tr class="step-row">
+  <td>15</td>
+  <td>9</td>
+  <td class="bad">21</td>
+  <td>4,414</td>
+  <td>0</td>
+  <td>4,409</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0065</td>
+</tr><tr class="step-row">
+  <td>16</td>
+  <td>9</td>
+  <td class="bad">23</td>
+  <td>4,920</td>
+  <td>0</td>
+  <td>4,915</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0077</td>
+</tr><tr class="step-row">
+  <td>17</td>
+  <td>9</td>
+  <td class="bad">25</td>
+  <td>5,352</td>
+  <td>0</td>
+  <td>5,347</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0076</td>
+</tr><tr class="step-row">
+  <td>18</td>
+  <td>9</td>
+  <td class="bad">27</td>
+  <td>4,142</td>
+  <td>0</td>
+  <td>4,137</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0061</td>
+</tr><tr class="step-row">
+  <td>19</td>
+  <td>9</td>
+  <td class="bad">29</td>
+  <td>3,417</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0040</td>
+</tr><tr class="step-row">
+  <td>20</td>
+  <td>9</td>
+  <td class="bad">31</td>
+  <td>3,895</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0046</td>
+</tr><tr class="step-row">
+  <td>21</td>
+  <td>9</td>
+  <td class="bad">33</td>
+  <td>3,914</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0047</td>
+</tr><tr class="step-row">
+  <td>22</td>
+  <td>9</td>
+  <td class="bad">35</td>
+  <td>6,695</td>
+  <td>0</td>
+  <td>6,690</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0092</td>
+</tr><tr class="step-row">
+  <td>23</td>
+  <td>9</td>
+  <td class="bad">37</td>
+  <td>6,795</td>
+  <td>0</td>
+  <td>6,790</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0099</td>
+</tr><tr class="step-row">
+  <td>24</td>
+  <td>9</td>
+  <td class="bad">39</td>
+  <td>6,888</td>
+  <td>0</td>
+  <td>6,883</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0095</td>
+</tr><tr class="step-row">
+  <td>25</td>
+  <td>9</td>
+  <td class="bad">41</td>
+  <td>4,090</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0048</td>
+</tr><tr class="step-row">
+  <td>26</td>
+  <td>9</td>
+  <td class="bad">43</td>
+  <td>3,803</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0047</td>
+</tr><tr class="step-row">
+  <td>27</td>
+  <td>9</td>
+  <td class="bad">45</td>
+  <td>4,466</td>
+  <td>0</td>
+  <td>4,461</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0069</td>
+</tr><tr class="step-row">
+  <td>28</td>
+  <td>9</td>
+  <td class="bad">47</td>
+  <td>4,824</td>
+  <td>0</td>
+  <td>4,819</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0071</td>
+</tr><tr class="step-row">
+  <td>29</td>
+  <td>9</td>
+  <td class="bad">49</td>
+  <td>5,630</td>
+  <td>0</td>
+  <td>5,625</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0123</td>
+</tr><tr class="step-row">
+  <td>30</td>
+  <td>9</td>
+  <td class="bad">51</td>
+  <td>6,239</td>
+  <td>0</td>
+  <td>6,234</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0085</td>
+</tr></table></div></div></div>
+<div class="instance-section">
+  <h3 class="toggle" id="btn-astropy_astropy_14995" onclick="toggle('astropy_astropy_14995')">astropy__astropy-14995</h3>
+  <div class="collapsible" id="astropy_astropy_14995">
+    <table>
+    <tr><th>Policy</th><th>Status</th><th>Steps</th><th>Cost</th><th>Prompt Tok</th><th>Cache Read</th><th>Hit Rate</th><th>Evicted</th><th>Cache Hit Sparkline</th></tr>
+<tr>
+  <td><strong>adaptive/8000</strong></td>
+  <td><span class="pill pill-yellow">LimitsExceeded</span></td>
+  <td>30</td>
+  <td class="cost">$0.211</td>
+  <td>261,850</td>
+  <td>122,675</td>
+  <td class="warn">46.8%</td>
+  <td>300</td>
+  <td class="sparkline">    ▆▇▆▇▇▆ ▇ ▆▇▇        ▇ ▇ ▇ </td>
+</tr><tr>
+  <td><strong>fifo/8000</strong></td>
+  <td><span class="pill pill-green">PATCH</span></td>
+  <td>43</td>
+  <td class="cost">$0.363</td>
+  <td>429,360</td>
+  <td>196,600</td>
+  <td class="warn">45.8%</td>
+  <td>1004</td>
+  <td class="sparkline">▇  ▇  ▇▇  ▇ ▇     ▇  ▇▇ ▇  ▇ ▇</td>
+</tr><tr>
+  <td><strong>none/999999</strong></td>
+  <td><span class="pill pill-green">PATCH</span></td>
+  <td>39</td>
+  <td class="cost">$0.181</td>
+  <td>796,968</td>
+  <td>748,096</td>
+  <td class="good">93.9%</td>
+  <td>0</td>
+  <td class="sparkline">▇▇▇▅▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇</td>
+</tr><tr>
+  <td><strong>summarize/8000</strong></td>
+  <td><span class="pill pill-yellow">LimitsExceeded</span></td>
+  <td>30</td>
+  <td class="cost">$0.155</td>
+  <td>174,795</td>
+  <td>80,300</td>
+  <td class="warn">45.9%</td>
+  <td>532</td>
+  <td class="sparkline">    ▇▇▇▆▇▆▇▇▇▇▇▇              </td>
+</tr></table>
+    <h3 class="toggle" id="btn-astropy_astropy_14995_adaptive" onclick="toggle('astropy_astropy_14995_adaptive')" style="font-size:12px; color:#8b949e;">
+      Step trace: adaptive/8000
+    </h3>
+    <div class="collapsible" id="astropy_astropy_14995_adaptive">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>2,500</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0030</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>4</td>
+  <td class="">0</td>
+  <td>2,632</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0029</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>6</td>
+  <td class="">0</td>
+  <td>3,915</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0044</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>4,137</td>
+  <td>0</td>
+  <td>4,132</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0057</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>10</td>
+  <td class="">0</td>
+  <td>4,850</td>
+  <td>4,132</td>
+  <td>714</td>
+  <td class="good">85.2%</td>
+  <td>$0.0016</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>12</td>
+  <td class="">0</td>
+  <td>5,174</td>
+  <td>4,846</td>
+  <td>325</td>
+  <td class="good">93.7%</td>
+  <td>$0.0040</td>
+</tr><tr class="step-row">
+  <td>7</td>
+  <td>14</td>
+  <td class="">0</td>
+  <td>6,011</td>
+  <td>5,171</td>
+  <td>838</td>
+  <td class="good">86.0%</td>
+  <td>$0.0021</td>
+</tr><tr class="step-row">
+  <td>8</td>
+  <td>16</td>
+  <td class="">0</td>
+  <td>6,385</td>
+  <td>6,009</td>
+  <td>375</td>
+  <td class="good">94.1%</td>
+  <td>$0.0016</td>
+</tr><tr class="step-row">
+  <td>9</td>
+  <td>18</td>
+  <td class="">0</td>
+  <td>6,935</td>
+  <td>6,384</td>
+  <td>551</td>
+  <td class="good">92.1%</td>
+  <td>$0.0019</td>
+</tr><tr class="step-row">
+  <td>10</td>
+  <td>20</td>
+  <td class="">0</td>
+  <td>8,165</td>
+  <td>6,935</td>
+  <td>1,230</td>
+  <td class="good">84.9%</td>
+  <td>$0.0026</td>
+</tr><tr class="step-row">
+  <td>11</td>
+  <td>18</td>
+  <td class="bad">4</td>
+  <td>7,093</td>
+  <td>0</td>
+  <td>7,088</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0094</td>
+</tr><tr class="step-row">
+  <td>12</td>
+  <td>24</td>
+  <td class="">0</td>
+  <td>9,242</td>
+  <td>8,165</td>
+  <td>1,077</td>
+  <td class="good">88.3%</td>
+  <td>$0.0037</td>
+</tr><tr class="step-row">
+  <td>13</td>
+  <td>20</td>
+  <td class="bad">6</td>
+  <td>8,310</td>
+  <td>0</td>
+  <td>8,305</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0112</td>
+</tr><tr class="step-row">
+  <td>14</td>
+  <td>24</td>
+  <td class="bad">4</td>
+  <td>8,888</td>
+  <td>7,088</td>
+  <td>1,796</td>
+  <td class="good">79.7%</td>
+  <td>$0.0036</td>
+</tr><tr class="step-row">
+  <td>15</td>
+  <td>26</td>
+  <td class="bad">4</td>
+  <td>9,160</td>
+  <td>8,884</td>
+  <td>273</td>
+  <td class="good">97.0%</td>
+  <td>$0.0019</td>
+</tr><tr class="step-row">
+  <td>16</td>
+  <td>26</td>
+  <td class="bad">6</td>
+  <td>9,323</td>
+  <td>8,305</td>
+  <td>1,014</td>
+  <td class="good">89.1%</td>
+  <td>$0.0029</td>
+</tr><tr class="step-row">
+  <td>17</td>
+  <td>26</td>
+  <td class="bad">8</td>
+  <td>10,542</td>
+  <td>0</td>
+  <td>10,537</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0139</td>
+</tr><tr class="step-row">
+  <td>18</td>
+  <td>22</td>
+  <td class="bad">14</td>
+  <td>9,982</td>
+  <td>0</td>
+  <td>9,977</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0133</td>
+</tr><tr class="step-row">
+  <td>19</td>
+  <td>28</td>
+  <td class="bad">10</td>
+  <td>12,192</td>
+  <td>0</td>
+  <td>12,187</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0193</td>
+</tr><tr class="step-row">
+  <td>20</td>
+  <td>20</td>
+  <td class="bad">20</td>
+  <td>9,748</td>
+  <td>0</td>
+  <td>9,743</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0140</td>
+</tr><tr class="step-row">
+  <td>21</td>
+  <td>34</td>
+  <td class="bad">8</td>
+  <td>14,571</td>
+  <td>0</td>
+  <td>14,566</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0187</td>
+</tr><tr class="step-row">
+  <td>22</td>
+  <td>10</td>
+  <td class="bad">34</td>
+  <td>6,238</td>
+  <td>0</td>
+  <td>6,233</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0082</td>
+</tr><tr class="step-row">
+  <td>23</td>
+  <td>46</td>
+  <td class="">0</td>
+  <td>17,543</td>
+  <td>0</td>
+  <td>17,538</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0224</td>
+</tr><tr class="step-row">
+  <td>24</td>
+  <td>10</td>
+  <td class="bad">38</td>
+  <td>4,214</td>
+  <td>0</td>
+  <td>4,209</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0056</td>
+</tr><tr class="step-row">
+  <td>25</td>
+  <td>50</td>
+  <td class="">0</td>
+  <td>18,895</td>
+  <td>17,538</td>
+  <td>1,353</td>
+  <td class="good">92.8%</td>
+  <td>$0.0062</td>
+</tr><tr class="step-row">
+  <td>26</td>
+  <td>8</td>
+  <td class="bad">44</td>
+  <td>4,482</td>
+  <td>0</td>
+  <td>4,477</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0060</td>
+</tr><tr class="step-row">
+  <td>27</td>
+  <td>54</td>
+  <td class="">0</td>
+  <td>20,330</td>
+  <td>18,891</td>
+  <td>1,436</td>
+  <td class="good">92.9%</td>
+  <td>$0.0042</td>
+</tr><tr class="step-row">
+  <td>28</td>
+  <td>8</td>
+  <td class="bad">48</td>
+  <td>4,558</td>
+  <td>0</td>
+  <td>4,553</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0063</td>
+</tr><tr class="step-row">
+  <td>29</td>
+  <td>58</td>
+  <td class="">0</td>
+  <td>21,499</td>
+  <td>20,327</td>
+  <td>1,170</td>
+  <td class="good">94.5%</td>
+  <td>$0.0039</td>
+</tr><tr class="step-row">
+  <td>30</td>
+  <td>8</td>
+  <td class="bad">52</td>
+  <td>4,336</td>
+  <td>0</td>
+  <td>4,331</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0062</td>
+</tr></table></div>
+    <h3 class="toggle" id="btn-astropy_astropy_14995_fifo" onclick="toggle('astropy_astropy_14995_fifo')" style="font-size:12px; color:#8b949e;">
+      Step trace: fifo/8000
+    </h3>
+    <div class="collapsible" id="astropy_astropy_14995_fifo">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>2,500</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0030</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>4</td>
+  <td class="">0</td>
+  <td>2,632</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0029</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>6</td>
+  <td class="">0</td>
+  <td>3,917</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0044</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>4,139</td>
+  <td>0</td>
+  <td>4,134</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0057</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>10</td>
+  <td class="">0</td>
+  <td>4,852</td>
+  <td>4,134</td>
+  <td>714</td>
+  <td class="good">85.2%</td>
+  <td>$0.0016</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>12</td>
+  <td class="">0</td>
+  <td>5,176</td>
+  <td>4,134</td>
+  <td>1,038</td>
+  <td class="good">79.9%</td>
+  <td>$0.0049</td>
+</tr><tr class="step-row">
+  <td>7</td>
+  <td>14</td>
+  <td class="">0</td>
+  <td>5,897</td>
+  <td>5,172</td>
+  <td>722</td>
+  <td class="good">87.7%</td>
+  <td>$0.0021</td>
+</tr><tr class="step-row">
+  <td>8</td>
+  <td>16</td>
+  <td class="">0</td>
+  <td>7,205</td>
+  <td>5,894</td>
+  <td>1,309</td>
+  <td class="good">81.8%</td>
+  <td>$0.0028</td>
+</tr><tr class="step-row">
+  <td>9</td>
+  <td>18</td>
+  <td class="">0</td>
+  <td>8,079</td>
+  <td>7,203</td>
+  <td>875</td>
+  <td class="good">89.2%</td>
+  <td>$0.0025</td>
+</tr><tr class="step-row">
+  <td>10</td>
+  <td>20</td>
+  <td class="">0</td>
+  <td>9,335</td>
+  <td>8,078</td>
+  <td>1,257</td>
+  <td class="good">86.5%</td>
+  <td>$0.0027</td>
+</tr><tr class="step-row">
+  <td>11</td>
+  <td>22</td>
+  <td class="">0</td>
+  <td>9,450</td>
+  <td>8,078</td>
+  <td>1,372</td>
+  <td class="good">85.5%</td>
+  <td>$0.0032</td>
+</tr><tr class="step-row">
+  <td>12</td>
+  <td>24</td>
+  <td class="">0</td>
+  <td>9,846</td>
+  <td>9,450</td>
+  <td>396</td>
+  <td class="good">96.0%</td>
+  <td>$0.0020</td>
+</tr><tr class="step-row">
+  <td>13</td>
+  <td>26</td>
+  <td class="">0</td>
+  <td>10,579</td>
+  <td>9,450</td>
+  <td>1,129</td>
+  <td class="good">89.3%</td>
+  <td>$0.0047</td>
+</tr><tr class="step-row">
+  <td>14</td>
+  <td>28</td>
+  <td class="">0</td>
+  <td>11,207</td>
+  <td>10,579</td>
+  <td>628</td>
+  <td class="good">94.4%</td>
+  <td>$0.0024</td>
+</tr><tr class="step-row">
+  <td>15</td>
+  <td>26</td>
+  <td class="bad">4</td>
+  <td>10,308</td>
+  <td>0</td>
+  <td>10,303</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0135</td>
+</tr><tr class="step-row">
+  <td>16</td>
+  <td>28</td>
+  <td class="bad">4</td>
+  <td>10,451</td>
+  <td>0</td>
+  <td>10,446</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0139</td>
+</tr><tr class="step-row">
+  <td>17</td>
+  <td>30</td>
+  <td class="bad">4</td>
+  <td>11,019</td>
+  <td>10,446</td>
+  <td>569</td>
+  <td class="good">94.8%</td>
+  <td>$0.0026</td>
+</tr><tr class="step-row">
+  <td>18</td>
+  <td>30</td>
+  <td class="bad">6</td>
+  <td>11,583</td>
+  <td>0</td>
+  <td>11,578</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0153</td>
+</tr><tr class="step-row">
+  <td>19</td>
+  <td>30</td>
+  <td class="bad">8</td>
+  <td>11,231</td>
+  <td>0</td>
+  <td>11,226</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0147</td>
+</tr><tr class="step-row">
+  <td>20</td>
+  <td>32</td>
+  <td class="bad">8</td>
+  <td>11,513</td>
+  <td>11,226</td>
+  <td>283</td>
+  <td class="good">97.5%</td>
+  <td>$0.0022</td>
+</tr><tr class="step-row">
+  <td>21</td>
+  <td>34</td>
+  <td class="bad">8</td>
+  <td>11,902</td>
+  <td>11,509</td>
+  <td>390</td>
+  <td class="good">96.7%</td>
+  <td>$0.0024</td>
+</tr><tr class="step-row">
+  <td>22</td>
+  <td>30</td>
+  <td class="bad">14</td>
+  <td>11,097</td>
+  <td>0</td>
+  <td>11,092</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0146</td>
+</tr><tr class="step-row">
+  <td>23</td>
+  <td>28</td>
+  <td class="bad">18</td>
+  <td>10,510</td>
+  <td>0</td>
+  <td>10,505</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0140</td>
+</tr><tr class="step-row">
+  <td>24</td>
+  <td>30</td>
+  <td class="bad">18</td>
+  <td>11,342</td>
+  <td>10,505</td>
+  <td>833</td>
+  <td class="good">92.6%</td>
+  <td>$0.0077</td>
+</tr><tr class="step-row">
+  <td>25</td>
+  <td>26</td>
+  <td class="bad">24</td>
+  <td>11,303</td>
+  <td>0</td>
+  <td>11,298</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0149</td>
+</tr><tr class="step-row">
+  <td>26</td>
+  <td>28</td>
+  <td class="bad">24</td>
+  <td>11,894</td>
+  <td>11,298</td>
+  <td>592</td>
+  <td class="good">95.0%</td>
+  <td>$0.0026</td>
+</tr><tr class="step-row">
+  <td>27</td>
+  <td>28</td>
+  <td class="bad">26</td>
+  <td>11,509</td>
+  <td>0</td>
+  <td>11,504</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0151</td>
+</tr><tr class="step-row">
+  <td>28</td>
+  <td>28</td>
+  <td class="bad">28</td>
+  <td>11,643</td>
+  <td>0</td>
+  <td>11,638</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0211</td>
+</tr><tr class="step-row">
+  <td>29</td>
+  <td>22</td>
+  <td class="bad">36</td>
+  <td>11,604</td>
+  <td>0</td>
+  <td>11,599</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0218</td>
+</tr><tr class="step-row">
+  <td>30</td>
+  <td>20</td>
+  <td class="bad">40</td>
+  <td>12,428</td>
+  <td>0</td>
+  <td>12,423</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0163</td>
+</tr><tr class="step-row">
+  <td>31</td>
+  <td>20</td>
+  <td class="bad">42</td>
+  <td>11,590</td>
+  <td>0</td>
+  <td>11,585</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0164</td>
+</tr><tr class="step-row">
+  <td>32</td>
+  <td>22</td>
+  <td class="bad">42</td>
+  <td>12,231</td>
+  <td>11,585</td>
+  <td>642</td>
+  <td class="good">94.7%</td>
+  <td>$0.0027</td>
+</tr><tr class="step-row">
+  <td>33</td>
+  <td>12</td>
+  <td class="bad">54</td>
+  <td>11,785</td>
+  <td>0</td>
+  <td>11,780</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0155</td>
+</tr><tr class="step-row">
+  <td>34</td>
+  <td>12</td>
+  <td class="bad">56</td>
+  <td>11,287</td>
+  <td>0</td>
+  <td>11,282</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0171</td>
+</tr><tr class="step-row">
+  <td>35</td>
+  <td>14</td>
+  <td class="bad">56</td>
+  <td>12,090</td>
+  <td>11,282</td>
+  <td>804</td>
+  <td class="good">93.3%</td>
+  <td>$0.0031</td>
+</tr><tr class="step-row">
+  <td>36</td>
+  <td>16</td>
+  <td class="bad">56</td>
+  <td>12,606</td>
+  <td>12,086</td>
+  <td>517</td>
+  <td class="good">95.9%</td>
+  <td>$0.0027</td>
+</tr><tr class="step-row">
+  <td>37</td>
+  <td>16</td>
+  <td class="bad">58</td>
+  <td>11,591</td>
+  <td>0</td>
+  <td>11,586</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0153</td>
+</tr><tr class="step-row">
+  <td>38</td>
+  <td>18</td>
+  <td class="bad">58</td>
+  <td>11,940</td>
+  <td>11,586</td>
+  <td>350</td>
+  <td class="good">97.0%</td>
+  <td>$0.0024</td>
+</tr><tr class="step-row">
+  <td>39</td>
+  <td>18</td>
+  <td class="bad">60</td>
+  <td>11,577</td>
+  <td>0</td>
+  <td>11,572</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0153</td>
+</tr><tr class="step-row">
+  <td>40</td>
+  <td>18</td>
+  <td class="bad">62</td>
+  <td>11,580</td>
+  <td>0</td>
+  <td>11,575</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0152</td>
+</tr><tr class="step-row">
+  <td>41</td>
+  <td>20</td>
+  <td class="bad">62</td>
+  <td>11,820</td>
+  <td>11,575</td>
+  <td>241</td>
+  <td class="good">97.9%</td>
+  <td>$0.0023</td>
+</tr><tr class="step-row">
+  <td>42</td>
+  <td>20</td>
+  <td class="bad">64</td>
+  <td>11,335</td>
+  <td>0</td>
+  <td>11,330</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0148</td>
+</tr><tr class="step-row">
+  <td>43</td>
+  <td>22</td>
+  <td class="bad">64</td>
+  <td>11,777</td>
+  <td>11,330</td>
+  <td>443</td>
+  <td class="good">96.2%</td>
+  <td>$0.0024</td>
+</tr></table></div>
+    <h3 class="toggle" id="btn-astropy_astropy_14995_none" onclick="toggle('astropy_astropy_14995_none')" style="font-size:12px; color:#8b949e;">
+      Step trace: none/999999
+    </h3>
+    <div class="collapsible" id="astropy_astropy_14995_none">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>2,500</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0030</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>4</td>
+  <td class="">0</td>
+  <td>2,632</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0029</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>6</td>
+  <td class="">0</td>
+  <td>3,915</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0044</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>4,137</td>
+  <td>0</td>
+  <td>4,132</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0057</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>10</td>
+  <td class="">0</td>
+  <td>4,850</td>
+  <td>4,132</td>
+  <td>714</td>
+  <td class="good">85.2%</td>
+  <td>$0.0016</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>12</td>
+  <td class="">0</td>
+  <td>5,174</td>
+  <td>4,132</td>
+  <td>1,038</td>
+  <td class="good">79.9%</td>
+  <td>$0.0024</td>
+</tr><tr class="step-row">
+  <td>7</td>
+  <td>14</td>
+  <td class="">0</td>
+  <td>8,041</td>
+  <td>4,846</td>
+  <td>3,192</td>
+  <td class="good">60.3%</td>
+  <td>$0.0051</td>
+</tr><tr class="step-row">
+  <td>8</td>
+  <td>16</td>
+  <td class="">0</td>
+  <td>8,320</td>
+  <td>8,038</td>
+  <td>280</td>
+  <td class="good">96.6%</td>
+  <td>$0.0015</td>
+</tr><tr class="step-row">
+  <td>9</td>
+  <td>18</td>
+  <td class="">0</td>
+  <td>8,814</td>
+  <td>8,038</td>
+  <td>774</td>
+  <td class="good">91.2%</td>
+  <td>$0.0059</td>
+</tr><tr class="step-row">
+  <td>10</td>
+  <td>20</td>
+  <td class="">0</td>
+  <td>9,721</td>
+  <td>8,812</td>
+  <td>908</td>
+  <td class="good">90.6%</td>
+  <td>$0.0027</td>
+</tr><tr class="step-row">
+  <td>11</td>
+  <td>22</td>
+  <td class="">0</td>
+  <td>11,050</td>
+  <td>9,720</td>
+  <td>1,330</td>
+  <td class="good">88.0%</td>
+  <td>$0.0034</td>
+</tr><tr class="step-row">
+  <td>12</td>
+  <td>24</td>
+  <td class="">0</td>
+  <td>11,478</td>
+  <td>11,050</td>
+  <td>428</td>
+  <td class="good">96.3%</td>
+  <td>$0.0023</td>
+</tr><tr class="step-row">
+  <td>13</td>
+  <td>26</td>
+  <td class="">0</td>
+  <td>16,076</td>
+  <td>11,478</td>
+  <td>4,598</td>
+  <td class="good">71.4%</td>
+  <td>$0.0076</td>
+</tr><tr class="step-row">
+  <td>14</td>
+  <td>28</td>
+  <td class="">0</td>
+  <td>17,394</td>
+  <td>16,076</td>
+  <td>1,318</td>
+  <td class="good">92.4%</td>
+  <td>$0.0039</td>
+</tr><tr class="step-row">
+  <td>15</td>
+  <td>30</td>
+  <td class="">0</td>
+  <td>17,733</td>
+  <td>17,394</td>
+  <td>339</td>
+  <td class="good">98.1%</td>
+  <td>$0.0048</td>
+</tr><tr class="step-row">
+  <td>16</td>
+  <td>32</td>
+  <td class="">0</td>
+  <td>18,687</td>
+  <td>17,733</td>
+  <td>954</td>
+  <td class="good">94.9%</td>
+  <td>$0.0067</td>
+</tr><tr class="step-row">
+  <td>17</td>
+  <td>34</td>
+  <td class="">0</td>
+  <td>19,915</td>
+  <td>18,687</td>
+  <td>1,228</td>
+  <td class="good">93.8%</td>
+  <td>$0.0042</td>
+</tr><tr class="step-row">
+  <td>18</td>
+  <td>36</td>
+  <td class="">0</td>
+  <td>20,550</td>
+  <td>19,915</td>
+  <td>635</td>
+  <td class="good">96.9%</td>
+  <td>$0.0083</td>
+</tr><tr class="step-row">
+  <td>19</td>
+  <td>38</td>
+  <td class="">0</td>
+  <td>21,688</td>
+  <td>20,550</td>
+  <td>1,138</td>
+  <td class="good">94.8%</td>
+  <td>$0.0042</td>
+</tr><tr class="step-row">
+  <td>20</td>
+  <td>40</td>
+  <td class="">0</td>
+  <td>22,334</td>
+  <td>21,688</td>
+  <td>646</td>
+  <td class="good">97.1%</td>
+  <td>$0.0037</td>
+</tr><tr class="step-row">
+  <td>21</td>
+  <td>42</td>
+  <td class="">0</td>
+  <td>22,700</td>
+  <td>21,688</td>
+  <td>1,012</td>
+  <td class="good">95.5%</td>
+  <td>$0.0111</td>
+</tr><tr class="step-row">
+  <td>22</td>
+  <td>44</td>
+  <td class="">0</td>
+  <td>24,910</td>
+  <td>22,700</td>
+  <td>2,210</td>
+  <td class="good">91.1%</td>
+  <td>$0.0058</td>
+</tr><tr class="step-row">
+  <td>23</td>
+  <td>46</td>
+  <td class="">0</td>
+  <td>25,165</td>
+  <td>24,910</td>
+  <td>255</td>
+  <td class="good">99.0%</td>
+  <td>$0.0036</td>
+</tr><tr class="step-row">
+  <td>24</td>
+  <td>48</td>
+  <td class="">0</td>
+  <td>25,399</td>
+  <td>25,165</td>
+  <td>234</td>
+  <td class="good">99.1%</td>
+  <td>$0.0035</td>
+</tr><tr class="step-row">
+  <td>25</td>
+  <td>50</td>
+  <td class="">0</td>
+  <td>26,058</td>
+  <td>25,165</td>
+  <td>893</td>
+  <td class="good">96.6%</td>
+  <td>$0.0045</td>
+</tr><tr class="step-row">
+  <td>26</td>
+  <td>52</td>
+  <td class="">0</td>
+  <td>26,658</td>
+  <td>26,058</td>
+  <td>600</td>
+  <td class="good">97.7%</td>
+  <td>$0.0041</td>
+</tr><tr class="step-row">
+  <td>27</td>
+  <td>54</td>
+  <td class="">0</td>
+  <td>27,303</td>
+  <td>26,058</td>
+  <td>1,245</td>
+  <td class="good">95.4%</td>
+  <td>$0.0053</td>
+</tr><tr class="step-row">
+  <td>28</td>
+  <td>56</td>
+  <td class="">0</td>
+  <td>27,717</td>
+  <td>27,303</td>
+  <td>414</td>
+  <td class="good">98.5%</td>
+  <td>$0.0041</td>
+</tr><tr class="step-row">
+  <td>29</td>
+  <td>58</td>
+  <td class="">0</td>
+  <td>28,936</td>
+  <td>27,717</td>
+  <td>1,219</td>
+  <td class="good">95.8%</td>
+  <td>$0.0052</td>
+</tr><tr class="step-row">
+  <td>30</td>
+  <td>60</td>
+  <td class="">0</td>
+  <td>29,648</td>
+  <td>28,936</td>
+  <td>712</td>
+  <td class="good">97.6%</td>
+  <td>$0.0047</td>
+</tr><tr class="step-row">
+  <td>31</td>
+  <td>62</td>
+  <td class="">0</td>
+  <td>30,335</td>
+  <td>29,648</td>
+  <td>687</td>
+  <td class="good">97.7%</td>
+  <td>$0.0047</td>
+</tr><tr class="step-row">
+  <td>32</td>
+  <td>64</td>
+  <td class="">0</td>
+  <td>31,406</td>
+  <td>30,335</td>
+  <td>1,071</td>
+  <td class="good">96.6%</td>
+  <td>$0.0053</td>
+</tr><tr class="step-row">
+  <td>33</td>
+  <td>66</td>
+  <td class="">0</td>
+  <td>32,143</td>
+  <td>31,406</td>
+  <td>737</td>
+  <td class="good">97.7%</td>
+  <td>$0.0049</td>
+</tr><tr class="step-row">
+  <td>34</td>
+  <td>68</td>
+  <td class="">0</td>
+  <td>32,814</td>
+  <td>32,143</td>
+  <td>671</td>
+  <td class="good">98.0%</td>
+  <td>$0.0048</td>
+</tr><tr class="step-row">
+  <td>35</td>
+  <td>70</td>
+  <td class="">0</td>
+  <td>33,242</td>
+  <td>32,143</td>
+  <td>1,099</td>
+  <td class="good">96.7%</td>
+  <td>$0.0050</td>
+</tr><tr class="step-row">
+  <td>36</td>
+  <td>72</td>
+  <td class="">0</td>
+  <td>33,605</td>
+  <td>33,242</td>
+  <td>363</td>
+  <td class="good">98.9%</td>
+  <td>$0.0045</td>
+</tr><tr class="step-row">
+  <td>37</td>
+  <td>74</td>
+  <td class="">0</td>
+  <td>33,974</td>
+  <td>33,242</td>
+  <td>732</td>
+  <td class="good">97.8%</td>
+  <td>$0.0050</td>
+</tr><tr class="step-row">
+  <td>38</td>
+  <td>76</td>
+  <td class="">0</td>
+  <td>34,794</td>
+  <td>33,974</td>
+  <td>820</td>
+  <td class="good">97.6%</td>
+  <td>$0.0049</td>
+</tr><tr class="step-row">
+  <td>39</td>
+  <td>78</td>
+  <td class="">0</td>
+  <td>35,152</td>
+  <td>33,974</td>
+  <td>1,178</td>
+  <td class="good">96.6%</td>
+  <td>$0.0054</td>
+</tr></table></div>
+    <h3 class="toggle" id="btn-astropy_astropy_14995_summarize" onclick="toggle('astropy_astropy_14995_summarize')" style="font-size:12px; color:#8b949e;">
+      Step trace: summarize/8000
+    </h3>
+    <div class="collapsible" id="astropy_astropy_14995_summarize">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>2,500</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0030</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>4</td>
+  <td class="">0</td>
+  <td>2,642</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0030</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>6</td>
+  <td class="">0</td>
+  <td>3,927</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0044</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>4,149</td>
+  <td>0</td>
+  <td>4,144</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0056</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>10</td>
+  <td class="">0</td>
+  <td>4,306</td>
+  <td>4,144</td>
+  <td>158</td>
+  <td class="good">96.2%</td>
+  <td>$0.0011</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>12</td>
+  <td class="">0</td>
+  <td>4,511</td>
+  <td>4,302</td>
+  <td>206</td>
+  <td class="good">95.4%</td>
+  <td>$0.0011</td>
+</tr><tr class="step-row">
+  <td>7</td>
+  <td>14</td>
+  <td class="">0</td>
+  <td>4,641</td>
+  <td>4,508</td>
+  <td>131</td>
+  <td class="good">97.1%</td>
+  <td>$0.0010</td>
+</tr><tr class="step-row">
+  <td>8</td>
+  <td>16</td>
+  <td class="">0</td>
+  <td>5,830</td>
+  <td>4,639</td>
+  <td>1,190</td>
+  <td class="good">79.6%</td>
+  <td>$0.0024</td>
+</tr><tr class="step-row">
+  <td>9</td>
+  <td>18</td>
+  <td class="">0</td>
+  <td>6,184</td>
+  <td>5,829</td>
+  <td>355</td>
+  <td class="good">94.3%</td>
+  <td>$0.0015</td>
+</tr><tr class="step-row">
+  <td>10</td>
+  <td>20</td>
+  <td class="">0</td>
+  <td>6,902</td>
+  <td>5,829</td>
+  <td>1,073</td>
+  <td class="good">84.5%</td>
+  <td>$0.0052</td>
+</tr><tr class="step-row">
+  <td>11</td>
+  <td>22</td>
+  <td class="">0</td>
+  <td>7,787</td>
+  <td>6,902</td>
+  <td>885</td>
+  <td class="good">88.6%</td>
+  <td>$0.0022</td>
+</tr><tr class="step-row">
+  <td>12</td>
+  <td>24</td>
+  <td class="">0</td>
+  <td>8,136</td>
+  <td>7,787</td>
+  <td>349</td>
+  <td class="good">95.7%</td>
+  <td>$0.0018</td>
+</tr><tr class="step-row">
+  <td>13</td>
+  <td>26</td>
+  <td class="">0</td>
+  <td>8,696</td>
+  <td>8,136</td>
+  <td>560</td>
+  <td class="good">93.6%</td>
+  <td>$0.0022</td>
+</tr><tr class="step-row">
+  <td>14</td>
+  <td>28</td>
+  <td class="">0</td>
+  <td>9,492</td>
+  <td>8,696</td>
+  <td>796</td>
+  <td class="good">91.6%</td>
+  <td>$0.0026</td>
+</tr><tr class="step-row">
+  <td>15</td>
+  <td>30</td>
+  <td class="">0</td>
+  <td>10,036</td>
+  <td>9,492</td>
+  <td>544</td>
+  <td class="good">94.6%</td>
+  <td>$0.0023</td>
+</tr><tr class="step-row">
+  <td>16</td>
+  <td>32</td>
+  <td class="">0</td>
+  <td>11,299</td>
+  <td>10,036</td>
+  <td>1,263</td>
+  <td class="good">88.8%</td>
+  <td>$0.0033</td>
+</tr><tr class="step-row">
+  <td>17</td>
+  <td>9</td>
+  <td class="bad">25</td>
+  <td>5,323</td>
+  <td>0</td>
+  <td>5,318</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0074</td>
+</tr><tr class="step-row">
+  <td>18</td>
+  <td>9</td>
+  <td class="bad">27</td>
+  <td>5,565</td>
+  <td>0</td>
+  <td>5,560</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0101</td>
+</tr><tr class="step-row">
+  <td>19</td>
+  <td>9</td>
+  <td class="bad">29</td>
+  <td>5,253</td>
+  <td>0</td>
+  <td>5,248</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0072</td>
+</tr><tr class="step-row">
+  <td>20</td>
+  <td>9</td>
+  <td class="bad">31</td>
+  <td>5,026</td>
+  <td>0</td>
+  <td>5,021</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0071</td>
+</tr><tr class="step-row">
+  <td>21</td>
+  <td>9</td>
+  <td class="bad">33</td>
+  <td>4,697</td>
+  <td>0</td>
+  <td>4,692</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0065</td>
+</tr><tr class="step-row">
+  <td>22</td>
+  <td>9</td>
+  <td class="bad">35</td>
+  <td>5,617</td>
+  <td>0</td>
+  <td>5,612</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0099</td>
+</tr><tr class="step-row">
+  <td>23</td>
+  <td>9</td>
+  <td class="bad">37</td>
+  <td>5,822</td>
+  <td>0</td>
+  <td>5,817</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0080</td>
+</tr><tr class="step-row">
+  <td>24</td>
+  <td>9</td>
+  <td class="bad">39</td>
+  <td>5,662</td>
+  <td>0</td>
+  <td>5,657</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0077</td>
+</tr><tr class="step-row">
+  <td>25</td>
+  <td>9</td>
+  <td class="bad">41</td>
+  <td>4,886</td>
+  <td>0</td>
+  <td>4,881</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0106</td>
+</tr><tr class="step-row">
+  <td>26</td>
+  <td>9</td>
+  <td class="bad">43</td>
+  <td>5,491</td>
+  <td>0</td>
+  <td>5,486</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0079</td>
+</tr><tr class="step-row">
+  <td>27</td>
+  <td>9</td>
+  <td class="bad">45</td>
+  <td>6,115</td>
+  <td>0</td>
+  <td>6,110</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0085</td>
+</tr><tr class="step-row">
+  <td>28</td>
+  <td>9</td>
+  <td class="bad">47</td>
+  <td>5,451</td>
+  <td>0</td>
+  <td>5,446</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0077</td>
+</tr><tr class="step-row">
+  <td>29</td>
+  <td>9</td>
+  <td class="bad">49</td>
+  <td>4,416</td>
+  <td>0</td>
+  <td>4,411</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0064</td>
+</tr><tr class="step-row">
+  <td>30</td>
+  <td>9</td>
+  <td class="bad">51</td>
+  <td>4,433</td>
+  <td>0</td>
+  <td>4,428</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0072</td>
+</tr></table></div></div></div>
+<div class="instance-section">
+  <h3 class="toggle" id="btn-astropy_astropy_6938" onclick="toggle('astropy_astropy_6938')">astropy__astropy-6938</h3>
+  <div class="collapsible" id="astropy_astropy_6938">
+    <table>
+    <tr><th>Policy</th><th>Status</th><th>Steps</th><th>Cost</th><th>Prompt Tok</th><th>Cache Read</th><th>Hit Rate</th><th>Evicted</th><th>Cache Hit Sparkline</th></tr>
+<tr>
+  <td><strong>adaptive/8000</strong></td>
+  <td><span class="pill pill-yellow">LimitsExceeded</span></td>
+  <td>30</td>
+  <td class="cost">$0.145</td>
+  <td>226,472</td>
+  <td>140,804</td>
+  <td class="good">62.2%</td>
+  <td>200</td>
+  <td class="sparkline">        ▇▇▇▇▇▇▇▇ ▆ ▆ ▆ ▆ ▇ ▇ ▇</td>
+</tr><tr>
+  <td><strong>fifo/8000</strong></td>
+  <td><span class="pill pill-green">PATCH</span></td>
+  <td>55</td>
+  <td class="cost">$0.379</td>
+  <td>566,679</td>
+  <td>317,408</td>
+  <td class="good">56.0%</td>
+  <td>528</td>
+  <td class="sparkline">▇  ▇▇▇▇▇▇ ▇▇  ▇   ▇  ▇▇      ▇</td>
+</tr><tr>
+  <td><strong>none/999999</strong></td>
+  <td><span class="pill pill-green">PATCH</span></td>
+  <td>43</td>
+  <td class="cost">$0.155</td>
+  <td>643,730</td>
+  <td>599,209</td>
+  <td class="good">93.1%</td>
+  <td>0</td>
+  <td class="sparkline">▇▇▇▇▇▇▆▇▇▇▇▇▆▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇</td>
+</tr><tr>
+  <td><strong>summarize/8000</strong></td>
+  <td><span class="pill pill-yellow">LimitsExceeded</span></td>
+  <td>30</td>
+  <td class="cost">$0.103</td>
+  <td>159,919</td>
+  <td>91,667</td>
+  <td class="good">57.3%</td>
+  <td>420</td>
+  <td class="sparkline">       ▇▇▇▇▇▇▇▇▇▇▇▇▇          </td>
+</tr></table>
+    <h3 class="toggle" id="btn-astropy_astropy_6938_adaptive" onclick="toggle('astropy_astropy_6938_adaptive')" style="font-size:12px; color:#8b949e;">
+      Step trace: adaptive/8000
+    </h3>
+    <div class="collapsible" id="astropy_astropy_6938_adaptive">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>1,807</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0023</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>4</td>
+  <td class="">0</td>
+  <td>1,936</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0023</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>6</td>
+  <td class="">0</td>
+  <td>3,277</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0037</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>3,400</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0040</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>10</td>
+  <td class="">0</td>
+  <td>3,589</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0041</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>12</td>
+  <td class="">0</td>
+  <td>4,051</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0049</td>
+</tr><tr class="step-row">
+  <td>7</td>
+  <td>14</td>
+  <td class="">0</td>
+  <td>4,990</td>
+  <td>0</td>
+  <td>4,985</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0067</td>
+</tr><tr class="step-row">
+  <td>8</td>
+  <td>16</td>
+  <td class="">0</td>
+  <td>5,462</td>
+  <td>0</td>
+  <td>5,457</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0073</td>
+</tr><tr class="step-row">
+  <td>9</td>
+  <td>18</td>
+  <td class="">0</td>
+  <td>5,675</td>
+  <td>4,985</td>
+  <td>686</td>
+  <td class="good">87.8%</td>
+  <td>$0.0019</td>
+</tr><tr class="step-row">
+  <td>10</td>
+  <td>20</td>
+  <td class="">0</td>
+  <td>5,819</td>
+  <td>5,457</td>
+  <td>358</td>
+  <td class="good">93.8%</td>
+  <td>$0.0015</td>
+</tr><tr class="step-row">
+  <td>11</td>
+  <td>22</td>
+  <td class="">0</td>
+  <td>6,040</td>
+  <td>5,457</td>
+  <td>579</td>
+  <td class="good">90.3%</td>
+  <td>$0.0020</td>
+</tr><tr class="step-row">
+  <td>12</td>
+  <td>24</td>
+  <td class="">0</td>
+  <td>6,465</td>
+  <td>6,036</td>
+  <td>426</td>
+  <td class="good">93.4%</td>
+  <td>$0.0020</td>
+</tr><tr class="step-row">
+  <td>13</td>
+  <td>26</td>
+  <td class="">0</td>
+  <td>6,781</td>
+  <td>6,462</td>
+  <td>317</td>
+  <td class="good">95.3%</td>
+  <td>$0.0017</td>
+</tr><tr class="step-row">
+  <td>14</td>
+  <td>28</td>
+  <td class="">0</td>
+  <td>7,193</td>
+  <td>6,779</td>
+  <td>413</td>
+  <td class="good">94.2%</td>
+  <td>$0.0035</td>
+</tr><tr class="step-row">
+  <td>15</td>
+  <td>30</td>
+  <td class="">0</td>
+  <td>7,778</td>
+  <td>7,192</td>
+  <td>586</td>
+  <td class="good">92.5%</td>
+  <td>$0.0033</td>
+</tr><tr class="step-row">
+  <td>16</td>
+  <td>32</td>
+  <td class="">0</td>
+  <td>8,277</td>
+  <td>7,778</td>
+  <td>499</td>
+  <td class="good">94.0%</td>
+  <td>$0.0027</td>
+</tr><tr class="step-row">
+  <td>17</td>
+  <td>30</td>
+  <td class="bad">4</td>
+  <td>7,877</td>
+  <td>0</td>
+  <td>7,872</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0128</td>
+</tr><tr class="step-row">
+  <td>18</td>
+  <td>36</td>
+  <td class="">0</td>
+  <td>10,053</td>
+  <td>8,277</td>
+  <td>1,776</td>
+  <td class="good">82.3%</td>
+  <td>$0.0045</td>
+</tr><tr class="step-row">
+  <td>19</td>
+  <td>26</td>
+  <td class="bad">12</td>
+  <td>7,360</td>
+  <td>0</td>
+  <td>7,355</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0097</td>
+</tr><tr class="step-row">
+  <td>20</td>
+  <td>40</td>
+  <td class="">0</td>
+  <td>11,490</td>
+  <td>10,053</td>
+  <td>1,437</td>
+  <td class="good">87.5%</td>
+  <td>$0.0033</td>
+</tr><tr class="step-row">
+  <td>21</td>
+  <td>20</td>
+  <td class="bad">22</td>
+  <td>6,168</td>
+  <td>0</td>
+  <td>6,163</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0082</td>
+</tr><tr class="step-row">
+  <td>22</td>
+  <td>44</td>
+  <td class="">0</td>
+  <td>12,481</td>
+  <td>10,053</td>
+  <td>2,428</td>
+  <td class="good">80.5%</td>
+  <td>$0.0046</td>
+</tr><tr class="step-row">
+  <td>23</td>
+  <td>20</td>
+  <td class="bad">26</td>
+  <td>6,802</td>
+  <td>0</td>
+  <td>6,797</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0093</td>
+</tr><tr class="step-row">
+  <td>24</td>
+  <td>48</td>
+  <td class="">0</td>
+  <td>15,643</td>
+  <td>12,481</td>
+  <td>3,162</td>
+  <td class="good">79.8%</td>
+  <td>$0.0060</td>
+</tr><tr class="step-row">
+  <td>25</td>
+  <td>8</td>
+  <td class="bad">42</td>
+  <td>5,844</td>
+  <td>0</td>
+  <td>5,839</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0079</td>
+</tr><tr class="step-row">
+  <td>26</td>
+  <td>52</td>
+  <td class="">0</td>
+  <td>16,845</td>
+  <td>15,643</td>
+  <td>1,202</td>
+  <td class="good">92.9%</td>
+  <td>$0.0038</td>
+</tr><tr class="step-row">
+  <td>27</td>
+  <td>8</td>
+  <td class="bad">46</td>
+  <td>3,231</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0037</td>
+</tr><tr class="step-row">
+  <td>28</td>
+  <td>56</td>
+  <td class="">0</td>
+  <td>17,306</td>
+  <td>16,845</td>
+  <td>461</td>
+  <td class="good">97.3%</td>
+  <td>$0.0046</td>
+</tr><tr class="step-row">
+  <td>29</td>
+  <td>10</td>
+  <td class="bad">48</td>
+  <td>3,785</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0046</td>
+</tr><tr class="step-row">
+  <td>30</td>
+  <td>60</td>
+  <td class="">0</td>
+  <td>19,047</td>
+  <td>17,306</td>
+  <td>1,741</td>
+  <td class="good">90.9%</td>
+  <td>$0.0076</td>
+</tr></table></div>
+    <h3 class="toggle" id="btn-astropy_astropy_6938_fifo" onclick="toggle('astropy_astropy_6938_fifo')" style="font-size:12px; color:#8b949e;">
+      Step trace: fifo/8000
+    </h3>
+    <div class="collapsible" id="astropy_astropy_6938_fifo">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>1,807</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0023</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>4</td>
+  <td class="">0</td>
+  <td>1,936</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0023</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>6</td>
+  <td class="">0</td>
+  <td>3,279</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0037</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>3,402</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0040</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>10</td>
+  <td class="">0</td>
+  <td>3,591</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0041</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>12</td>
+  <td class="">0</td>
+  <td>4,053</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0049</td>
+</tr><tr class="step-row">
+  <td>7</td>
+  <td>14</td>
+  <td class="">0</td>
+  <td>4,992</td>
+  <td>0</td>
+  <td>4,987</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0067</td>
+</tr><tr class="step-row">
+  <td>8</td>
+  <td>16</td>
+  <td class="">0</td>
+  <td>5,464</td>
+  <td>4,987</td>
+  <td>473</td>
+  <td class="good">91.3%</td>
+  <td>$0.0016</td>
+</tr><tr class="step-row">
+  <td>9</td>
+  <td>18</td>
+  <td class="">0</td>
+  <td>5,677</td>
+  <td>5,460</td>
+  <td>214</td>
+  <td class="good">96.2%</td>
+  <td>$0.0014</td>
+</tr><tr class="step-row">
+  <td>10</td>
+  <td>20</td>
+  <td class="">0</td>
+  <td>5,821</td>
+  <td>5,674</td>
+  <td>145</td>
+  <td class="good">97.5%</td>
+  <td>$0.0012</td>
+</tr><tr class="step-row">
+  <td>11</td>
+  <td>22</td>
+  <td class="">0</td>
+  <td>6,045</td>
+  <td>5,819</td>
+  <td>225</td>
+  <td class="good">96.3%</td>
+  <td>$0.0019</td>
+</tr><tr class="step-row">
+  <td>12</td>
+  <td>24</td>
+  <td class="">0</td>
+  <td>6,382</td>
+  <td>6,044</td>
+  <td>338</td>
+  <td class="good">94.7%</td>
+  <td>$0.0015</td>
+</tr><tr class="step-row">
+  <td>13</td>
+  <td>26</td>
+  <td class="">0</td>
+  <td>6,755</td>
+  <td>6,044</td>
+  <td>711</td>
+  <td class="good">89.5%</td>
+  <td>$0.0024</td>
+</tr><tr class="step-row">
+  <td>14</td>
+  <td>28</td>
+  <td class="">0</td>
+  <td>7,017</td>
+  <td>6,382</td>
+  <td>635</td>
+  <td class="good">91.0%</td>
+  <td>$0.0019</td>
+</tr><tr class="step-row">
+  <td>15</td>
+  <td>30</td>
+  <td class="">0</td>
+  <td>7,370</td>
+  <td>6,755</td>
+  <td>615</td>
+  <td class="good">91.7%</td>
+  <td>$0.0020</td>
+</tr><tr class="step-row">
+  <td>16</td>
+  <td>32</td>
+  <td class="">0</td>
+  <td>7,847</td>
+  <td>7,370</td>
+  <td>477</td>
+  <td class="good">93.9%</td>
+  <td>$0.0018</td>
+</tr><tr class="step-row">
+  <td>17</td>
+  <td>34</td>
+  <td class="">0</td>
+  <td>8,312</td>
+  <td>7,370</td>
+  <td>942</td>
+  <td class="good">88.7%</td>
+  <td>$0.0025</td>
+</tr><tr class="step-row">
+  <td>18</td>
+  <td>36</td>
+  <td class="">0</td>
+  <td>8,715</td>
+  <td>7,847</td>
+  <td>868</td>
+  <td class="good">90.0%</td>
+  <td>$0.0025</td>
+</tr><tr class="step-row">
+  <td>19</td>
+  <td>38</td>
+  <td class="">0</td>
+  <td>9,283</td>
+  <td>8,715</td>
+  <td>568</td>
+  <td class="good">93.9%</td>
+  <td>$0.0031</td>
+</tr><tr class="step-row">
+  <td>20</td>
+  <td>40</td>
+  <td class="">0</td>
+  <td>9,831</td>
+  <td>9,283</td>
+  <td>548</td>
+  <td class="good">94.4%</td>
+  <td>$0.0029</td>
+</tr><tr class="step-row">
+  <td>21</td>
+  <td>42</td>
+  <td class="">0</td>
+  <td>10,217</td>
+  <td>9,831</td>
+  <td>386</td>
+  <td class="good">96.2%</td>
+  <td>$0.0028</td>
+</tr><tr class="step-row">
+  <td>22</td>
+  <td>44</td>
+  <td class="">0</td>
+  <td>10,646</td>
+  <td>10,217</td>
+  <td>429</td>
+  <td class="good">96.0%</td>
+  <td>$0.0025</td>
+</tr><tr class="step-row">
+  <td>23</td>
+  <td>46</td>
+  <td class="">0</td>
+  <td>10,965</td>
+  <td>10,646</td>
+  <td>319</td>
+  <td class="good">97.1%</td>
+  <td>$0.0033</td>
+</tr><tr class="step-row">
+  <td>24</td>
+  <td>48</td>
+  <td class="">0</td>
+  <td>11,415</td>
+  <td>10,965</td>
+  <td>450</td>
+  <td class="good">96.1%</td>
+  <td>$0.0023</td>
+</tr><tr class="step-row">
+  <td>25</td>
+  <td>50</td>
+  <td class="">0</td>
+  <td>11,583</td>
+  <td>11,415</td>
+  <td>168</td>
+  <td class="good">98.5%</td>
+  <td>$0.0019</td>
+</tr><tr class="step-row">
+  <td>26</td>
+  <td>52</td>
+  <td class="">0</td>
+  <td>12,257</td>
+  <td>11,415</td>
+  <td>842</td>
+  <td class="good">93.1%</td>
+  <td>$0.0027</td>
+</tr><tr class="step-row">
+  <td>27</td>
+  <td>50</td>
+  <td class="bad">4</td>
+  <td>11,381</td>
+  <td>0</td>
+  <td>11,376</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0148</td>
+</tr><tr class="step-row">
+  <td>28</td>
+  <td>52</td>
+  <td class="bad">4</td>
+  <td>11,526</td>
+  <td>0</td>
+  <td>11,521</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0149</td>
+</tr><tr class="step-row">
+  <td>29</td>
+  <td>54</td>
+  <td class="bad">4</td>
+  <td>11,661</td>
+  <td>11,521</td>
+  <td>136</td>
+  <td class="good">98.8%</td>
+  <td>$0.0018</td>
+</tr><tr class="step-row">
+  <td>30</td>
+  <td>56</td>
+  <td class="bad">4</td>
+  <td>11,990</td>
+  <td>11,657</td>
+  <td>330</td>
+  <td class="good">97.2%</td>
+  <td>$0.0021</td>
+</tr><tr class="step-row">
+  <td>31</td>
+  <td>58</td>
+  <td class="bad">4</td>
+  <td>12,260</td>
+  <td>11,987</td>
+  <td>271</td>
+  <td class="good">97.8%</td>
+  <td>$0.0021</td>
+</tr><tr class="step-row">
+  <td>32</td>
+  <td>60</td>
+  <td class="bad">4</td>
+  <td>12,413</td>
+  <td>11,987</td>
+  <td>424</td>
+  <td class="good">96.6%</td>
+  <td>$0.0022</td>
+</tr><tr class="step-row">
+  <td>33</td>
+  <td>62</td>
+  <td class="bad">4</td>
+  <td>12,779</td>
+  <td>11,987</td>
+  <td>790</td>
+  <td class="good">93.8%</td>
+  <td>$0.0027</td>
+</tr><tr class="step-row">
+  <td>34</td>
+  <td>64</td>
+  <td class="bad">4</td>
+  <td>13,080</td>
+  <td>12,777</td>
+  <td>302</td>
+  <td class="good">97.7%</td>
+  <td>$0.0022</td>
+</tr><tr class="step-row">
+  <td>35</td>
+  <td>60</td>
+  <td class="bad">10</td>
+  <td>12,735</td>
+  <td>0</td>
+  <td>12,730</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0165</td>
+</tr><tr class="step-row">
+  <td>36</td>
+  <td>62</td>
+  <td class="bad">10</td>
+  <td>12,876</td>
+  <td>12,730</td>
+  <td>142</td>
+  <td class="good">98.9%</td>
+  <td>$0.0037</td>
+</tr><tr class="step-row">
+  <td>37</td>
+  <td>64</td>
+  <td class="bad">10</td>
+  <td>13,373</td>
+  <td>12,872</td>
+  <td>498</td>
+  <td class="good">96.3%</td>
+  <td>$0.0023</td>
+</tr><tr class="step-row">
+  <td>38</td>
+  <td>64</td>
+  <td class="bad">12</td>
+  <td>13,224</td>
+  <td>0</td>
+  <td>13,219</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0170</td>
+</tr><tr class="step-row">
+  <td>39</td>
+  <td>66</td>
+  <td class="bad">12</td>
+  <td>13,393</td>
+  <td>0</td>
+  <td>13,388</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0172</td>
+</tr><tr class="step-row">
+  <td>40</td>
+  <td>68</td>
+  <td class="bad">12</td>
+  <td>13,538</td>
+  <td>13,219</td>
+  <td>315</td>
+  <td class="good">97.6%</td>
+  <td>$0.0024</td>
+</tr><tr class="step-row">
+  <td>41</td>
+  <td>68</td>
+  <td class="bad">14</td>
+  <td>13,655</td>
+  <td>0</td>
+  <td>13,650</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0175</td>
+</tr><tr class="step-row">
+  <td>42</td>
+  <td>68</td>
+  <td class="bad">16</td>
+  <td>13,558</td>
+  <td>0</td>
+  <td>13,553</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0179</td>
+</tr><tr class="step-row">
+  <td>43</td>
+  <td>66</td>
+  <td class="bad">20</td>
+  <td>13,511</td>
+  <td>0</td>
+  <td>13,506</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0183</td>
+</tr><tr class="step-row">
+  <td>44</td>
+  <td>68</td>
+  <td class="bad">20</td>
+  <td>13,838</td>
+  <td>13,506</td>
+  <td>328</td>
+  <td class="good">97.6%</td>
+  <td>$0.0022</td>
+</tr><tr class="step-row">
+  <td>45</td>
+  <td>68</td>
+  <td class="bad">22</td>
+  <td>13,723</td>
+  <td>0</td>
+  <td>13,718</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0178</td>
+</tr><tr class="step-row">
+  <td>46</td>
+  <td>68</td>
+  <td class="bad">24</td>
+  <td>13,592</td>
+  <td>0</td>
+  <td>13,587</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0175</td>
+</tr><tr class="step-row">
+  <td>47</td>
+  <td>70</td>
+  <td class="bad">24</td>
+  <td>13,743</td>
+  <td>13,587</td>
+  <td>152</td>
+  <td class="good">98.9%</td>
+  <td>$0.0020</td>
+</tr><tr class="step-row">
+  <td>48</td>
+  <td>72</td>
+  <td class="bad">24</td>
+  <td>14,048</td>
+  <td>13,739</td>
+  <td>306</td>
+  <td class="good">97.8%</td>
+  <td>$0.0024</td>
+</tr><tr class="step-row">
+  <td>49</td>
+  <td>66</td>
+  <td class="bad">32</td>
+  <td>13,443</td>
+  <td>0</td>
+  <td>13,438</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0191</td>
+</tr><tr class="step-row">
+  <td>50</td>
+  <td>64</td>
+  <td class="bad">36</td>
+  <td>13,577</td>
+  <td>0</td>
+  <td>13,572</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0183</td>
+</tr><tr class="step-row">
+  <td>51</td>
+  <td>66</td>
+  <td class="bad">36</td>
+  <td>13,918</td>
+  <td>0</td>
+  <td>13,913</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0183</td>
+</tr><tr class="step-row">
+  <td>52</td>
+  <td>66</td>
+  <td class="bad">38</td>
+  <td>13,792</td>
+  <td>0</td>
+  <td>13,787</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0180</td>
+</tr><tr class="step-row">
+  <td>53</td>
+  <td>66</td>
+  <td class="bad">40</td>
+  <td>13,794</td>
+  <td>0</td>
+  <td>13,789</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0178</td>
+</tr><tr class="step-row">
+  <td>54</td>
+  <td>66</td>
+  <td class="bad">42</td>
+  <td>13,605</td>
+  <td>0</td>
+  <td>13,600</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0178</td>
+</tr><tr class="step-row">
+  <td>55</td>
+  <td>68</td>
+  <td class="bad">42</td>
+  <td>13,991</td>
+  <td>13,600</td>
+  <td>387</td>
+  <td class="good">97.2%</td>
+  <td>$0.0023</td>
+</tr></table></div>
+    <h3 class="toggle" id="btn-astropy_astropy_6938_none" onclick="toggle('astropy_astropy_6938_none')" style="font-size:12px; color:#8b949e;">
+      Step trace: none/999999
+    </h3>
+    <div class="collapsible" id="astropy_astropy_6938_none">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>1,807</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0023</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>4</td>
+  <td class="">0</td>
+  <td>1,936</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0023</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>6</td>
+  <td class="">0</td>
+  <td>3,277</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0037</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>3,400</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0039</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>10</td>
+  <td class="">0</td>
+  <td>4,439</td>
+  <td>0</td>
+  <td>4,434</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0060</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>12</td>
+  <td class="">0</td>
+  <td>4,566</td>
+  <td>4,434</td>
+  <td>128</td>
+  <td class="good">97.1%</td>
+  <td>$0.0011</td>
+</tr><tr class="step-row">
+  <td>7</td>
+  <td>14</td>
+  <td class="">0</td>
+  <td>5,026</td>
+  <td>4,562</td>
+  <td>461</td>
+  <td class="good">90.8%</td>
+  <td>$0.0022</td>
+</tr><tr class="step-row">
+  <td>8</td>
+  <td>16</td>
+  <td class="">0</td>
+  <td>6,146</td>
+  <td>5,023</td>
+  <td>1,121</td>
+  <td class="good">81.7%</td>
+  <td>$0.0024</td>
+</tr><tr class="step-row">
+  <td>9</td>
+  <td>18</td>
+  <td class="">0</td>
+  <td>6,624</td>
+  <td>5,023</td>
+  <td>1,599</td>
+  <td class="good">75.8%</td>
+  <td>$0.0033</td>
+</tr><tr class="step-row">
+  <td>10</td>
+  <td>20</td>
+  <td class="">0</td>
+  <td>6,911</td>
+  <td>6,622</td>
+  <td>288</td>
+  <td class="good">95.8%</td>
+  <td>$0.0022</td>
+</tr><tr class="step-row">
+  <td>11</td>
+  <td>22</td>
+  <td class="">0</td>
+  <td>7,281</td>
+  <td>6,910</td>
+  <td>371</td>
+  <td class="good">94.9%</td>
+  <td>$0.0037</td>
+</tr><tr class="step-row">
+  <td>12</td>
+  <td>24</td>
+  <td class="">0</td>
+  <td>7,962</td>
+  <td>7,281</td>
+  <td>681</td>
+  <td class="good">91.4%</td>
+  <td>$0.0025</td>
+</tr><tr class="step-row">
+  <td>13</td>
+  <td>26</td>
+  <td class="">0</td>
+  <td>8,217</td>
+  <td>7,281</td>
+  <td>936</td>
+  <td class="good">88.6%</td>
+  <td>$0.0024</td>
+</tr><tr class="step-row">
+  <td>14</td>
+  <td>28</td>
+  <td class="">0</td>
+  <td>8,616</td>
+  <td>7,962</td>
+  <td>654</td>
+  <td class="good">92.4%</td>
+  <td>$0.0044</td>
+</tr><tr class="step-row">
+  <td>15</td>
+  <td>30</td>
+  <td class="">0</td>
+  <td>9,366</td>
+  <td>8,616</td>
+  <td>750</td>
+  <td class="good">92.0%</td>
+  <td>$0.0034</td>
+</tr><tr class="step-row">
+  <td>16</td>
+  <td>32</td>
+  <td class="">0</td>
+  <td>9,917</td>
+  <td>9,366</td>
+  <td>551</td>
+  <td class="good">94.4%</td>
+  <td>$0.0036</td>
+</tr><tr class="step-row">
+  <td>17</td>
+  <td>34</td>
+  <td class="">0</td>
+  <td>10,436</td>
+  <td>9,917</td>
+  <td>519</td>
+  <td class="good">95.0%</td>
+  <td>$0.0024</td>
+</tr><tr class="step-row">
+  <td>18</td>
+  <td>36</td>
+  <td class="">0</td>
+  <td>10,705</td>
+  <td>9,917</td>
+  <td>788</td>
+  <td class="good">92.6%</td>
+  <td>$0.0027</td>
+</tr><tr class="step-row">
+  <td>19</td>
+  <td>38</td>
+  <td class="">0</td>
+  <td>11,205</td>
+  <td>10,705</td>
+  <td>500</td>
+  <td class="good">95.5%</td>
+  <td>$0.0022</td>
+</tr><tr class="step-row">
+  <td>20</td>
+  <td>40</td>
+  <td class="">0</td>
+  <td>12,323</td>
+  <td>10,705</td>
+  <td>1,618</td>
+  <td class="good">86.9%</td>
+  <td>$0.0036</td>
+</tr><tr class="step-row">
+  <td>21</td>
+  <td>42</td>
+  <td class="">0</td>
+  <td>13,228</td>
+  <td>12,323</td>
+  <td>905</td>
+  <td class="good">93.2%</td>
+  <td>$0.0030</td>
+</tr><tr class="step-row">
+  <td>22</td>
+  <td>44</td>
+  <td class="">0</td>
+  <td>14,135</td>
+  <td>13,228</td>
+  <td>907</td>
+  <td class="good">93.6%</td>
+  <td>$0.0030</td>
+</tr><tr class="step-row">
+  <td>23</td>
+  <td>46</td>
+  <td class="">0</td>
+  <td>14,937</td>
+  <td>14,135</td>
+  <td>802</td>
+  <td class="good">94.6%</td>
+  <td>$0.0029</td>
+</tr><tr class="step-row">
+  <td>24</td>
+  <td>48</td>
+  <td class="">0</td>
+  <td>15,409</td>
+  <td>14,937</td>
+  <td>472</td>
+  <td class="good">96.9%</td>
+  <td>$0.0032</td>
+</tr><tr class="step-row">
+  <td>25</td>
+  <td>50</td>
+  <td class="">0</td>
+  <td>16,234</td>
+  <td>15,409</td>
+  <td>825</td>
+  <td class="good">94.9%</td>
+  <td>$0.0031</td>
+</tr><tr class="step-row">
+  <td>26</td>
+  <td>52</td>
+  <td class="">0</td>
+  <td>18,640</td>
+  <td>15,409</td>
+  <td>3,231</td>
+  <td class="good">82.7%</td>
+  <td>$0.0061</td>
+</tr><tr class="step-row">
+  <td>27</td>
+  <td>54</td>
+  <td class="">0</td>
+  <td>19,741</td>
+  <td>18,640</td>
+  <td>1,101</td>
+  <td class="good">94.4%</td>
+  <td>$0.0039</td>
+</tr><tr class="step-row">
+  <td>28</td>
+  <td>56</td>
+  <td class="">0</td>
+  <td>19,896</td>
+  <td>19,741</td>
+  <td>155</td>
+  <td class="good">99.2%</td>
+  <td>$0.0028</td>
+</tr><tr class="step-row">
+  <td>29</td>
+  <td>58</td>
+  <td class="">0</td>
+  <td>20,842</td>
+  <td>19,896</td>
+  <td>946</td>
+  <td class="good">95.5%</td>
+  <td>$0.0069</td>
+</tr><tr class="step-row">
+  <td>30</td>
+  <td>60</td>
+  <td class="">0</td>
+  <td>21,666</td>
+  <td>20,842</td>
+  <td>824</td>
+  <td class="good">96.2%</td>
+  <td>$0.0039</td>
+</tr><tr class="step-row">
+  <td>31</td>
+  <td>62</td>
+  <td class="">0</td>
+  <td>22,263</td>
+  <td>21,666</td>
+  <td>597</td>
+  <td class="good">97.3%</td>
+  <td>$0.0041</td>
+</tr><tr class="step-row">
+  <td>32</td>
+  <td>64</td>
+  <td class="">0</td>
+  <td>22,627</td>
+  <td>22,263</td>
+  <td>364</td>
+  <td class="good">98.4%</td>
+  <td>$0.0045</td>
+</tr><tr class="step-row">
+  <td>33</td>
+  <td>66</td>
+  <td class="">0</td>
+  <td>23,073</td>
+  <td>22,627</td>
+  <td>446</td>
+  <td class="good">98.1%</td>
+  <td>$0.0033</td>
+</tr><tr class="step-row">
+  <td>34</td>
+  <td>68</td>
+  <td class="">0</td>
+  <td>23,303</td>
+  <td>23,073</td>
+  <td>230</td>
+  <td class="good">99.0%</td>
+  <td>$0.0032</td>
+</tr><tr class="step-row">
+  <td>35</td>
+  <td>70</td>
+  <td class="">0</td>
+  <td>23,903</td>
+  <td>23,073</td>
+  <td>830</td>
+  <td class="good">96.5%</td>
+  <td>$0.0039</td>
+</tr><tr class="step-row">
+  <td>36</td>
+  <td>72</td>
+  <td class="">0</td>
+  <td>24,369</td>
+  <td>23,303</td>
+  <td>1,066</td>
+  <td class="good">95.6%</td>
+  <td>$0.0042</td>
+</tr><tr class="step-row">
+  <td>37</td>
+  <td>74</td>
+  <td class="">0</td>
+  <td>25,211</td>
+  <td>23,903</td>
+  <td>1,308</td>
+  <td class="good">94.8%</td>
+  <td>$0.0062</td>
+</tr><tr class="step-row">
+  <td>38</td>
+  <td>76</td>
+  <td class="">0</td>
+  <td>26,264</td>
+  <td>25,211</td>
+  <td>1,053</td>
+  <td class="good">96.0%</td>
+  <td>$0.0059</td>
+</tr><tr class="step-row">
+  <td>39</td>
+  <td>78</td>
+  <td class="">0</td>
+  <td>26,881</td>
+  <td>26,264</td>
+  <td>617</td>
+  <td class="good">97.7%</td>
+  <td>$0.0042</td>
+</tr><tr class="step-row">
+  <td>40</td>
+  <td>80</td>
+  <td class="">0</td>
+  <td>27,175</td>
+  <td>26,264</td>
+  <td>911</td>
+  <td class="good">96.6%</td>
+  <td>$0.0045</td>
+</tr><tr class="step-row">
+  <td>41</td>
+  <td>82</td>
+  <td class="">0</td>
+  <td>27,559</td>
+  <td>27,175</td>
+  <td>384</td>
+  <td class="good">98.6%</td>
+  <td>$0.0040</td>
+</tr><tr class="step-row">
+  <td>42</td>
+  <td>84</td>
+  <td class="">0</td>
+  <td>27,944</td>
+  <td>27,559</td>
+  <td>385</td>
+  <td class="good">98.6%</td>
+  <td>$0.0037</td>
+</tr><tr class="step-row">
+  <td>43</td>
+  <td>86</td>
+  <td class="">0</td>
+  <td>28,270</td>
+  <td>27,944</td>
+  <td>326</td>
+  <td class="good">98.8%</td>
+  <td>$0.0044</td>
+</tr></table></div>
+    <h3 class="toggle" id="btn-astropy_astropy_6938_summarize" onclick="toggle('astropy_astropy_6938_summarize')" style="font-size:12px; color:#8b949e;">
+      Step trace: summarize/8000
+    </h3>
+    <div class="collapsible" id="astropy_astropy_6938_summarize">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>1,807</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0023</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>4</td>
+  <td class="">0</td>
+  <td>1,936</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0023</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>6</td>
+  <td class="">0</td>
+  <td>3,279</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0037</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>3,402</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0040</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>10</td>
+  <td class="">0</td>
+  <td>3,591</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0041</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>12</td>
+  <td class="">0</td>
+  <td>4,053</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0049</td>
+</tr><tr class="step-row">
+  <td>7</td>
+  <td>14</td>
+  <td class="">0</td>
+  <td>4,992</td>
+  <td>0</td>
+  <td>4,987</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0067</td>
+</tr><tr class="step-row">
+  <td>8</td>
+  <td>16</td>
+  <td class="">0</td>
+  <td>5,464</td>
+  <td>4,987</td>
+  <td>473</td>
+  <td class="good">91.3%</td>
+  <td>$0.0016</td>
+</tr><tr class="step-row">
+  <td>9</td>
+  <td>18</td>
+  <td class="">0</td>
+  <td>5,677</td>
+  <td>5,460</td>
+  <td>214</td>
+  <td class="good">96.2%</td>
+  <td>$0.0014</td>
+</tr><tr class="step-row">
+  <td>10</td>
+  <td>20</td>
+  <td class="">0</td>
+  <td>5,821</td>
+  <td>5,460</td>
+  <td>358</td>
+  <td class="good">93.8%</td>
+  <td>$0.0015</td>
+</tr><tr class="step-row">
+  <td>11</td>
+  <td>22</td>
+  <td class="">0</td>
+  <td>6,045</td>
+  <td>5,674</td>
+  <td>369</td>
+  <td class="good">93.9%</td>
+  <td>$0.0018</td>
+</tr><tr class="step-row">
+  <td>12</td>
+  <td>24</td>
+  <td class="">0</td>
+  <td>6,469</td>
+  <td>6,043</td>
+  <td>425</td>
+  <td class="good">93.4%</td>
+  <td>$0.0021</td>
+</tr><tr class="step-row">
+  <td>13</td>
+  <td>26</td>
+  <td class="">0</td>
+  <td>6,708</td>
+  <td>6,468</td>
+  <td>240</td>
+  <td class="good">96.4%</td>
+  <td>$0.0015</td>
+</tr><tr class="step-row">
+  <td>14</td>
+  <td>28</td>
+  <td class="">0</td>
+  <td>7,570</td>
+  <td>6,708</td>
+  <td>862</td>
+  <td class="good">88.6%</td>
+  <td>$0.0023</td>
+</tr><tr class="step-row">
+  <td>15</td>
+  <td>30</td>
+  <td class="">0</td>
+  <td>8,167</td>
+  <td>7,570</td>
+  <td>597</td>
+  <td class="good">92.7%</td>
+  <td>$0.0021</td>
+</tr><tr class="step-row">
+  <td>16</td>
+  <td>32</td>
+  <td class="">0</td>
+  <td>8,334</td>
+  <td>7,570</td>
+  <td>764</td>
+  <td class="good">90.8%</td>
+  <td>$0.0022</td>
+</tr><tr class="step-row">
+  <td>17</td>
+  <td>34</td>
+  <td class="">0</td>
+  <td>8,698</td>
+  <td>8,334</td>
+  <td>364</td>
+  <td class="good">95.8%</td>
+  <td>$0.0018</td>
+</tr><tr class="step-row">
+  <td>18</td>
+  <td>36</td>
+  <td class="">0</td>
+  <td>8,868</td>
+  <td>8,698</td>
+  <td>170</td>
+  <td class="good">98.1%</td>
+  <td>$0.0016</td>
+</tr><tr class="step-row">
+  <td>19</td>
+  <td>38</td>
+  <td class="">0</td>
+  <td>9,827</td>
+  <td>8,868</td>
+  <td>959</td>
+  <td class="good">90.2%</td>
+  <td>$0.0026</td>
+</tr><tr class="step-row">
+  <td>20</td>
+  <td>40</td>
+  <td class="">0</td>
+  <td>10,825</td>
+  <td>9,827</td>
+  <td>998</td>
+  <td class="good">90.8%</td>
+  <td>$0.0030</td>
+</tr><tr class="step-row">
+  <td>21</td>
+  <td>9</td>
+  <td class="bad">33</td>
+  <td>5,205</td>
+  <td>0</td>
+  <td>5,200</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0075</td>
+</tr><tr class="step-row">
+  <td>22</td>
+  <td>9</td>
+  <td class="bad">35</td>
+  <td>4,344</td>
+  <td>0</td>
+  <td>4,339</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0059</td>
+</tr><tr class="step-row">
+  <td>23</td>
+  <td>9</td>
+  <td class="bad">37</td>
+  <td>3,886</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0051</td>
+</tr><tr class="step-row">
+  <td>24</td>
+  <td>9</td>
+  <td class="bad">39</td>
+  <td>3,437</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0042</td>
+</tr><tr class="step-row">
+  <td>25</td>
+  <td>9</td>
+  <td class="bad">41</td>
+  <td>3,695</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0050</td>
+</tr><tr class="step-row">
+  <td>26</td>
+  <td>9</td>
+  <td class="bad">43</td>
+  <td>4,141</td>
+  <td>0</td>
+  <td>4,136</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0057</td>
+</tr><tr class="step-row">
+  <td>27</td>
+  <td>9</td>
+  <td class="bad">45</td>
+  <td>4,074</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0046</td>
+</tr><tr class="step-row">
+  <td>28</td>
+  <td>9</td>
+  <td class="bad">47</td>
+  <td>3,781</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0044</td>
+</tr><tr class="step-row">
+  <td>29</td>
+  <td>9</td>
+  <td class="bad">49</td>
+  <td>2,945</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0035</td>
+</tr><tr class="step-row">
+  <td>30</td>
+  <td>9</td>
+  <td class="bad">51</td>
+  <td>2,878</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0034</td>
+</tr></table></div></div></div></body></html>

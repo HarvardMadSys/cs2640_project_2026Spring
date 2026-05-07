@@ -1,0 +1,27 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+results/exp_haiku_5/*/repos/
+results/exp_haiku_5/*/__pycache__/
+*.egg-info/
+dist/
+build/
+.obsidian/
+raw/papers/*.pdf
+
+# Datasets — too large for git, fetched via HF/curl on demand
+*.parquet
+*.arrow
+studies/lifetime_cost/external_traces/hermes/
+studies/lifetime_cost/external_traces/applied_compute/
+
+# Local Python venv — never commit
+.venv/
+
+# Run logs and raw trajectories are too large; figures/csv/validated.json
+# are small enough and ARE committed.
+studies/lifetime_cost/out/*.log
+studies/lifetime_cost/out/*/trajectories/
+studies/lifetime_cost/out/*/logs/

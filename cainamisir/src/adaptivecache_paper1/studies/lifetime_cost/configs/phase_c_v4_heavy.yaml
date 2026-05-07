@@ -1,0 +1,76 @@
+# Phase C v4 — heavy SWE-bench Lite tasks at 128K context window.
+#
+# The previous Phase C runs used `max_model_len=50000`, which causes `none`
+# to fail by overflow on tasks with long problem statements + multi-file
+# exploration. This run bumps to 128K, picks tasks where compaction has
+# real headroom to amortize, and compares only the policies worth comparing.
+#
+# Memory plan (97 GB total):
+#   30B weights bf16:                   ~57 GB
+#   30B KV cache at max_model_len=128K: ~25 GB (8 KV heads × 48 layers × bf16)
+#   4B summarizer (weights + KV at 8K): ~11 GB
+#   ----                                  ----
+#   Total expected:                     ~93 GB; ~4 GB headroom
+#
+# Tasks (4):
+#   - psf__requests-3362        (long problem; previous baseline overflow point)
+#   - pallets__flask-5063       (100-line patch; one of the bigger Lite tasks)
+#   - pylint-dev__pylint-7080   (24K-char problem; longest in Lite)
+#   - pytest-dev__pytest-7490   (22K-char problem)
+#
+# Policies (4):
+#   - none                — baseline
+#   - smart_evict         — type-prior + ref-count, lazy hard-budget trigger
+#   - llm_reorganizer     — Qwen3-4B scoring, lazy, anchored on problem statement
+#   - prefix_preserving   — frozen-head + summary-of-middle (we drop microcompact
+#                           and position_aware to save smoke time; their behavior
+#                           was well-characterized in Phase C v1)
+
+models:
+  - vllm:Qwen/Qwen3-30B-A3B-Instruct-2507
+
+summarizer_model: vllm:Qwen/Qwen3-4B-Instruct-2507
+
+model_kwargs:
+  vllm:Qwen/Qwen3-30B-A3B-Instruct-2507:
+    max_new_tokens: 800
+    temperature: 0.5
+    enable_thinking: false
+    dtype: bfloat16
+    gpu_memory_utilization: 0.80
+    max_model_len: 128000
+    enable_prefix_caching: true
+  vllm:Qwen/Qwen3-4B-Instruct-2507:
+    max_new_tokens: 600
+    temperature: 0.5
+    enable_thinking: false
+    dtype: bfloat16
+    gpu_memory_utilization: 0.13
+    max_model_len: 8000
+    enable_prefix_caching: true
+
+policies:
+  - name: none
+  - name: smart_evict
+    kwargs: { trigger_ratio: 0.85, target_ratio: 0.55, protect_recent: 3, min_obs_tokens: 300, use_hard_budget_trigger: true }
+  - name: llm_reorganizer
+    kwargs: { trigger_ratio: 0.85, target_ratio: 0.55, protect_recent: 3, min_obs_tokens: 300, use_hard_budget_trigger: true, max_score_input_msgs: 30 }
+  - name: prefix_preserving
+    kwargs: { keep_first_turns: 2, keep_recent_turns: 6, trigger_ratio: 0.85, cooldown_steps: 5 }
+
+benchmarks:
+  - name: swebench_live
+    kwargs:
+      cache_dir: /scratch/swebench_repos
+      max_steps_per_task: 80
+      instance_ids:
+        - psf__requests-3362
+        - pallets__flask-5063
+        - pylint-dev__pylint-7080
+        - pytest-dev__pytest-7490
+
+budget_tokens: 50000
+hard_budget_tokens: 100000
+max_tasks: null
+n_workers: 1
+out_dir: studies/lifetime_cost/out/phase_c_v4_heavy

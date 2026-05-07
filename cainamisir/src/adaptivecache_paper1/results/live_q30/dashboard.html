@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+
+<title>AdaptiveCache Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'SF Mono', 'Menlo', 'Monaco', monospace; background: #0d1117; color: #c9d1d9; padding: 20px; font-size: 13px; }
+  h1 { color: #58a6ff; margin-bottom: 5px; font-size: 20px; }
+  h2 { color: #8b949e; font-size: 16px; margin: 25px 0 10px; border-bottom: 1px solid #21262d; padding-bottom: 5px; }
+  h3 { color: #58a6ff; font-size: 14px; margin: 15px 0 8px; cursor: pointer; }
+  h3:hover { color: #79c0ff; }
+  .meta { color: #8b949e; margin-bottom: 20px; }
+  .meta span { margin-right: 20px; }
+  .cost { color: #f0883e; }
+  .good { color: #3fb950; }
+  .warn { color: #d29922; }
+  .bad { color: #f85149; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+  th { background: #161b22; color: #8b949e; text-align: left; padding: 8px 12px; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 6px 12px; border-bottom: 1px solid #21262d; }
+  tr:hover td { background: #161b22; }
+  .bar-container { width: 120px; height: 14px; background: #21262d; border-radius: 3px; display: inline-block; vertical-align: middle; }
+  .bar { height: 100%; border-radius: 3px; transition: width 0.3s; }
+  .bar-green { background: linear-gradient(90deg, #238636, #3fb950); }
+  .bar-yellow { background: linear-gradient(90deg, #9e6a03, #d29922); }
+  .bar-red { background: linear-gradient(90deg, #da3633, #f85149); }
+  .bar-blue { background: linear-gradient(90deg, #1f6feb, #58a6ff); }
+  .sparkline { font-size: 11px; letter-spacing: -1px; color: #3fb950; }
+  .collapsible { display: none; margin-left: 15px; }
+  .collapsible.open { display: block; }
+  .toggle { cursor: pointer; user-select: none; }
+  .toggle::before { content: "▶ "; font-size: 10px; }
+  .toggle.open::before { content: "▼ "; }
+  .step-row td { font-size: 12px; padding: 3px 8px; }
+  .step-row:nth-child(even) td { background: #0d1117; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .pill-green { background: #238636; color: #fff; }
+  .pill-red { background: #da3633; color: #fff; }
+  .pill-yellow { background: #9e6a03; color: #fff; }
+  .pill-blue { background: #1f6feb; color: #fff; }
+  .instance-section { background: #161b22; border: 1px solid #21262d; border-radius: 6px; padding: 12px; margin: 10px 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; }
+  .metric-card { background: #0d1117; border: 1px solid #21262d; border-radius: 6px; padding: 12px; text-align: center; }
+  .metric-value { font-size: 28px; font-weight: bold; }
+  .metric-label { color: #8b949e; font-size: 11px; margin-top: 4px; }
+</style>
+<script>
+function toggle(id) {
+  var el = document.getElementById(id);
+  var btn = document.getElementById('btn-' + id);
+  if (el.classList.contains('open')) {
+    el.classList.remove('open');
+    btn.classList.remove('open');
+  } else {
+    el.classList.add('open');
+    btn.classList.add('open');
+  }
+}
+</script>
+</head><body>
+<h1>AdaptiveCache Experiment Dashboard</h1>
+<div class="meta">
+  <span>5 trajectories</span>
+  <span class="cost">$0.00 total cost</span>
+  <span>2026-04-09 00:14:23</span>
+  <span>live_q30</span>
+</div>
+
+<div class="grid" style="margin-bottom: 20px;">
+  <div class="metric-card"><div class="metric-value">5</div><div class="metric-label">Trajectories</div></div>
+  <div class="metric-card"><div class="metric-value">44</div><div class="metric-label">Total Steps</div></div>
+  <div class="metric-card"><div class="metric-value cost">$0.00</div><div class="metric-label">Total Cost</div></div>
+  <div class="metric-card"><div class="metric-value">181,863</div><div class="metric-label">Total Prompt Tokens</div></div>
+  <div class="metric-card"><div class="metric-value bad">0.0%</div><div class="metric-label">Overall Cache Hit Rate</div></div>
+</div>
+<h2>Config Comparison</h2><table><tr><th>Config</th><th>Instances</th><th>Patches</th><th>Avg Cost</th><th>Avg Steps</th><th>Avg Prompt Tok</th><th>Avg Cache Read</th><th>Cache Hit Rate</th><th>Evicted Msgs</th></tr><tr>
+  <td><strong>adaptive/10000</strong></td>
+  <td>3</td>
+  <td><span class="pill pill-green">3</span></td>
+  <td class="cost">$0.000</td>
+  <td>11</td>
+  <td>47,614</td>
+  <td>0</td>
+  <td><span class="bad">0.0%</span> <div class="bar-container"><div class="bar bar-red" style="width:0%"></div></div></td>
+  <td>0</td>
+</tr><tr>
+  <td><strong>fifo/10000</strong></td>
+  <td>1</td>
+  <td><span class="pill pill-green">1</span></td>
+  <td class="cost">$0.000</td>
+  <td>5</td>
+  <td>10,943</td>
+  <td>0</td>
+  <td><span class="bad">0.0%</span> <div class="bar-container"><div class="bar bar-red" style="width:0%"></div></div></td>
+  <td>0</td>
+</tr><tr>
+  <td><strong>kv_adaptive/10000</strong></td>
+  <td>1</td>
+  <td><span class="pill pill-green">1</span></td>
+  <td class="cost">$0.000</td>
+  <td>7</td>
+  <td>28,079</td>
+  <td>0</td>
+  <td><span class="bad">0.0%</span> <div class="bar-container"><div class="bar bar-red" style="width:0%"></div></div></td>
+  <td>0</td>
+</tr></table><h2>Per-Instance Comparison</h2>
+<div class="instance-section">
+  <h3 class="toggle" id="btn-astropy_astropy_12907" onclick="toggle('astropy_astropy_12907')">astropy__astropy-12907</h3>
+  <div class="collapsible" id="astropy_astropy_12907">
+    <table>
+    <tr><th>Policy</th><th>Status</th><th>Steps</th><th>Cost</th><th>Prompt Tok</th><th>Cache Read</th><th>Hit Rate</th><th>Evicted</th><th>Cache Hit Sparkline</th></tr>
+<tr>
+  <td><strong>adaptive/10000</strong></td>
+  <td><span class="pill pill-green">PATCH</span></td>
+  <td>5</td>
+  <td class="cost">$0.000</td>
+  <td>15,307</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>0</td>
+  <td class="sparkline">     </td>
+</tr></table>
+    <h3 class="toggle" id="btn-astropy_astropy_12907_adaptive" onclick="toggle('astropy_astropy_12907_adaptive')" style="font-size:12px; color:#8b949e;">
+      Step trace: adaptive/10000
+    </h3>
+    <div class="collapsible" id="astropy_astropy_12907_adaptive">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>1,472</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>5</td>
+  <td class="">0</td>
+  <td>2,175</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>2,657</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>11</td>
+  <td class="">0</td>
+  <td>4,223</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>14</td>
+  <td class="">0</td>
+  <td>4,780</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr></table></div></div></div>
+<div class="instance-section">
+  <h3 class="toggle" id="btn-astropy_astropy_14182" onclick="toggle('astropy_astropy_14182')">astropy__astropy-14182</h3>
+  <div class="collapsible" id="astropy_astropy_14182">
+    <table>
+    <tr><th>Policy</th><th>Status</th><th>Steps</th><th>Cost</th><th>Prompt Tok</th><th>Cache Read</th><th>Hit Rate</th><th>Evicted</th><th>Cache Hit Sparkline</th></tr>
+<tr>
+  <td><strong>adaptive/10000</strong></td>
+  <td><span class="pill pill-green">PATCH</span></td>
+  <td>6</td>
+  <td class="cost">$0.000</td>
+  <td>19,018</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>0</td>
+  <td class="sparkline">      </td>
+</tr></table>
+    <h3 class="toggle" id="btn-astropy_astropy_14182_adaptive" onclick="toggle('astropy_astropy_14182_adaptive')" style="font-size:12px; color:#8b949e;">
+      Step trace: adaptive/10000
+    </h3>
+    <div class="collapsible" id="astropy_astropy_14182_adaptive">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>1,680</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>5</td>
+  <td class="">0</td>
+  <td>2,417</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>2,924</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>10</td>
+  <td class="">0</td>
+  <td>3,371</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>13</td>
+  <td class="">0</td>
+  <td>3,698</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>16</td>
+  <td class="">0</td>
+  <td>4,928</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr></table></div></div></div>
+<div class="instance-section">
+  <h3 class="toggle" id="btn-astropy_astropy_14365" onclick="toggle('astropy_astropy_14365')">astropy__astropy-14365</h3>
+  <div class="collapsible" id="astropy_astropy_14365">
+    <table>
+    <tr><th>Policy</th><th>Status</th><th>Steps</th><th>Cost</th><th>Prompt Tok</th><th>Cache Read</th><th>Hit Rate</th><th>Evicted</th><th>Cache Hit Sparkline</th></tr>
+<tr>
+  <td><strong>adaptive/10000</strong></td>
+  <td><span class="pill pill-green">PATCH</span></td>
+  <td>21</td>
+  <td class="cost">$0.000</td>
+  <td>108,516</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>0</td>
+  <td class="sparkline">                     </td>
+</tr><tr>
+  <td><strong>kv_adaptive/10000</strong></td>
+  <td><span class="pill pill-green">PATCH</span></td>
+  <td>7</td>
+  <td class="cost">$0.000</td>
+  <td>28,079</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>0</td>
+  <td class="sparkline">       </td>
+</tr></table>
+    <h3 class="toggle" id="btn-astropy_astropy_14365_adaptive" onclick="toggle('astropy_astropy_14365_adaptive')" style="font-size:12px; color:#8b949e;">
+      Step trace: adaptive/10000
+    </h3>
+    <div class="collapsible" id="astropy_astropy_14365_adaptive">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>1,617</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>5</td>
+  <td class="">0</td>
+  <td>2,114</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>7</td>
+  <td class="">0</td>
+  <td>2,259</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>9</td>
+  <td class="">0</td>
+  <td>3,292</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>11</td>
+  <td class="">0</td>
+  <td>3,443</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>13</td>
+  <td class="">0</td>
+  <td>3,536</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>7</td>
+  <td>15</td>
+  <td class="">0</td>
+  <td>3,695</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>8</td>
+  <td>17</td>
+  <td class="">0</td>
+  <td>3,852</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>9</td>
+  <td>19</td>
+  <td class="">0</td>
+  <td>4,041</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>10</td>
+  <td>21</td>
+  <td class="">0</td>
+  <td>4,255</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>11</td>
+  <td>23</td>
+  <td class="">0</td>
+  <td>4,658</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>12</td>
+  <td>25</td>
+  <td class="">0</td>
+  <td>4,934</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>13</td>
+  <td>27</td>
+  <td class="">0</td>
+  <td>5,911</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>14</td>
+  <td>29</td>
+  <td class="">0</td>
+  <td>6,510</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>15</td>
+  <td>31</td>
+  <td class="">0</td>
+  <td>6,675</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>16</td>
+  <td>33</td>
+  <td class="">0</td>
+  <td>7,659</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>17</td>
+  <td>35</td>
+  <td class="">0</td>
+  <td>7,840</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>18</td>
+  <td>37</td>
+  <td class="">0</td>
+  <td>7,912</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>19</td>
+  <td>39</td>
+  <td class="">0</td>
+  <td>7,989</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>20</td>
+  <td>41</td>
+  <td class="">0</td>
+  <td>8,048</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>21</td>
+  <td>43</td>
+  <td class="">0</td>
+  <td>8,276</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr></table></div>
+    <h3 class="toggle" id="btn-astropy_astropy_14365_kv_adaptive" onclick="toggle('astropy_astropy_14365_kv_adaptive')" style="font-size:12px; color:#8b949e;">
+      Step trace: kv_adaptive/10000
+    </h3>
+    <div class="collapsible" id="astropy_astropy_14365_kv_adaptive">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>1,617</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>5</td>
+  <td class="">0</td>
+  <td>2,183</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>8</td>
+  <td class="">0</td>
+  <td>2,370</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>10</td>
+  <td class="">0</td>
+  <td>4,505</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>13</td>
+  <td class="">0</td>
+  <td>5,016</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>6</td>
+  <td>16</td>
+  <td class="">0</td>
+  <td>5,482</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>7</td>
+  <td>21</td>
+  <td class="">0</td>
+  <td>6,906</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr></table></div></div></div>
+<div class="instance-section">
+  <h3 class="toggle" id="btn-astropy_astropy_6938" onclick="toggle('astropy_astropy_6938')">astropy__astropy-6938</h3>
+  <div class="collapsible" id="astropy_astropy_6938">
+    <table>
+    <tr><th>Policy</th><th>Status</th><th>Steps</th><th>Cost</th><th>Prompt Tok</th><th>Cache Read</th><th>Hit Rate</th><th>Evicted</th><th>Cache Hit Sparkline</th></tr>
+<tr>
+  <td><strong>fifo/10000</strong></td>
+  <td><span class="pill pill-green">PATCH</span></td>
+  <td>5</td>
+  <td class="cost">$0.000</td>
+  <td>10,943</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>0</td>
+  <td class="sparkline">     </td>
+</tr></table>
+    <h3 class="toggle" id="btn-astropy_astropy_6938_fifo" onclick="toggle('astropy_astropy_6938_fifo')" style="font-size:12px; color:#8b949e;">
+      Step trace: fifo/10000
+    </h3>
+    <div class="collapsible" id="astropy_astropy_6938_fifo">
+      <table>
+      <tr><th>Step</th><th>Msgs Sent</th><th>Evicted</th><th>Prompt Tok</th><th>Cache Read</th><th>Cache Create</th><th>Hit Rate</th><th>Cost</th></tr>
+<tr class="step-row">
+  <td>1</td>
+  <td>2</td>
+  <td class="">0</td>
+  <td>1,266</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>2</td>
+  <td>5</td>
+  <td class="">0</td>
+  <td>1,815</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>3</td>
+  <td>7</td>
+  <td class="">0</td>
+  <td>2,166</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>4</td>
+  <td>9</td>
+  <td class="">0</td>
+  <td>2,653</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr><tr class="step-row">
+  <td>5</td>
+  <td>12</td>
+  <td class="">0</td>
+  <td>3,043</td>
+  <td>0</td>
+  <td>0</td>
+  <td class="bad">0.0%</td>
+  <td>$0.0000</td>
+</tr></table></div></div></div></body></html>

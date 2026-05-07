@@ -1,0 +1,29 @@
+# Ablation matrix. Inherits from main.yaml conceptually but uses a smaller
+# benchmark and only the policy-of-interest to keep cost down.
+#
+# Run with:
+#   python -m studies.lifetime_cost.scripts.run_ablations --config studies/lifetime_cost/configs/ablations.yaml
+
+models:
+  - openai/gpt-4.1-mini       # one cheap model is sufficient for hyperparameter sweeps
+
+policies:
+  - name: prefix_preserving
+    kwargs: { keep_first_turns: 6, keep_recent_turns: 4, trigger_ratio: 0.85 }
+  - name: microcompact
+    kwargs: { per_msg_threshold_tokens: 800, trigger_ratio: 0.85 }
+  - name: boundary_aware
+    kwargs: { keep_first_turns: 6, keep_recent_turns: 4, trigger_ratio: 0.85 }
+
+benchmarks:
+  - name: longdoc
+    kwargs:
+      n_tasks: 12              # smaller for sweeps
+      target_doc_tokens: 80000
+      n_needles: 4
+      corpus: wikitext
+
+budget_tokens: 32000
+hard_budget_tokens: 64000
+n_workers: 4
+out_dir: studies/lifetime_cost/out/ablations

@@ -1,0 +1,103 @@
+{
+  "policy": "none",
+  "budget": 32768,
+  "model_name": "Qwen/Qwen2.5-7B-Instruct",
+  "instances": [
+    "astropy__astropy-12907"
+  ],
+  "resolved": 0,
+  "total": 1,
+  "resolve_rate": 0.0,
+  "elapsed_seconds": 275.1696970462799,
+  "results": [
+    {
+      "instance_id": "astropy__astropy-12907",
+      "policy": "none",
+      "budget": 32768,
+      "model_name": "openai/Qwen/Qwen2.5-7B-Instruct",
+      "resolved": false,
+      "steps": 0,
+      "cache_stats": {
+        "total_steps": 5,
+        "total_prompt_tokens": 9373,
+        "total_cached_tokens": 0,
+        "mean_hit_rate": 0.0,
+        "cache_trace": [
+          {
+            "step": 1,
+            "policy": "none",
+            "original_messages": 2,
+            "sent_messages": 2,
+            "messages_evicted": 0,
+            "prompt_tokens": 1472,
+            "completion_tokens": 20,
+            "cache_read_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_hit_rate": 0.0,
+            "cost": 0.0,
+            "timestamp": 1775695718.745528
+          },
+          {
+            "step": 2,
+            "policy": "none",
+            "original_messages": 4,
+            "sent_messages": 4,
+            "messages_evicted": 0,
+            "prompt_tokens": 1559,
+            "completion_tokens": 78,
+            "cache_read_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_hit_rate": 0.0,
+            "cost": 0.0,
+            "timestamp": 1775695720.007464
+          },
+          {
+            "step": 3,
+            "policy": "none",
+            "original_messages": 6,
+            "sent_messages": 6,
+            "messages_evicted": 0,
+            "prompt_tokens": 1932,
+            "completion_tokens": 134,
+            "cache_read_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_hit_rate": 0.0,
+            "cost": 0.0,
+            "timestamp": 1775695722.027689
+          },
+          {
+            "step": 4,
+            "policy": "none",
+            "original_messages": 8,
+            "sent_messages": 8,
+            "messages_evicted": 0,
+            "prompt_tokens": 2098,
+            "completion_tokens": 182,
+            "cache_read_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_hit_rate": 0.0,
+            "cost": 0.0,
+            "timestamp": 1775695724.5814016
+          },
+          {
+            "step": 5,
+            "policy": "none",
+            "original_messages": 10,
+            "sent_messages": 10,
+            "messages_evicted": 0,
+            "prompt_tokens": 2312,
+            "completion_tokens": 143,
+            "cache_read_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_hit_rate": 0.0,
+            "cost": 0.0,
+            "timestamp": 1775695726.6662645
+          }
+        ]
+      },
+      "error": null,
+      "timestamp": 1775695457.8111267
+    }
+  ],
+  "timestamp": 1775695728.631745
+}

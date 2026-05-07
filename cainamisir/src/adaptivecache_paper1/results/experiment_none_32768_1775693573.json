@@ -1,0 +1,26 @@
+{
+  "policy": "none",
+  "budget": 32768,
+  "model_name": "Qwen/Qwen2.5-7B-Instruct",
+  "instances": [
+    "astropy__astropy-12907"
+  ],
+  "resolved": 0,
+  "total": 1,
+  "resolve_rate": 0.0,
+  "elapsed_seconds": 6.333401918411255,
+  "results": [
+    {
+      "instance_id": "astropy__astropy-12907",
+      "policy": "none",
+      "budget": 32768,
+      "model_name": "openai/Qwen/Qwen2.5-7B-Instruct",
+      "resolved": false,
+      "steps": 0,
+      "cache_stats": {},
+      "error": "HfHubHTTPError: Server error '503 Service Unavailable' for url 'https://huggingface.co/api/datasets/princeton-nlp/SWE-bench_Lite/tree/6ec7bb89b9342f664a54a6e0a6ea6501d3437cc2?recursive=false&expand=false' (Request ID: Root=1-69d6ef05-373eb6c2422e3fa01489cf09;e0e556f1-bdc5-4f19-8d1e-4b139cb3b284)\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503\n\nInternal Error - We're working hard to fix this as soon as possible!\nTraceback (most recent call last):\n  File \"/root/run_experiments.py\", line 147, in run_swebench_instance\n    run_dir = run_experiment(config)\n              ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/src/harness/swe_runner.py\", line 121, in run_experiment\n    _run_via_mini_swe_agent(config, output_dir)\n  File \"/app/src/harness/swe_runner.py\", line 150, in _run_via_mini_swe_agent\n    instances = load_instances(config)\n                ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/src/harness/swe_runner.py\", line 45, in load_instances\n    ds = load_dataset(dataset_name, split=config.split)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/datasets/load.py\", line 1688, in load_dataset\n    builder_instance = load_dataset_builder(\n                       ^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/datasets/load.py\", line 1315, in load_dataset_builder\n    dataset_module = dataset_module_factory(\n                     ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/datasets/load.py\", line 1207, in dataset_module_factory\n    raise e1 from None\n  File \"/usr/local/lib/python3.11/site-packages/datasets/load.py\", line 1182, in dataset_module_factory\n    ).get_module()\n      ^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/datasets/load.py\", line 639, in get_module\n    data_files = DataFilesDict.from_patterns(\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/datasets/data_files.py\", line 723, in from_patterns\n    else DataFilesList.from_patterns(\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/datasets/data_files.py\", line 616, in from_patterns\n    resolve_pattern(\n  File \"/usr/local/lib/python3.11/site-packages/datasets/data_files.py\", line 372, in resolve_pattern\n    for filepath, info in fs.glob(fs_pattern, detail=True, **glob_kwargs).items():\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/huggingface_hub/hf_file_system.py\", line 759, in glob\n    return super().glob(path, maxdepth=maxdepth, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/fsspec/spec.py\", line 642, in glob\n    allpaths = self.find(root, maxdepth=depth, withdirs=True, detail=True, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/huggingface_hub/hf_file_system.py\", line 813, in find\n    path_info = self.info(path, **kwargs)\n                ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/huggingface_hub/hf_file_system.py\", line 968, in info\n    self.ls(parent_path)\n  File \"/usr/local/lib/python3.11/site-packages/huggingface_hub/hf_file_system.py\", line 534, in ls\n    out = self._ls_tree(path, refresh=refresh, revision=revision, **kwargs)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/huggingface_hub/hf_file_system.py\", line 645, in _ls_tree\n    for path_info in tree:\n  File \"/usr/local/lib/python3.11/site-packages/huggingface_hub/hf_api.py\", line 3604, in list_repo_tree\n    for path_info in paginate(path=tree_url, headers=headers, params={\"recursive\": recursive, \"expand\": expand}):\n  File \"/usr/local/lib/python3.11/site-packages/huggingface_hub/utils/_pagination.py\", line 36, in paginate\n    hf_raise_for_status(r)\n  File \"/usr/local/lib/python3.11/site-packages/huggingface_hub/utils/_http.py\", line 889, in hf_raise_for_status\n    raise _format(HfHubHTTPError, str(e), response) from e\nhuggingface_hub.errors.HfHubHTTPError: Server error '503 Service Unavailable' for url 'https://huggingface.co/api/datasets/princeton-nlp/SWE-bench_Lite/tree/6ec7bb89b9342f664a54a6e0a6ea6501d3437cc2?recursive=false&expand=false' (Request ID: Root=1-69d6ef05-373eb6c2422e3fa01489cf09;e0e556f1-bdc5-4f19-8d1e-4b139cb3b284)\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503\n\nInternal Error - We're working hard to fix this as soon as possible!\n",
+      "timestamp": 1775693568.9990287
+    }
+  ],
+  "timestamp": 1775693573.338079
+}

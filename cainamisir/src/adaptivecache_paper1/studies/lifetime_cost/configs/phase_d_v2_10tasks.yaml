@@ -1,0 +1,52 @@
+# Phase D v2 — 10 SWE-bench Lite tasks × 4 policies (Haiku, parallel)
+#
+# Tests whether v1's "consumption_evict resolves pytest-7490 alone" win
+# replicates at scale. Includes Step B (consumption_evict_facts: same as
+# consumption_evict but the [evicted: ...] placeholder retains a structured
+# one-line fact extracted from the obs content).
+#
+# Wall-time budget: ~10 tasks × 4 policies = 40 trajectories at n_workers=4
+# in parallel. Tasks within a cell run concurrently. ETA ~15-20 min.
+
+models:
+  - anthropic/claude-haiku-4-5
+
+summarizer_model: anthropic/claude-haiku-4-5
+
+model_kwargs:
+  anthropic/claude-haiku-4-5:
+    max_new_tokens: 800
+    temperature: 0.5
+
+policies:
+  - name: none
+  - name: smart_evict
+    kwargs: { trigger_ratio: 0.85, target_ratio: 0.55, protect_recent: 3, min_obs_tokens: 300, use_hard_budget_trigger: false, max_drop_score: 0.4, emergency_ratio: 0.95 }
+  - name: consumption_evict
+    kwargs: { drop_threshold_tokens: 5000, protect_recent: 3, min_obs_tokens: 200, trigger_ratio: 0.85, use_hard_budget_trigger: false, preserve_facts: false }
+  - name: consumption_evict_facts
+    kwargs: { drop_threshold_tokens: 5000, protect_recent: 3, min_obs_tokens: 200, trigger_ratio: 0.85, use_hard_budget_trigger: false, preserve_facts: true }
+
+benchmarks:
+  - name: swebench_live
+    kwargs:
+      cache_dir: /scratch/swebench_repos
+      max_steps_per_task: 80
+      instance_ids:
+        # mix of small/medium/hard, all 4 pre-cloned repos covered
+        - psf__requests-2148        # med, models.py
+        - psf__requests-2317        # small, sessions.py
+        - psf__requests-3362        # small, utils.py
+        - pallets__flask-4045       # small, blueprints.py
+        - pallets__flask-4992       # med, config.py
+        - pallets__flask-5063       # med, cli.py (100 patch lines)
+        - pylint-dev__pylint-5859   # small, misc.py
+        - pylint-dev__pylint-7228   # med, argument.py
+        - pytest-dev__pytest-5227   # small, logging.py
+        - pytest-dev__pytest-7490   # large problem, skipping.py
+
+budget_tokens: 35000
+hard_budget_tokens: 100000
+max_tasks: null
+n_workers: 4
+out_dir: studies/lifetime_cost/out/phase_d_v2_10tasks

@@ -1,0 +1,34 @@
+=== Qwen/Qwen3-1.7B → studies/lifetime_cost/out/hermes/attention_scores__Qwen_Qwen3-1.7B.csv ===
+28438 MiB
+
+Wrote studies/lifetime_cost/out/hermes/attention_scores__Qwen_Qwen3-1.7B.csv  (272 rows)
+Wrote studies/lifetime_cost/out/hermes/attention_vs_proxies.csv
+
+=== Correlations across 262 messages ===
+  attn_per_tok vs citation:    Pearson r = 0.062
+  attn_per_tok vs cos_sim:     Pearson r = 0.044
+  citation     vs cos_sim:     Pearson r = 0.022
+
+=== Qwen/Qwen3-4B → studies/lifetime_cost/out/hermes/attention_scores__Qwen_Qwen3-4B.csv ===
+39148 MiB
+
+Wrote studies/lifetime_cost/out/hermes/attention_scores__Qwen_Qwen3-4B.csv  (272 rows)
+Wrote studies/lifetime_cost/out/hermes/attention_vs_proxies.csv
+
+=== Correlations across 262 messages ===
+  attn_per_tok vs citation:    Pearson r = 0.061
+  attn_per_tok vs cos_sim:     Pearson r = 0.044
+  citation     vs cos_sim:     Pearson r = 0.022
+
+=== Qwen/Qwen3-8B → studies/lifetime_cost/out/hermes/attention_scores__Qwen_Qwen3-8B.csv ===
+40229 MiB
+
+Wrote studies/lifetime_cost/out/hermes/attention_scores__Qwen_Qwen3-8B.csv  (272 rows)
+Wrote studies/lifetime_cost/out/hermes/attention_vs_proxies.csv
+
+=== Correlations across 262 messages ===
+  attn_per_tok vs citation:    Pearson r = 0.061
+  attn_per_tok vs cos_sim:     Pearson r = 0.044
+  citation     vs cos_sim:     Pearson r = 0.022
+
+ALL_DONE

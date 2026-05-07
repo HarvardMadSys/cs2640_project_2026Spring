@@ -1,0 +1,3 @@
+policy,n,n_resolved,resolve_rate,mean_cost_per_task
+consumption_evict,30,27,0.9,0.731450275
+none,10,9,0.9,0.347234145

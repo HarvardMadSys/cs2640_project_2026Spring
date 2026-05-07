@@ -1,0 +1,98 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{zhang2023h2o,xiao2024streamingllm,li2024snapkv,liu2023scissorhands,cai2024pyramidkv}
+\citation{wu2025resum,lu2025supo,openhands2025}
+\citation{zhou2025mem1,yu2025memagent,sun2025contextfolding}
+\citation{zhang2023h2o}
+\citation{xiao2024streamingllm}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{1}{section.2}\protected@file@percent }
+\newlabel{sec:related}{{2}{1}{Related Work}{section.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}KV-Cache Eviction (Inference-Layer)}{1}{subsection.2.1}\protected@file@percent }
+\citation{liu2023scissorhands}
+\citation{li2024snapkv}
+\citation{cai2024pyramidkv}
+\citation{liu2023lostinmiddle}
+\citation{wu2025resum}
+\citation{lu2025supo}
+\citation{openhands2025}
+\citation{zhou2025mem1}
+\citation{yu2025memagent}
+\citation{sun2025contextfolding}
+\citation{wu2025resum}
+\citation{zhou2025mem1}
+\citation{yu2025memagent}
+\citation{sun2025contextfolding}
+\citation{kontonis2026memento}
+\citation{zhang2023h2o,li2024snapkv}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Agent Context Management}{2}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Summary}{2}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}System Design}{2}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Block Segmentation and Scoring}{2}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Three-Zone Layout and Eviction}{2}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Three-Tier Runtime Architecture}{2}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}A Critical Note on the Heuristic Scorer}{2}{subsection.3.4}\protected@file@percent }
+\citation{claudecode2025}
+\citation{kontonis2026memento}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces AdaptiveCacheis the only system that is layout-aware and prefix-cache-aware without requiring training.}}{3}{table.1}\protected@file@percent }
+\newlabel{tab:comparison}{{1}{3}{\sysname is the only system that is layout-aware and prefix-cache-aware without requiring training}{table.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Three-tier pipeline. Goal: never reach Tier 3.}}{3}{table.2}\protected@file@percent }
+\newlabel{tab:tiers}{{2}{3}{Three-tier pipeline. Goal: never reach Tier 3}{table.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Concurrent Work and Production Evidence}{3}{section.4}\protected@file@percent }
+\newlabel{sec:concurrent}{{4}{3}{Concurrent Work and Production Evidence}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Claude Code Compaction~\cite  {claudecode2025}}{3}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}MEMENTO}{3}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Implementation}{3}{section.5}\protected@file@percent }
+\newlabel{sec:impl}{{5}{3}{Implementation}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Two-Prototype Evolution}{3}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Core Library}{4}{subsection.5.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}GPU Inference Server}{4}{subsection.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Compatibility Engineering}{4}{subsection.5.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.5}SWE-bench Harness}{4}{subsection.5.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.6}Tier 1: The Unresolved Problem}{5}{subsection.5.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Results}{5}{section.6}\protected@file@percent }
+\newlabel{sec:eval}{{6}{5}{Results}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Scope and Methodology}{5}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Infrastructure Deployed}{5}{subsection.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Anthropic API Prototype}{5}{subsection.6.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Anthropic API prototype, astropy-12907, Claude Haiku 4.5. No-eviction is cheapest: eviction adds turns and cache misses that amplify cost rather than reduce it.}}{5}{table.3}\protected@file@percent }
+\newlabel{tab:prototype}{{3}{5}{Anthropic API prototype, astropy-12907, Claude Haiku 4.5. No-eviction is cheapest: eviction adds turns and cache misses that amplify cost rather than reduce it}{table.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Controlled vLLM Experiment}{5}{subsection.6.4}\protected@file@percent }
+\newlabel{sec:vllm_exp}{{6.4}{5}{Controlled vLLM Experiment}{subsection.6.4}{}}
+\citation{zhou2025mem1}
+\citation{yu2025memagent}
+\citation{sun2025contextfolding}
+\citation{kontonis2026memento}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces vLLM prefix cache hit rate. Policies run sequentially; LMCache CPU store reset between runs, but GPU cache is not (see text).}}{6}{table.4}\protected@file@percent }
+\newlabel{tab:hitrate}{{4}{6}{vLLM prefix cache hit rate. Policies run sequentially; LMCache CPU store reset between runs, but GPU cache is not (see text)}{table.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}SWE-bench Task Results}{6}{subsection.6.5}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces SWE-bench task experiment, Anthropic API (Haiku 4.5), 5 astropy instances, 8K budget. Resolve rates unknown (\texttt  {sb-cli} not run).}}{6}{table.5}\protected@file@percent }
+\newlabel{tab:swebench}{{5}{6}{SWE-bench task experiment, Anthropic API (Haiku 4.5), 5 astropy instances, 8K budget. Resolve rates unknown (\texttt {sb-cli} not run)}{table.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Reflection and Future Directions}{6}{section.7}\protected@file@percent }
+\newlabel{sec:reflection}{{7}{6}{Reflection and Future Directions}{section.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}The Scoring Problem}{6}{subsection.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}A Longer-Term Synthesis: Tetris + Folding + MEMENTO}{6}{subsection.7.2}\protected@file@percent }
+\newlabel{sec:tetris}{{7.2}{6}{A Longer-Term Synthesis: Tetris + Folding + MEMENTO}{subsection.7.2}{}}
+\bibstyle{plain}
+\bibdata{refs}
+\bibcite{openhands2025}{1}
+\bibcite{claudecode2025}{2}
+\bibcite{cai2024pyramidkv}{3}
+\bibcite{kontonis2026memento}{4}
+\bibcite{li2024snapkv}{5}
+\bibcite{liu2023lostinmiddle}{6}
+\bibcite{liu2023scissorhands}{7}
+\@writefile{toc}{\contentsline {section}{\numberline {8}Next Steps and Milestones}{7}{section.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9}Conclusion}{7}{section.9}\protected@file@percent }
+\bibcite{lu2025supo}{8}
+\bibcite{sun2025contextfolding}{9}
+\bibcite{wu2025resum}{10}
+\bibcite{xiao2024streamingllm}{11}
+\bibcite{yu2025memagent}{12}
+\bibcite{zhang2023h2o}{13}
+\bibcite{zhou2025mem1}{14}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Proposed Tetris synthesis across two sub-problems. PIN prefix bytes are identical throughout all three phases---continuous KV cache hits. No summary tokens are generated at any point. Context size stays bounded at $|\text  {prefix}| + |\text  {current sub-problem}|$.}}{8}{figure.1}\protected@file@percent }
+\newlabel{fig:tetris}{{1}{8}{Proposed Tetris synthesis across two sub-problems. PIN prefix bytes are identical throughout all three phases---continuous KV cache hits. No summary tokens are generated at any point. Context size stays bounded at $|\text {prefix}| + |\text {current sub-problem}|$}{figure.1}{}}
+\gdef \@abspage@last{8}

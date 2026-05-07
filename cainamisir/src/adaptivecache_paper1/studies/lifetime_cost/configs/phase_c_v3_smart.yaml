@@ -1,0 +1,60 @@
+# Phase C v3 — type-aware lazy eviction.
+#
+# Compares 4 policies on the 2 informative SWE-bench Lite tasks at max_steps=80:
+#   - none                — baseline
+#   - evict_oldest        — pure eviction by age (loses on requests-2317 vs none)
+#   - smart_evict         — type-prior + textual-overlap ref-count, lazy trigger
+#   - llm_reorganizer_v2  — same llm_reorganizer policy, but with:
+#                            * lazy trigger (use_hard_budget_trigger=True)
+#                            * drop until target (target_ratio=0.55)
+#                            * scoring prompt anchored on the problem statement
+#
+# Hypothesis: type-aware scoring (smart_evict) and/or task-aware LLM scoring
+# (llm_reorganizer_v2) protect read_file obs that evict_oldest dropped, so
+# the agent doesn't fall into the regex-loop pathology, and resolve rate at
+# matched cost goes up.
+
+models:
+  - vllm:Qwen/Qwen3-30B-A3B-Instruct-2507
+
+summarizer_model: vllm:Qwen/Qwen3-4B-Instruct-2507
+
+model_kwargs:
+  vllm:Qwen/Qwen3-30B-A3B-Instruct-2507:
+    max_new_tokens: 800
+    temperature: 0.5
+    enable_thinking: false
+    dtype: bfloat16
+    gpu_memory_utilization: 0.80
+    max_model_len: 128000
+    enable_prefix_caching: true
+  vllm:Qwen/Qwen3-4B-Instruct-2507:
+    max_new_tokens: 600
+    temperature: 0.5
+    enable_thinking: false
+    dtype: bfloat16
+    gpu_memory_utilization: 0.13
+    max_model_len: 8000
+    enable_prefix_caching: true
+
+policies:
+  - name: none
+  - name: smart_evict
+    kwargs: { trigger_ratio: 0.85, target_ratio: 0.55, protect_recent: 3, min_obs_tokens: 300, use_hard_budget_trigger: true }
+  - name: llm_reorganizer
+    kwargs: { trigger_ratio: 0.85, target_ratio: 0.55, protect_recent: 3, min_obs_tokens: 300, use_hard_budget_trigger: true, max_score_input_msgs: 30 }
+
+benchmarks:
+  - name: swebench_live
+    kwargs:
+      cache_dir: /scratch/swebench_repos
+      max_steps_per_task: 80
+      instance_ids:
+        - psf__requests-3362
+        - psf__requests-2317
+
+budget_tokens: 50000
+hard_budget_tokens: 100000
+max_tasks: null
+n_workers: 1
+out_dir: studies/lifetime_cost/out/phase_c_v3b_bigfiles

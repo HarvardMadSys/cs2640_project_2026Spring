@@ -1,0 +1,44 @@
+# Phase B smoke — τ-bench airline (Sierra Research) end-to-end on Qwen3-30B-A3B.
+#
+# Goal: confirm
+#   1. Our adapter drives tau-bench's user-simulator + tool API correctly
+#   2. Compaction actually fires on multi-turn agent dialogues (the 8K budget
+#      is well below the natural growth of an airline conversation)
+#   3. Policy ranking (cost-per-resolved) starts to differentiate
+#
+# User simulator: claude-haiku-4-5 via Anthropic API (key in .env). Cost
+# upper bound ~$0.20 for 3 tasks.
+
+models:
+  - hf:Qwen/Qwen3-30B-A3B-Instruct-2507
+
+model_kwargs:
+  hf:Qwen/Qwen3-30B-A3B-Instruct-2507:
+    max_new_tokens: 512
+    temperature: 0.0
+    enable_thinking: false
+    dtype: bfloat16
+    attn_implementation: sdpa
+
+policies:
+  - name: none
+  - name: position_aware
+    kwargs: { keep_first_turns: 3, keep_recent_turns: 3, trigger_ratio: 0.85, big_tool_obs_threshold_tokens: 600 }
+  - name: prefix_preserving
+    kwargs: { keep_first_turns: 3, keep_recent_turns: 3, trigger_ratio: 0.85 }
+
+benchmarks:
+  - name: taubench
+    kwargs:
+      domain: airline
+      max_tasks: 3
+      user_model: claude-haiku-4-5
+      user_provider: anthropic
+
+# Tight budget: airline tasks naturally grow to 15K+ tokens, so 8K trigger
+# fires by mid-conversation across all but the simplest tasks.
+budget_tokens: 8000
+hard_budget_tokens: 16000
+max_tasks: null
+n_workers: 1
+out_dir: studies/lifetime_cost/out/phase_b_taubench

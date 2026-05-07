@@ -1,0 +1,4 @@
+policy,n,n_resolved,resolve_rate,mean_cost_per_task
+consumption_evict,20,19,0.95,0.0348607525
+none,10,10,1.0,0.040992694999999996
+smart_evict,10,10,1.0,0.03485912

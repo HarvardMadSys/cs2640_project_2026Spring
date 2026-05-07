@@ -1,0 +1,44 @@
+# Phase C v8 — periodic LLM scoring as the eviction signal.
+#
+# `score_periodic`: every 10K tokens of context growth, ONE LLM call scores
+# all tool obs 1-10 for current task relevance. Eviction reads cached scores
+# (no LLM call in the eviction path). Same Tier-1 max_drop_score gate as
+# smart_evict. Scoring infrastructure cost lands in `compaction_dollars` —
+# run analyze with --exclude_compaction_costs for the "scoring is free" view.
+#
+# Also includes smart_evict (heuristic, current winner from v7) as the
+# baseline-to-beat.
+
+models:
+  - anthropic/claude-haiku-4-5
+
+summarizer_model: anthropic/claude-haiku-4-5
+
+model_kwargs:
+  anthropic/claude-haiku-4-5:
+    max_new_tokens: 800
+    temperature: 0.5
+
+policies:
+  - name: none
+  - name: smart_evict
+    kwargs: { trigger_ratio: 0.85, target_ratio: 0.55, protect_recent: 3, min_obs_tokens: 300, use_hard_budget_trigger: false, max_drop_score: 0.4, emergency_ratio: 0.95 }
+  - name: score_periodic
+    kwargs: { rescore_interval_tokens: 10000, trigger_ratio: 0.85, target_ratio: 0.55, protect_recent: 3, min_obs_tokens: 300, use_hard_budget_trigger: false, max_drop_score: 3, emergency_ratio: 0.95 }
+
+benchmarks:
+  - name: swebench_live
+    kwargs:
+      cache_dir: /scratch/swebench_repos
+      max_steps_per_task: 80
+      instance_ids:
+        - psf__requests-3362
+        - pallets__flask-5063
+        - pylint-dev__pylint-7080
+        - pytest-dev__pytest-7490
+
+budget_tokens: 35000
+hard_budget_tokens: 100000
+max_tasks: null
+n_workers: 4
+out_dir: studies/lifetime_cost/out/phase_c_v8_periodic

@@ -1,0 +1,68 @@
+{
+  "rows": [
+    {
+      "policy": "smart_evict",
+      "n_tasks": 4,
+      "n_resolved": 1,
+      "resolve_rate": 0.25,
+      "n_compactions_total": 0,
+      "mean_cost": 0.0108900025,
+      "mean_cost_agent_only": 0.0108900025,
+      "mean_compaction_cost": 0.0,
+      "cost_per_resolved": 0.04356001,
+      "cost_per_resolved_agent_only": 0.04356001,
+      "mean_steps": 26.25,
+      "mean_max_prompt_tokens": 22751.0,
+      "n_overflow_endings": 0
+    },
+    {
+      "policy": "prefix_preserving",
+      "n_tasks": 4,
+      "n_resolved": 1,
+      "resolve_rate": 0.25,
+      "n_compactions_total": 0,
+      "mean_cost": 0.01775894,
+      "mean_cost_agent_only": 0.01775894,
+      "mean_compaction_cost": 0.0,
+      "cost_per_resolved": 0.07103576,
+      "cost_per_resolved_agent_only": 0.07103576,
+      "mean_steps": 51.5,
+      "mean_max_prompt_tokens": 34384.5,
+      "n_overflow_endings": 0
+    },
+    {
+      "policy": "none",
+      "n_tasks": 4,
+      "n_resolved": 1,
+      "resolve_rate": 0.25,
+      "n_compactions_total": 0,
+      "mean_cost": 0.029468192500000004,
+      "mean_cost_agent_only": 0.029468192500000004,
+      "mean_compaction_cost": 0.0,
+      "cost_per_resolved": 0.11787277000000002,
+      "cost_per_resolved_agent_only": 0.11787277000000002,
+      "mean_steps": 29.5,
+      "mean_max_prompt_tokens": 52311.25,
+      "n_overflow_endings": 1
+    },
+    {
+      "policy": "llm_reorganizer",
+      "n_tasks": 4,
+      "n_resolved": 1,
+      "resolve_rate": 0.25,
+      "n_compactions_total": 1,
+      "mean_cost": 0.0429802325,
+      "mean_cost_agent_only": 0.0429724825,
+      "mean_compaction_cost": 7.75e-06,
+      "cost_per_resolved": 0.17192093,
+      "cost_per_resolved_agent_only": 0.17188993,
+      "mean_steps": 63.75,
+      "mean_max_prompt_tokens": 58671.75,
+      "n_overflow_endings": 1
+    }
+  ],
+  "frontier": [
+    "smart_evict"
+  ],
+  "cost_model": "qwen/qwen3-30b-a3b"
+}

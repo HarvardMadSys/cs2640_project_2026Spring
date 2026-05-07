@@ -1,0 +1,80 @@
+{
+  "rows": [
+    {
+      "policy": "none",
+      "n_tasks": 4,
+      "n_resolved": 2,
+      "resolve_rate": 0.5,
+      "n_compactions_total": 0,
+      "mean_cost": 0.014110464999999999,
+      "cost_per_resolved": 0.028220929999999998,
+      "mean_steps": 28.0,
+      "mean_max_prompt_tokens": 36212.25,
+      "n_overflow_endings": 2
+    },
+    {
+      "policy": "prefix_preserving",
+      "n_tasks": 4,
+      "n_resolved": 1,
+      "resolve_rate": 0.25,
+      "n_compactions_total": 12,
+      "mean_cost": 0.01107338,
+      "cost_per_resolved": 0.04429352,
+      "mean_steps": 21.75,
+      "mean_max_prompt_tokens": 13864.75,
+      "n_overflow_endings": 0
+    },
+    {
+      "policy": "microcompact",
+      "n_tasks": 4,
+      "n_resolved": 1,
+      "resolve_rate": 0.25,
+      "n_compactions_total": 43,
+      "mean_cost": 0.021092015000000002,
+      "cost_per_resolved": 0.08436806000000001,
+      "mean_steps": 31.5,
+      "mean_max_prompt_tokens": 22376.25,
+      "n_overflow_endings": 1
+    },
+    {
+      "policy": "llm_reorganizer",
+      "n_tasks": 4,
+      "n_resolved": 1,
+      "resolve_rate": 0.25,
+      "n_compactions_total": 91,
+      "mean_cost": 0.022710575000000004,
+      "cost_per_resolved": 0.09084230000000001,
+      "mean_steps": 31.5,
+      "mean_max_prompt_tokens": 40995.0,
+      "n_overflow_endings": 3
+    },
+    {
+      "policy": "evict_oldest",
+      "n_tasks": 4,
+      "n_resolved": 1,
+      "resolve_rate": 0.25,
+      "n_compactions_total": 37,
+      "mean_cost": 0.02442499,
+      "cost_per_resolved": 0.09769996,
+      "mean_steps": 31.5,
+      "mean_max_prompt_tokens": 22653.75,
+      "n_overflow_endings": 1
+    },
+    {
+      "policy": "position_aware",
+      "n_tasks": 4,
+      "n_resolved": 1,
+      "resolve_rate": 0.25,
+      "n_compactions_total": 37,
+      "mean_cost": 0.0244476025,
+      "cost_per_resolved": 0.09779041,
+      "mean_steps": 31.5,
+      "mean_max_prompt_tokens": 22806.75,
+      "n_overflow_endings": 1
+    }
+  ],
+  "frontier": [
+    "none"
+  ],
+  "cost_model": "qwen/qwen3-30b-a3b"
+}

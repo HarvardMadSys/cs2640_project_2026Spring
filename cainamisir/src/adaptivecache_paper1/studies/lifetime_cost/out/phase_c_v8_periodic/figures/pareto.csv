@@ -1,0 +1,4 @@
+policy,n,n_resolved,resolve_rate,mean_cost_per_task
+none,4,2,0.5,0.5996906000000001
+score_periodic,4,2,0.5,0.7214457125
+smart_evict,4,2,0.5,0.607971925

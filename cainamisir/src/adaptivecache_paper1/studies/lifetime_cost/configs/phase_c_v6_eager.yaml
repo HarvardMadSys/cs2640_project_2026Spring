@@ -1,0 +1,61 @@
+# Phase C v6 — eager-trigger compaction.
+#
+# v5 used `use_hard_budget_trigger=true` (trigger at 0.85 × hard = 85K). That
+# fires too late: task ends at 90K, leaving only 1-2 subsequent steps to
+# amortize the cliff cost. Net effect on cost: compaction loses.
+#
+# Cost-equation reasoning:
+#   - Pre-compaction step at 90K, ~95% cache hit: ~$0.011 / step
+#   - Post-compaction step at ~30K, ~5% cache hit (cliff): ~$0.024 / step
+#     → cliff cost = ~$0.013 over a no-compaction step
+#   - Subsequent steps with smaller prompt + warming cache: ~$0.005 / step
+#     → savings = ~$0.005 / step vs no-compaction
+#   - Break-even: ~3 steps post-compaction
+#
+# So compaction must fire when there are at least ~3-5 steps left to
+# amortize. With heavy SWE tasks running ~20-40 steps total, firing at
+# 30-40K (when context is at "moderate growth") gives 10+ steps to recoup.
+#
+# This run uses `use_hard_budget_trigger=false` (trigger at 0.85 × soft =
+# 30K with our soft=35K) AND a smaller soft budget so compaction fires
+# earlier on growth.
+
+models:
+  - anthropic/claude-haiku-4-5
+
+summarizer_model: anthropic/claude-haiku-4-5
+
+model_kwargs:
+  anthropic/claude-haiku-4-5:
+    max_new_tokens: 800
+    temperature: 0.5
+
+policies:
+  - name: none
+  - name: smart_evict
+    kwargs: { trigger_ratio: 0.85, target_ratio: 0.40, protect_recent: 3, min_obs_tokens: 300, use_hard_budget_trigger: false }
+  - name: llm_reorganizer
+    kwargs: { trigger_ratio: 0.85, target_ratio: 0.40, protect_recent: 3, min_obs_tokens: 300, use_hard_budget_trigger: false, max_score_input_msgs: 30 }
+  - name: prefix_preserving
+    kwargs: { keep_first_turns: 2, keep_recent_turns: 6, trigger_ratio: 0.85, cooldown_steps: 5 }
+
+benchmarks:
+  - name: swebench_live
+    kwargs:
+      cache_dir: /scratch/swebench_repos
+      max_steps_per_task: 80
+      instance_ids:
+        - psf__requests-3362
+        - pallets__flask-5063
+        - pylint-dev__pylint-7080
+        - pytest-dev__pytest-7490
+
+# Eager budget: trigger fires at 0.85 × soft_budget = 0.85 × 35K = ~30K
+# (so compaction kicks in when content is at "moderate" growth, leaving
+# 10+ steps of amortization room before the heavy tasks would naturally
+# finish around 90K).
+budget_tokens: 35000
+hard_budget_tokens: 100000
+max_tasks: null
+n_workers: 4
+out_dir: studies/lifetime_cost/out/phase_c_v6_eager

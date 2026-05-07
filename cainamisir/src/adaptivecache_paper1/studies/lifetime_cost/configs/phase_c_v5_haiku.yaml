@@ -1,0 +1,47 @@
+# Phase C v5 — Claude Haiku 4.5 as the agent.
+#
+# Same 4 SWE-bench Lite tasks + same 4 policies as v4, but with Haiku as
+# both agent and summarizer. Haiku is a much stronger coder than
+# Qwen3-30B-A3B, so the agent shouldn't get stuck in regex loops, and
+# Anthropic's `cache_read_input_tokens` gives us *real* cache hit numbers
+# (not our byte-prefix sim).
+#
+# Runs in parallel with Qwen v4 since Haiku is API-only — no GPU contention.
+# Cost: ~$2-3 total for 16 trajectories at Haiku 4.5 pricing
+# ($0.10/MTok cached input, $1/MTok uncached, $5/MTok output).
+
+models:
+  - anthropic/claude-haiku-4-5
+
+summarizer_model: anthropic/claude-haiku-4-5
+
+model_kwargs:
+  anthropic/claude-haiku-4-5:
+    max_new_tokens: 800
+    temperature: 0.5
+
+policies:
+  - name: none
+  - name: smart_evict
+    kwargs: { trigger_ratio: 0.85, target_ratio: 0.55, protect_recent: 3, min_obs_tokens: 300, use_hard_budget_trigger: true }
+  - name: llm_reorganizer
+    kwargs: { trigger_ratio: 0.85, target_ratio: 0.55, protect_recent: 3, min_obs_tokens: 300, use_hard_budget_trigger: true, max_score_input_msgs: 30 }
+  - name: prefix_preserving
+    kwargs: { keep_first_turns: 2, keep_recent_turns: 6, trigger_ratio: 0.85, cooldown_steps: 5 }
+
+benchmarks:
+  - name: swebench_live
+    kwargs:
+      cache_dir: /scratch/swebench_repos
+      max_steps_per_task: 80
+      instance_ids:
+        - psf__requests-3362
+        - pallets__flask-5063
+        - pylint-dev__pylint-7080
+        - pytest-dev__pytest-7490
+
+budget_tokens: 50000
+hard_budget_tokens: 100000
+max_tasks: null
+n_workers: 1
+out_dir: studies/lifetime_cost/out/phase_c_v5_haiku

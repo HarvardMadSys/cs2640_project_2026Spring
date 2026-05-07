@@ -1,0 +1,58 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{yao2023react}
+\citation{kwon2023vllm}
+\citation{yang2024swebench}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Solution Overview}{1}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Agents and Workload Characterization}{1}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Agent Types}{1}{subsection.3.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Agent workload profiles (median). The p90 prefill tokens reach up to 50$\times $ the median, driven by retry loops and multi-hop reasoning that accumulate long conversation histories.}}{2}{table.1}\protected@file@percent }
+\newlabel{tab:agents}{{1}{2}{Agent workload profiles (median). The p90 prefill tokens reach up to 50$\times $ the median, driven by retry loops and multi-hop reasoning that accumulate long conversation histories}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Tail Behavior}{2}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Traces, Visualization, and Design Space}{2}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Trace Format}{2}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Design Space}{2}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}\textsc  {HyperAgent} Framework and Implementation}{2}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}\textsc  {HyperAgenting}}{2}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Implementation}{2}{subsection.5.2}\protected@file@percent }
+\citation{yang2018hotpotqa}
+\citation{wei2025browsecomp}
+\citation{mialon2023gaia}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces RAG benchmark datasets. Median turns and tool-call duration from the 16-task baseline run.}}{3}{table.2}\protected@file@percent }
+\newlabel{tab:datasets}{{2}{3}{RAG benchmark datasets. Median turns and tool-call duration from the 16-task baseline run}{table.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Experiments and Results}{3}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Setup}{3}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Results}{3}{subsection.6.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Baseline vs.\ \textsc  {HyperAgent}, 16 RAG tasks, Qwen~2.5-7B, single H100, prefix caching off.}}{3}{table.3}\protected@file@percent }
+\newlabel{tab:results}{{3}{3}{Baseline vs.\ \textsc {HyperAgent}, 16 RAG tasks, Qwen~2.5-7B, single H100, prefix caching off}{table.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Normalized latency: \textsc  {HyperAgent} vs.\ baseline. Total latency (end-to-end) drops 22\%, while service latency (worker-internal) rises because the engine is always busy.}}{3}{figure.1}\protected@file@percent }
+\newlabel{fig:hyper}{{1}{3}{Normalized latency: \textsc {HyperAgent} vs.\ baseline. Total latency (end-to-end) drops 22\%, while service latency (worker-internal) rises because the engine is always busy}{figure.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Reflection}{3}{section.7}\protected@file@percent }
+\newlabel{sec:reflection}{{7}{3}{Reflection}{section.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}What Worked}{3}{subsection.7.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Speculation accuracy (MAE in seconds, log scale). With measured hints from prior tool calls, duration prediction error drops by over an order of magnitude for Data Analysis and RAG agents.}}{4}{figure.2}\protected@file@percent }
+\newlabel{fig:speculation}{{2}{4}{Speculation accuracy (MAE in seconds, log scale). With measured hints from prior tool calls, duration prediction error drops by over an order of magnitude for Data Analysis and RAG agents}{figure.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}What Did Not Work}{4}{subsection.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Next Steps}{4}{subsection.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.4}Milestones}{4}{subsection.7.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}AI Usage Report}{4}{section.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}How I Used AI}{4}{subsection.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}What I Learned}{5}{subsection.8.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}What I Did Not Expect}{5}{subsection.8.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.4}Maintaining Context Across Sessions with next\_session.md}{5}{subsection.8.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.5}Project-Specific AI Experiences}{5}{subsection.8.5}\protected@file@percent }
+\bibstyle{plain}
+\bibcite{kwon2023vllm}{1}
+\bibcite{yao2023react}{2}
+\bibcite{continuum2024}{3}
+\bibcite{yang2024swebench}{4}
+\bibcite{yang2018hotpotqa}{5}
+\bibcite{wei2025browsecomp}{6}
+\bibcite{mialon2023gaia}{7}
+\bibcite{li2024lmcache}{8}
+\bibcite{qin2025mooncake}{9}
+\bibcite{sheng2023flexgen}{10}
+\gdef \@abspage@last{6}

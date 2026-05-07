@@ -1,0 +1,98 @@
+\begin{thebibliography}{10}
+
+\bibitem{openhands2025}
+{All-Hands.dev}.
+\newblock {OpenHands} context condensation.
+\newblock \url{https://github.com/All-Hands-AI/OpenHands}, 2025.
+
+\bibitem{claudecode2025}
+{Anthropic}.
+\newblock {Claude Code} compaction source (\texttt{src/services/compact/}),
+  2025.
+\newblock Internal source, became publicly accessible 2026.
+
+\bibitem{cai2024pyramidkv}
+Zefan Cai, Yichi Zhang, Bofei Gao, Yuliang Liu, Tianyu Liu, Keming Lu, Wayne
+  Xiong, Yue Dong, Baobao Chang, Junjie Hu, et~al.
+\newblock {PyramidKV}: Dynamic {KV} cache compression based on pyramidal
+  information funneling.
+\newblock {\em arXiv preprint arXiv:2406.02069}, 2024.
+
+\bibitem{kontonis2026memento}
+Vasilis Kontonis, Yuchen Zeng, Shivam Garg, Lingjiao Chen, Hao Tang, Ziyan
+  Wang, Ahmed Awadallah, Eric Horvitz, John Langford, and Dimitris
+  Papailiopoulos.
+\newblock {MEMENTO}: Teaching {LLMs} to manage their own context.
+\newblock {\em arXiv preprint}, 2026.
+\newblock Microsoft Research.
+
+\bibitem{li2024snapkv}
+Yuhong Li, Yingbing Huang, Bowen Yang, Bharat Venkitesh, Acyr Locatelli,
+  Hanchen Ye, Tianle Cai, Patrick Lewis, and Deming Chen.
+\newblock {SnapKV}: {LLM} knows what you are looking for before generation.
+\newblock {\em arXiv preprint arXiv:2404.14469}, 2024.
+
+\bibitem{liu2023lostinmiddle}
+Nelson~F. Liu, Kevin Lin, John Hewitt, Ashwin Paranjape, Michele Bevilacqua,
+  Fabio Petroni, and Percy Liang.
+\newblock Lost in the middle: How language models use long contexts.
+\newblock {\em Transactions of the Association for Computational Linguistics
+  (TACL)}, 12:157--173, 2024.
+
+\bibitem{liu2023scissorhands}
+Zichang Liu, Aditya Desai, Fangshuo Liao, Weitao Wang, Victor Xie, Zhaozhuo Xu,
+  Anastasios Kyrillidis, and Anshumali Shrivastava.
+\newblock {ScissorHands}: Exploiting the persistence of importance hypothesis
+  for {LLM} {KV} cache compression at test time.
+\newblock In {\em Advances in Neural Information Processing Systems (NeurIPS)},
+  2023.
+
+\bibitem{lu2025supo}
+Yucheng Lu et~al.
+\newblock Scaling {LLM} multi-turn reinforcement learning with end-to-end
+  summarization-based context management.
+\newblock {\em arXiv preprint}, 2025.
+
+\bibitem{sun2025contextfolding}
+Yuxiao Sun et~al.
+\newblock Context folding: Active context management for {LLM} agents via
+  learned branch-return mechanisms.
+\newblock {\em arXiv preprint}, 2025.
+
+\bibitem{wu2025resum}
+Xixi Wu, Kuan Li, Yida Zhao, Liwen Zhang, Litu Ou, Huifeng Yin, Zhongwang
+  Zhang, Xinmiao Yu, Dingchu Zhang, Yong Jiang, et~al.
+\newblock {ReSum}: Unlocking long-horizon search intelligence via context
+  summarization.
+\newblock {\em arXiv preprint arXiv:2509.13313}, 2025.
+
+\bibitem{xiao2024streamingllm}
+Guangxuan Xiao, Yuandong Tian, Beidi Chen, Song Han, and Mike Lewis.
+\newblock Efficient streaming language models with attention sinks.
+\newblock In {\em International Conference on Learning Representations (ICLR)},
+  2024.
+
+\bibitem{yu2025memagent}
+Hongli Yu, Tinghong Chen, Jiangtao Feng, Jiangjie Chen, Weinan Dai, Qiying Yu,
+  Ya-Qin Zhang, Wei-Ying Ma, Jingjing Liu, Mingxuan Wang, et~al.
+\newblock {MemAgent}: Reshaping long-context {LLM} with multi-conv {RL}-based
+  memory agent.
+\newblock {\em arXiv preprint arXiv:2507.02259}, 2025.
+
+\bibitem{zhang2023h2o}
+Zhenyu Zhang, Ying Sheng, Tianyi Zhou, Tianlong Chen, Lianmin Zheng, Ruisi Cai,
+  Zhao Song, Yuandong Tian, Christopher R{\'e}, Clark Barrett, Zhangyang Wang,
+  and Beidi Chen.
+\newblock {H$_2$O}: Heavy-hitter oracle for efficient generative inference of
+  large language models.
+\newblock In {\em Advances in Neural Information Processing Systems (NeurIPS)},
+  2023.
+
+\bibitem{zhou2025mem1}
+Zijian Zhou, Ao~Qu, Zhaoxuan Wu, Sunghwan Kim, Alok Prakash, Daniela Rus,
+  Jinhua Zhao, Bryan Kian~Hsiang Low, and Paul~Pu Liang.
+\newblock {MEM1}: Learning to synergize memory and reasoning for efficient
+  long-horizon agents.
+\newblock {\em arXiv preprint arXiv:2506.15841}, 2025.
+
+\end{thebibliography}

@@ -1,0 +1,6 @@
+policy,anthropic/claude-haiku-4-5,anthropic/claude-sonnet-4-6,openai/gpt-4.1-mini,openai/gpt-4.1,qwen/qwen3-30b-a3b
+boundary_aware,0.070707,0.212120,0.043152,0.215761,0.006460
+microcompact,0.172163,0.516490,0.088302,0.441508,0.013325
+naive_summary,0.068367,0.205100,0.035636,0.178178,0.006009
+none,0.069752,0.209256,0.043992,0.219958,0.006416
+prefix_preserving,0.077961,0.233883,0.042137,0.210685,0.007073

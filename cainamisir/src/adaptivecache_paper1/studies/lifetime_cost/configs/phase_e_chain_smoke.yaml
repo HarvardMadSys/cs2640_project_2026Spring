@@ -1,0 +1,31 @@
+# Phase E v3 SMOKE — single chain (3 customers) × `none` policy.
+# Verify chain harness runs end-to-end before scaling.
+
+models:
+  - anthropic/claude-haiku-4-5
+
+summarizer_model: anthropic/claude-haiku-4-5
+
+model_kwargs:
+  anthropic/claude-haiku-4-5:
+    max_new_tokens: 600
+    temperature: 0.5
+
+policies:
+  - name: none
+
+benchmarks:
+  - name: taubench
+    kwargs:
+      domain: retail
+      max_tasks: 3
+      chain_size: 3
+      chain_max_steps_per_customer: 30
+      user_model: claude-haiku-4-5
+      user_provider: anthropic
+
+budget_tokens: 35000
+hard_budget_tokens: 100000
+max_tasks: null
+n_workers: 1
+out_dir: studies/lifetime_cost/out/phase_e_chain_smoke

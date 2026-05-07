@@ -1,0 +1,49 @@
+# Phase C v7 — "only evict what's safe to drop"
+#
+# v6 eager fired compaction hard (47 fires for smart_evict on Haiku) but lost
+# on cost because every fire created a cliff. The trace inspection revealed
+# smart_evict was holing read_file observations the agent later re-read 3-4×
+# — those obs had high scores (1.42), but smart_evict still evicted them
+# because the budget said it must.
+#
+# v7 fix: add a `max_drop_score` gate. Compaction only fires if there's at
+# least one obs with score ≤ threshold. Otherwise it ties `none`. Emergency
+# override at 95% of hard_budget so we don't OOM.
+#
+# smart_evict: max_drop_score=0.4 → only drops search/list_files exhaust
+# with low ref_count (read_file=1.0 prior would never qualify unless ref=0)
+# llm_reorganizer: max_drop_score=3 → only drops what LLM marked ≤ 3/10
+
+models:
+  - anthropic/claude-haiku-4-5
+
+summarizer_model: anthropic/claude-haiku-4-5
+
+model_kwargs:
+  anthropic/claude-haiku-4-5:
+    max_new_tokens: 800
+    temperature: 0.5
+
+policies:
+  - name: none
+  - name: smart_evict
+    kwargs: { trigger_ratio: 0.85, target_ratio: 0.55, protect_recent: 3, min_obs_tokens: 300, use_hard_budget_trigger: false, max_drop_score: 0.4, emergency_ratio: 0.95 }
+  - name: llm_reorganizer
+    kwargs: { trigger_ratio: 0.85, target_ratio: 0.55, protect_recent: 3, min_obs_tokens: 300, use_hard_budget_trigger: false, max_score_input_msgs: 30, max_drop_score: 3, emergency_ratio: 0.95 }
+
+benchmarks:
+  - name: swebench_live
+    kwargs:
+      cache_dir: /scratch/swebench_repos
+      max_steps_per_task: 80
+      instance_ids:
+        - psf__requests-3362
+        - pallets__flask-5063
+        - pylint-dev__pylint-7080
+        - pytest-dev__pytest-7490
+
+budget_tokens: 35000
+hard_budget_tokens: 100000
+max_tasks: null
+n_workers: 4
+out_dir: studies/lifetime_cost/out/phase_c_v7_safedrop

@@ -1,0 +1,629 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+"""
+MementoStore — process-global side table holding obs KV captured at
+compaction time, indexed by memento_id.
+
+This is the substrate for Paper 2's KV-level recall (the "stale historical
+truth" mechanism). At compaction time, the obs blocks are copied from GPU
+to CPU pinned memory and stashed here. On recall, the policy asks the
+engine to splice them back into a future request's block table.
+
+Phase 1A scaffolding: defines the data model + a singleton accessor. The
+worker's actual GPU→CPU copy is wired in Phase 1B; until then, `stash`
+records metadata only (cpu_kv may be None).
+"""
+
+from __future__ import annotations
+
+import atexit
+import json
+import os
+from dataclasses import dataclass, field
+from typing import Optional
+
+import torch
+
+
+# Phase 9: registry for block_pool so heartbeat + GPU mem trace can
+# sample get_num_free_blocks() — the true measure of "release", since
+# torch.cuda.memory_allocated stays flat (vLLM pre-allocates the pool).
+_GLOBAL_BLOCK_POOL = None
+
+
+def register_block_pool(block_pool) -> None:
+    global _GLOBAL_BLOCK_POOL
+    _GLOBAL_BLOCK_POOL = block_pool
+
+
+def get_num_free_blocks_or_neg1() -> int:
+    bp = _GLOBAL_BLOCK_POOL
+    if bp is None:
+        return -1
+    try:
+        return int(bp.get_num_free_blocks())
+    except Exception:
+        return -1
+
+
+# Phase 9 heartbeat: a background thread prints ENGINE_STATS every N
+# seconds so we can detect engine hangs vs slow but live runs. Enabled
+# when PAPER2_HEARTBEAT_SEC env var is set to a positive integer.
+_HEARTBEAT_THREAD_STARTED = False
+
+
+def _start_heartbeat_thread() -> None:
+    global _HEARTBEAT_THREAD_STARTED
+    if _HEARTBEAT_THREAD_STARTED:
+        return
+    raw = os.environ.get("PAPER2_HEARTBEAT_SEC", "0") or "0"
+    try:
+        interval = int(raw)
+    except Exception:
+        interval = 0
+    print(f"[heartbeat-init pid={os.getpid()}] PAPER2_HEARTBEAT_SEC={raw!r} "
+          f"→ interval={interval}",
+          flush=True)
+    if interval <= 0:
+        return
+    _HEARTBEAT_THREAD_STARTED = True
+    import threading
+    import time as _time
+
+    def _heartbeat():
+        last_seen = dict(ENGINE_STATS)
+        path = os.environ.get("PAPER2_GPU_MEM_TRACE_PATH")
+        while True:
+            _time.sleep(interval)
+            now = dict(ENGINE_STATS)
+            delta = {
+                k: now[k] - last_seen.get(k, 0)
+                for k in now
+                if now[k] != last_seen.get(k, 0)
+            }
+            # GPU mem snapshot to log + jsonl trace
+            alloc_gb = 0.0
+            reserved_gb = 0.0
+            try:
+                import torch as _torch
+                if _torch.cuda.is_available():
+                    alloc_gb = _torch.cuda.memory_allocated() / 1e9
+                    reserved_gb = _torch.cuda.memory_reserved() / 1e9
+            except Exception:
+                pass
+            n_free = get_num_free_blocks_or_neg1()
+            print(f"[heartbeat pid={os.getpid()}] stats={now} "
+                  f"gpu_alloc={alloc_gb:.2f}GB reserved={reserved_gb:.2f}GB "
+                  f"free_blocks={n_free} "
+                  f"delta_last_{interval}s={delta or '(no change)'}",
+                  flush=True)
+            if path:
+                try:
+                    import json as _json
+                    rec = {
+                        "t": _time.time(),
+                        "label": "heartbeat",
+                        "pid": os.getpid(),
+                        "alloc_bytes": int(alloc_gb * 1e9),
+                        "reserved_bytes": int(reserved_gb * 1e9),
+                        "num_free_blocks": n_free,
+                        "engine_stats": now,
+                    }
+                    with open(path, "a") as f:
+                        f.write(_json.dumps(rec) + "\n")
+                except Exception:
+                    pass
+            last_seen = now
+
+    t = threading.Thread(target=_heartbeat, daemon=True, name="paper2-heartbeat")
+    t.start()
+
+
+# Process-global engine-side counters. Incremented by the worker at the
+# call sites listed in the comment. Dumped to disk via atexit so we can
+# verify (post-bake) that v4 plumbing actually fired in the worker
+# subprocess — print() to worker stdout is unreliable under vLLM V1.
+ENGINE_STATS: dict[str, int] = {
+    "compactions_seen": 0,        # compact_kv_cache called (any mode)
+    "captures_built": 0,          # capture_operations populated by mgr
+    "pins_applied": 0,            # Phase 4a refcount++
+    "mask_short_circuits": 0,     # Phase 4b: physical compaction skipped
+    "block_table_filters": 0,     # Phase 4c: worker filtered N rows
+    "block_ids_filtered": 0,      # Phase 4c: total block IDs compacted-out
+    "kv_captures_executed": 0,    # worker did GPU→CPU copy
+    "kv_restores_executed": 0,    # worker did CPU→GPU copy
+    "recalls_via_unmask": 0,      # Phase 4e: obs_id consumed from recall queue
+    "dual_key_inserts": 0,        # Phase 8: cached block dual-keyed under
+                                   # additional chain hash (transparent compaction)
+    "kv_rotations_executed": 0,   # Phase 9: suffix K rotated in cache to match
+                                   # post-recall logical positions (RoPE composition)
+    "kv_rotations_blocks": 0,     # Phase 9: total #blocks whose K was rotated
+}
+
+
+def dump_engine_stats(path: Optional[str] = None) -> None:
+    """Write ENGINE_STATS as a JSON snapshot to {path}.{pid}.
+
+    Overwrite-style — each process writes its own pid-suffixed file every
+    time. Reader tallies all *.json snapshots in the run dir. Called
+    inline after every counter increment so the file is on disk before
+    volume.commit() — atexit is unreliable under Modal's SIGKILL teardown.
+    """
+    if path is None:
+        path = os.environ.get("PAPER2_ENGINE_STATS_PATH")
+    if not path:
+        return
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        per_pid_path = f"{path}.{os.getpid()}"
+        out = {"pid": os.getpid(), **ENGINE_STATS}
+        # Atomic write: serialize to a temp then rename.
+        tmp = per_pid_path + ".tmp"
+        with open(tmp, "w") as f:
+            f.write(json.dumps(out))
+        os.replace(tmp, per_pid_path)
+    except Exception:  # pragma: no cover — diagnostic only
+        pass
+
+
+def bump(key: str, n: int = 1) -> None:
+    """Increment ENGINE_STATS[key] and persist immediately."""
+    ENGINE_STATS[key] = ENGINE_STATS.get(key, 0) + n
+    dump_engine_stats()
+
+
+# ---- Phase 4e: stable obs_id + recall queue ----
+# obs_id is derived from the obs token content: same obs across calls →
+# same id. This lets the policy address an obs across request_id changes,
+# and lets the scheduler do idempotent capture/pin (Phase 4e refinement).
+import hashlib as _hashlib
+
+
+def compute_obs_id(token_ids) -> str:
+    """Stable hash of obs tokens. Used as memento_id under v4 attmask.
+
+    Engine and policy/adapter compute this same way so they can refer to
+    the same obs across chat() calls (request_id changes; content stays).
+    """
+    h = _hashlib.sha256()
+    for t in token_ids:
+        h.update(int(t).to_bytes(4, "little", signed=False))
+    return f"obs:{h.hexdigest()[:16]}"
+
+
+_RECALL_QUEUE_PATH_DEFAULT = "/tmp/paper2_recall_queue.jsonl"
+
+
+def _recall_queue_path() -> str:
+    return os.environ.get(
+        "PAPER2_RECALL_QUEUE_PATH", _RECALL_QUEUE_PATH_DEFAULT
+    )
+
+
+_CAPTURED_OBS_PATH_DEFAULT = "/tmp/paper2_captured_obs.jsonl"
+
+
+def _captured_obs_path() -> str:
+    return os.environ.get(
+        "PAPER2_CAPTURED_OBS_PATH", _CAPTURED_OBS_PATH_DEFAULT
+    )
+
+
+def announce_captured_obs(obs_id: str) -> None:
+    """Phase 9: engine-side notice that obs_id is now in the memento store.
+
+    Append-only file; adapter reads it (read_captured_obs_ids) before
+    queuing kvrestore recalls so we never recall an obs the engine
+    hasn't captured yet (which would fail with 'unknown memento_id').
+    """
+    path = _captured_obs_path()
+    try:
+        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+        with open(path, "a") as f:
+            f.write(json.dumps({"obs_id": obs_id}) + "\n")
+    except Exception:
+        pass
+
+
+def read_captured_obs_ids() -> "set[str]":
+    """Phase 9: snapshot of obs_ids the engine has captured this session.
+
+    Adapter calls this before deciding whether to recall a given obs_id.
+    Idempotent and cheap (small append-only file). Returns an empty set
+    if the file doesn't exist yet.
+    """
+    path = _captured_obs_path()
+    if not os.path.exists(path):
+        return set()
+    out: "set[str]" = set()
+    try:
+        with open(path) as f:
+            for line in f:
+                try:
+                    rec = json.loads(line)
+                except Exception:
+                    continue
+                oid = rec.get("obs_id")
+                if oid:
+                    out.add(oid)
+    except Exception:
+        return out
+    return out
+
+
+def reset_captured_obs() -> None:
+    """Test hook: reset the captured-obs announcement file."""
+    path = _captured_obs_path()
+    if os.path.exists(path):
+        try:
+            os.remove(path)
+        except Exception:
+            pass
+
+
+def queue_recall(obs_id: str) -> None:
+    """Append obs_id to the recall queue file.
+
+    Cross-process channel: the engine subprocess reads + drains this on
+    each compaction. Adapter (main process) appends. Filesystem-based
+    so it survives the process boundary in vLLM V1 multi-proc deploy.
+    """
+    path = _recall_queue_path()
+    try:
+        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+        with open(path, "a") as f:
+            f.write(json.dumps({"obs_id": obs_id}) + "\n")
+        print(f"[v4e-queue-write] appended {obs_id} → {path}", flush=True)
+    except Exception as e:
+        print(f"[v4e-queue-write-err] {obs_id} → {path}: "
+              f"{type(e).__name__}: {e}",
+              flush=True)
+
+
+def consume_recall(obs_id: str) -> bool:
+    """Atomic-ish: if obs_id is queued, remove it and return True.
+
+    Race-free in our use (single writer, single reader), but lock-free.
+    Reads the whole queue, drops one matching obs_id, rewrites the
+    remainder. Returns False if obs_id is not queued.
+    """
+    path = _recall_queue_path()
+    if not os.path.exists(path):
+        print(f"[v4e-consume-MISS-no-file] looked for {obs_id} at {path}",
+              flush=True)
+        return False
+    queued: list[str] = []
+    found = False
+    try:
+        with open(path) as f:
+            for line in f:
+                try:
+                    rec = json.loads(line)
+                except Exception:
+                    continue
+                qid = rec.get("obs_id")
+                if not qid:
+                    continue
+                if qid == obs_id and not found:
+                    found = True  # drop the first match
+                    continue
+                queued.append(qid)
+    except Exception:
+        return False
+    if not found:
+        print(f"[v4e-consume-MISS-not-in-queue] looked for {obs_id} at {path}, "
+              f"queue has {len(queued)} entries: {queued[:5]}",
+              flush=True)
+        return False
+    print(f"[v4e-consume-HIT] {obs_id} consumed; remaining {len(queued)}: "
+          f"{queued[:5]}",
+          flush=True)
+    try:
+        tmp = path + ".tmp"
+        with open(tmp, "w") as f:
+            for qid in queued:
+                f.write(json.dumps({"obs_id": qid}) + "\n")
+        os.replace(tmp, path)
+    except Exception:
+        pass
+    return True
+
+
+def reset_recall_queue() -> None:
+    """Test hook: drop the queue file."""
+    path = _recall_queue_path()
+    if os.path.exists(path):
+        try:
+            os.remove(path)
+        except Exception:
+            pass
+
+
+_KV_RESTORE_QUEUE_PATH_DEFAULT = "/tmp/paper2_kv_restore_queue.jsonl"
+
+
+def _kv_restore_queue_path() -> str:
+    return os.environ.get(
+        "PAPER2_KV_RESTORE_QUEUE_PATH", _KV_RESTORE_QUEUE_PATH_DEFAULT
+    )
+
+
+def queue_kv_restore_request(memento_id: str, rotate_delta: int = 0) -> None:
+    """Phase 3c + 9: append a memento_id (+ optional rotate_delta) to the queue.
+
+    Adapter writes (main proc); scheduler reads (engine proc) when the
+    next chat()'s request is about to start. The scheduler then calls
+    its own queue_kv_restore(request_id, memento_id, rotate_delta) to
+    allocate fresh GPU blocks, queue a worker KVRestoreOp (CPU→GPU copy),
+    splice the new blocks into req_to_blocks at the obs's original
+    logical position, AND queue a KVRotateOp that rotates the suffix's
+    cached K vectors by `rotate_delta` tokens to correct their RoPE
+    phase post-splice.
+
+    rotate_delta: tokens by which the suffix shifted on recall.
+        For lru-kvrestore mode this is m_obs - p_placeholder
+        (positive when obs is longer than placeholder, which is normal).
+        Pass 0 to skip rotation (legacy Phase 3c behavior with
+        accepted RoPE drift).
+    """
+    path = _kv_restore_queue_path()
+    try:
+        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+        with open(path, "a") as f:
+            f.write(json.dumps({
+                "memento_id": memento_id,
+                "rotate_delta": int(rotate_delta),
+            }) + "\n")
+    except Exception:
+        pass
+
+
+def drain_kv_restore_requests() -> list[tuple[str, int]]:
+    """Consume + return all queued (memento_id, rotate_delta). Empties queue.
+
+    Called by the scheduler at request-add time so each new request gets
+    the pending restores applied before forward runs. Backward-compatible
+    with prior file format that had only {"memento_id": ...} — those
+    return rotate_delta=0.
+    """
+    path = _kv_restore_queue_path()
+    if not os.path.exists(path):
+        return []
+    out: list[tuple[str, int]] = []
+    try:
+        with open(path) as f:
+            for line in f:
+                try:
+                    rec = json.loads(line)
+                except Exception:
+                    continue
+                mid = rec.get("memento_id")
+                if mid:
+                    out.append((mid, int(rec.get("rotate_delta", 0) or 0)))
+    except Exception:
+        return []
+    try:
+        os.remove(path)
+    except Exception:
+        pass
+    return out
+
+
+def reset_kv_restore_queue() -> None:
+    """Test hook: drop the kv-restore queue file."""
+    path = _kv_restore_queue_path()
+    if os.path.exists(path):
+        try:
+            os.remove(path)
+        except Exception:
+            pass
+
+
+_DUAL_KEY_QUEUE_PATH_DEFAULT = "/tmp/paper2_dual_key_queue.jsonl"
+
+
+def _dual_key_queue_path() -> str:
+    return os.environ.get(
+        "PAPER2_DUAL_KEY_QUEUE_PATH", _DUAL_KEY_QUEUE_PATH_DEFAULT
+    )
+
+
+def queue_dual_key_request(
+    compacted_tokens: list[int],
+    recall_tokens: list[int],
+) -> None:
+    """Phase 8: append a dual-key request.
+
+    Adapter writes (compacted_tokens, recall_tokens) before a chat()
+    that contains an `lru-inplace` recall. The engine subprocess drains
+    this on each `add_request` call and dual-keys cached suffix blocks
+    so vLLM's prefix-cache lookup finds them under the recall-prompt's
+    chain hash too. Pure metadata operation — no data movement.
+    """
+    path = _dual_key_queue_path()
+    try:
+        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+        with open(path, "a") as f:
+            f.write(json.dumps({
+                "compacted": compacted_tokens,
+                "recall": recall_tokens,
+            }) + "\n")
+    except Exception:
+        pass
+
+
+def drain_dual_key_requests() -> "list[tuple[list[int], list[int]]]":
+    """Consume + return all queued (compacted, recall) token pairs."""
+    path = _dual_key_queue_path()
+    if not os.path.exists(path):
+        return []
+    out: "list[tuple[list[int], list[int]]]" = []
+    try:
+        with open(path) as f:
+            for line in f:
+                try:
+                    rec = json.loads(line)
+                except Exception:
+                    continue
+                c = rec.get("compacted")
+                r = rec.get("recall")
+                if c is not None and r is not None:
+                    out.append((list(c), list(r)))
+    except Exception:
+        return []
+    try:
+        os.remove(path)
+    except Exception:
+        pass
+    return out
+
+
+def reset_dual_key_queue() -> None:
+    """Test hook: drop the dual-key queue file."""
+    path = _dual_key_queue_path()
+    if os.path.exists(path):
+        try:
+            os.remove(path)
+        except Exception:
+            pass
+
+
+# Backward-compat alias.
+_dump_engine_stats = dump_engine_stats
+
+atexit.register(dump_engine_stats)
+
+
+@dataclass
+class StoredMemento:
+    """One captured obs block group.
+
+    cpu_kv layout (when populated): a list of length num_layers. Each entry
+    is a tensor of shape [num_captured_blocks, 2, block_size, num_kv_heads,
+    head_size] (FlashInfer layout) or [2, num_captured_blocks, block_size,
+    num_kv_heads, head_size] (FlashAttention layout). Pinned host memory.
+
+    physical_block_ids are the SOURCE block ids on GPU at the moment of
+    capture — useful for debug/verification, not for recall (those blocks
+    will be freed shortly after).
+
+    gpu_pinned_block_ids (Phase 4a): when set, these GPU block IDs were
+    refcount-incremented at capture time so they survive the normal
+    free_blocks() call. The KV bytes are PRESERVED on GPU and can be
+    spliced back into a future request's block_table without H2D copy.
+    Released via `Scheduler.release_pinned_memento(memento_id)`.
+    """
+
+    memento_id: str
+    request_id: str
+    logical_range: tuple[int, int]               # [start, end) in source request
+    physical_block_ids: list[int]                # source GPU block ids at capture time
+    block_size: int
+    num_layers: int
+    cpu_kv: Optional[list[torch.Tensor]] = None  # populated by worker hook
+    gpu_pinned_block_ids: Optional[list[int]] = None  # populated by Phase 4a pin step
+
+    def cpu_bytes(self) -> int:
+        if self.cpu_kv is None:
+            return 0
+        return sum(t.numel() * t.element_size() for t in self.cpu_kv)
+
+
+class MementoStore:
+    """Process-global stash. Engine and policy share via global accessor."""
+
+    def __init__(self) -> None:
+        self._store: dict[str, StoredMemento] = {}
+
+    def stash(self, memento: StoredMemento) -> None:
+        self._store[memento.memento_id] = memento
+
+    def get(self, memento_id: str) -> Optional[StoredMemento]:
+        return self._store.get(memento_id)
+
+    def evict(self, memento_id: str) -> bool:
+        return self._store.pop(memento_id, None) is not None
+
+    def memento_ids(self) -> list[str]:
+        return list(self._store.keys())
+
+    def total_cpu_bytes(self) -> int:
+        return sum(m.cpu_bytes() for m in self._store.values())
+
+    def __len__(self) -> int:
+        return len(self._store)
+
+
+_GLOBAL_STORE: Optional[MementoStore] = None
+
+
+def global_memento_store() -> MementoStore:
+    """Return the process-wide MementoStore, creating it on first call.
+
+    The store lives in whichever process this is called from. In vLLM's
+    common deployment the worker process owns the KV tensors, so the
+    worker-side store holds the CPU bytes; the scheduler-side store
+    holds metadata only. Phase 3 wires the cross-process proxy.
+    """
+    global _GLOBAL_STORE
+    if _GLOBAL_STORE is None:
+        _GLOBAL_STORE = MementoStore()
+    return _GLOBAL_STORE
+
+
+def reset_global_memento_store() -> None:
+    """Test hook — drop the singleton."""
+    global _GLOBAL_STORE
+    _GLOBAL_STORE = None
+
+
+@dataclass
+class CaptureSpec:
+    """Scheduler→manager intent: capture these positions into this memento_id."""
+
+    memento_id: str
+    physical_positions: list[int]  # positions in the SOURCE request's physical layout
+    logical_range: tuple[int, int]
+
+
+@dataclass
+class CaptureOp:
+    """Manager→worker job: copy these GPU blocks into CPU memento store."""
+
+    memento_id: str
+    request_id: str
+    src_block_ids: list[int]       # full-block captures (Phase 1: aligned only)
+    block_size: int
+    logical_range: tuple[int, int]
+
+
+@dataclass
+class KVRestoreOp:
+    """Manager→worker job: copy CPU pinned bytes for memento_id back to GPU.
+
+    Phase 3b — the inverse of CaptureOp. The caller (scheduler) has already
+    allocated `target_block_ids` from block_pool; the worker just copies
+    bytes into them via gpu_model_runner.restore_pinned_kv.
+    """
+
+    memento_id: str
+    request_id: str
+    target_block_ids: list[int]   # already-allocated GPU blocks to fill
+
+
+@dataclass
+class KVRotateOp:
+    """Manager→worker job: rotate cached K vectors by delta_tokens in place.
+
+    Phase 9 — the missing piece for "no re-prefill on recall". After
+    `KVRestoreOp` brings obs's KV back to GPU and the scheduler splices
+    obs blocks at original positions, the SUFFIX blocks have K vectors
+    that were RoPE-baked at compacted slot positions. Their logical
+    positions just shifted by delta_tokens = m_obs - p_placeholder. We
+    re-rotate K in place via vLLM's rotary kernel so RoPE phase matches
+    the new positions, exploiting RoPE composition: R(p+Δ) = R(Δ) ∘ R(p).
+    """
+
+    request_id: str
+    suffix_block_ids: list[int]   # blocks AFTER the spliced obs region
+    delta_tokens: int             # signed; typically positive on recall

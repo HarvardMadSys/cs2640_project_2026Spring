@@ -1,0 +1,69 @@
+# Phase C — SWE-bench Lite live agent run on A6000.
+#
+# Real coding-agent benchmark: each task is a SWE-bench Lite instance from a
+# small repo (psf/requests, pallets/flask). Agent has read/list/grep/edit/
+# run_tests/submit tools. Resolve = agent's git diff overlaps with gold
+# patch's modified line ranges (loose oracle; adequate for ranking
+# compaction policies). See benchmarks/swebench_live.py for details.
+#
+# Why this benchmark for compaction:
+#   - Tool obs are file reads, 2K-15K tokens each
+#   - Agent reads 5-10 files per task → context grows to 30-50K naturally
+#   - Once a file is digested, the raw obs is mostly redundant → eviction wins
+#
+# Memory plan (97 GB total):
+#   30B serving model weights + KV at max_model_len=40000  ≈ 68 GB (gpu_util 0.73)
+#   4B  summarizer at max_model_len=8000                   ≈  9 GB (gpu_util 0.12)
+#   Headroom for activations / overhead                    ≈ 20 GB
+
+models:
+  - vllm:Qwen/Qwen3-30B-A3B-Instruct-2507
+
+summarizer_model: vllm:Qwen/Qwen3-4B-Instruct-2507
+
+model_kwargs:
+  vllm:Qwen/Qwen3-30B-A3B-Instruct-2507:
+    max_new_tokens: 800
+    temperature: 0.0
+    enable_thinking: false
+    dtype: bfloat16
+    gpu_memory_utilization: 0.75
+    max_model_len: 50000
+    enable_prefix_caching: true
+  vllm:Qwen/Qwen3-4B-Instruct-2507:
+    max_new_tokens: 600
+    temperature: 0.0
+    enable_thinking: false
+    dtype: bfloat16
+    gpu_memory_utilization: 0.12
+    max_model_len: 8000
+    enable_prefix_caching: true
+
+policies:
+  - name: none
+  - name: position_aware
+    kwargs: { keep_first_turns: 2, keep_recent_turns: 4, trigger_ratio: 0.85, big_tool_obs_threshold_tokens: 600 }
+  - name: prefix_preserving
+    kwargs: { keep_first_turns: 2, keep_recent_turns: 4, trigger_ratio: 0.85, cooldown_steps: 4 }
+  - name: microcompact
+    kwargs: { per_msg_threshold_tokens: 1500, trigger_ratio: 0.85, protect_recent: 4 }
+  - name: evict_oldest
+    kwargs: { min_obs_tokens: 600, protect_recent: 4, trigger_ratio: 0.85, target_ratio: 0.50 }
+  - name: llm_reorganizer
+    kwargs: { drop_count: 3, trigger_ratio: 0.85, protect_recent: 4 }
+
+benchmarks:
+  - name: swebench_live
+    kwargs:
+      cache_dir: /scratch/swebench_repos
+      instance_ids:
+        - psf__requests-3362     # utils.py — small change
+        - psf__requests-2317     # sessions.py
+        - pallets__flask-4992    # config.py
+        - pallets__flask-5063    # cli.py — bigger problem statement
+
+budget_tokens: 20000
+hard_budget_tokens: 40000
+max_tasks: null
+n_workers: 1
+out_dir: studies/lifetime_cost/out/phase_c_swebench_live

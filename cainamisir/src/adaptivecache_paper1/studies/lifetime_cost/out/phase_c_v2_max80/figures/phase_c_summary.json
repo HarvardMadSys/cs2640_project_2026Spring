@@ -1,0 +1,44 @@
+{
+  "rows": [
+    {
+      "policy": "none",
+      "n_tasks": 2,
+      "n_resolved": 1,
+      "resolve_rate": 0.5,
+      "n_compactions_total": 0,
+      "mean_cost": 0.026932764999999997,
+      "cost_per_resolved": 0.053865529999999995,
+      "mean_steps": 53.0,
+      "mean_max_prompt_tokens": 45807.5,
+      "n_overflow_endings": 1
+    },
+    {
+      "policy": "evict_oldest",
+      "n_tasks": 2,
+      "n_resolved": 1,
+      "resolve_rate": 0.5,
+      "n_compactions_total": 77,
+      "mean_cost": 0.075153125,
+      "cost_per_resolved": 0.15030625,
+      "mean_steps": 73.5,
+      "mean_max_prompt_tokens": 19580.0,
+      "n_overflow_endings": 0
+    },
+    {
+      "policy": "llm_reorganizer",
+      "n_tasks": 2,
+      "n_resolved": 0,
+      "resolve_rate": 0.0,
+      "n_compactions_total": 134,
+      "mean_cost": 0.058278025000000004,
+      "cost_per_resolved": Infinity,
+      "mean_steps": 80.0,
+      "mean_max_prompt_tokens": 56160.0,
+      "n_overflow_endings": 2
+    }
+  ],
+  "frontier": [
+    "none"
+  ],
+  "cost_model": "qwen/qwen3-30b-a3b"
+}

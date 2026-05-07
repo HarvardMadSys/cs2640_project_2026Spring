@@ -1,0 +1,50 @@
+# Main experiment matrix for the lifetime-cost study.
+#
+# Run with:
+#   python -m studies.lifetime_cost.scripts.run_main --config studies/lifetime_cost/configs/main.yaml
+
+models:
+  - anthropic/claude-haiku-4-5            # cheap, has explicit cache breakpoints
+  - openai/gpt-4.1-mini                   # cheap, automatic prefix cache
+  - qwen/qwen3-30b-a3b                    # self-hosted via serve_unified.py
+
+# Per-model adapter overrides (e.g. base_url for self-hosted)
+model_kwargs:
+  qwen/qwen3-30b-a3b:
+    base_url: "https://vcainamisir--adaptivecache-unified-llmserver-serve.modal.run/v1"
+    served_model_name: "Qwen/Qwen3-30B-A3B"
+
+policies:
+  - name: none
+  - name: naive_summary
+    kwargs: { recent_keep: 4, trigger_ratio: 0.90 }
+  - name: microcompact
+    kwargs: { per_msg_threshold_tokens: 800, trigger_ratio: 0.85 }
+  - name: prefix_preserving
+    kwargs: { keep_first_turns: 6, keep_recent_turns: 4, trigger_ratio: 0.85 }
+  - name: boundary_aware
+    kwargs: { keep_first_turns: 6, keep_recent_turns: 4, trigger_ratio: 0.85 }
+
+benchmarks:
+  - name: longdoc
+    kwargs:
+      n_tasks: 20
+      target_doc_tokens: 80000
+      n_needles: 4
+      corpus: wikitext
+  - name: taubench
+    kwargs:
+      domain: airline
+      max_tasks: 30
+      user_model: openai/gpt-4.1-mini
+  - name: gaia
+    kwargs:
+      level: 1
+      max_tasks: 20
+      tool_backend: stub          # change to "real" for actual eval
+
+budget_tokens: 32000
+hard_budget_tokens: 64000
+max_tasks: null                   # null = use each benchmark's own cap
+n_workers: 4
+out_dir: studies/lifetime_cost/out/main

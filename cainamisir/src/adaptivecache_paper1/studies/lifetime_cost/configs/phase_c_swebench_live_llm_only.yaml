@@ -1,0 +1,47 @@
+# Phase C continuation — runs only the llm_reorganizer cell because the main
+# config crashed before reaching it (REGISTRY was missing the registration).
+# Other 5 cells already wrote trajectories to phase_c_swebench_live; this run
+# appends the 6th cell into the same out_dir.
+
+models:
+  - vllm:Qwen/Qwen3-30B-A3B-Instruct-2507
+
+summarizer_model: vllm:Qwen/Qwen3-4B-Instruct-2507
+
+model_kwargs:
+  vllm:Qwen/Qwen3-30B-A3B-Instruct-2507:
+    max_new_tokens: 800
+    temperature: 0.0
+    enable_thinking: false
+    dtype: bfloat16
+    gpu_memory_utilization: 0.75
+    max_model_len: 50000
+    enable_prefix_caching: true
+  vllm:Qwen/Qwen3-4B-Instruct-2507:
+    max_new_tokens: 600
+    temperature: 0.0
+    enable_thinking: false
+    dtype: bfloat16
+    gpu_memory_utilization: 0.12
+    max_model_len: 8000
+    enable_prefix_caching: true
+
+policies:
+  - name: llm_reorganizer
+    kwargs: { drop_count: 2, trigger_ratio: 0.85, protect_recent: 3 }
+
+benchmarks:
+  - name: swebench_live
+    kwargs:
+      cache_dir: /scratch/swebench_repos
+      instance_ids:
+        - psf__requests-3362
+        - psf__requests-2317
+        - pallets__flask-4992
+        - pallets__flask-5063
+
+budget_tokens: 20000
+hard_budget_tokens: 40000
+max_tasks: null
+n_workers: 1
+out_dir: studies/lifetime_cost/out/phase_c_swebench_live

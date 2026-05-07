@@ -1,0 +1,26 @@
+{
+  "policy": "none",
+  "budget": 32768,
+  "model_name": "Qwen/Qwen2.5-7B-Instruct",
+  "instances": [
+    "astropy__astropy-12907"
+  ],
+  "resolved": 0,
+  "total": 1,
+  "resolve_rate": 0.0,
+  "elapsed_seconds": 28.25353193283081,
+  "results": [
+    {
+      "instance_id": "astropy__astropy-12907",
+      "policy": "none",
+      "budget": 32768,
+      "model_name": "openai/Qwen/Qwen2.5-7B-Instruct",
+      "resolved": false,
+      "steps": 0,
+      "cache_stats": {},
+      "error": "FileNotFoundError: Couldn't find any data file at /root/princeton-nlp/SWE-Bench_Lite. Couldn't find 'princeton-nlp/SWE-Bench_Lite' on the Hugging Face Hub either: LocalEntryNotFoundError: An error happened while trying to locate the file on the Hub and we cannot find the requested files in the local cache. Please check your connection and try again or make sure your Internet connection is on.\nTraceback (most recent call last):\n  File \"/root/run_experiments.py\", line 147, in run_swebench_instance\n    run_dir = run_experiment(config)\n              ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/src/harness/swe_runner.py\", line 121, in run_experiment\n    _run_via_mini_swe_agent(config, output_dir)\n  File \"/app/src/harness/swe_runner.py\", line 150, in _run_via_mini_swe_agent\n    instances = load_instances(config)\n                ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/src/harness/swe_runner.py\", line 45, in load_instances\n    ds = load_dataset(dataset_name, split=config.split)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/datasets/load.py\", line 1688, in load_dataset\n    builder_instance = load_dataset_builder(\n                       ^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/datasets/load.py\", line 1315, in load_dataset_builder\n    dataset_module = dataset_module_factory(\n                     ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/datasets/load.py\", line 1203, in dataset_module_factory\n    raise FileNotFoundError(\nFileNotFoundError: Couldn't find any data file at /root/princeton-nlp/SWE-Bench_Lite. Couldn't find 'princeton-nlp/SWE-Bench_Lite' on the Hugging Face Hub either: LocalEntryNotFoundError: An error happened while trying to locate the file on the Hub and we cannot find the requested files in the local cache. Please check your connection and try again or make sure your Internet connection is on.\n",
+      "timestamp": 1775693518.5263414
+    }
+  ],
+  "timestamp": 1775693544.367722
+}

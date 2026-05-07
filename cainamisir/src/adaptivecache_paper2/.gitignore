@@ -1,0 +1,26 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+.venv-paper2/
+# Paper 2 external clones (microsoft/memento, etc.) — not vendored
+external/
+results/exp_haiku_5/*/repos/
+results/exp_haiku_5/*/__pycache__/
+*.egg-info/
+dist/
+build/
+.obsidian/
+raw/papers/*.pdf
+
+# Datasets — too large for git, fetched via HF/curl on demand
+*.parquet
+*.arrow
+studies/lifetime_cost/external_traces/hermes/
+studies/lifetime_cost/external_traces/applied_compute/
+
+# Trajectory outputs from Paper 2 v0/v1 runs — regenerable, ~70MB
+studies/lifetime_cost/paper2/out_v0_swebench/*.json
+studies/lifetime_cost/paper2/out_v0_swebench/*.jsonl

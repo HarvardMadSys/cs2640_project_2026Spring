@@ -1,0 +1,5 @@
+policy,n,n_resolved,resolve_rate,mean_cost_per_task
+llm_reorganizer,4,1,0.25,0.0429802325
+none,4,1,0.25,0.029468192500000004
+prefix_preserving,4,1,0.25,0.01775894
+smart_evict,4,1,0.25,0.0108900025

@@ -1,0 +1,58 @@
+# Phase E v2 — τ-bench retail (single-customer, N=10) × 4 policies (Haiku).
+#
+# Hypothesis test: does consumption_evict's SWE-bench win generalize to a
+# different agent regime (customer-service tool conversations, not coding)?
+#
+# τ-bench retail differs from airline:
+#   - 115 tasks vs 50
+#   - Larger tool surface (12 tools vs 7)
+#   - More DB rows in tool obs (~3-5K tokens per row vs ~500-1500)
+#   - Single customer per task; conversations 25-50 turns
+#
+# Memory note: airline had nothing to compact (cache 95% hit). Retail single-
+# customer is the next test — if STILL nothing to compact, we'll need a
+# multi-customer chain mode (extend benchmark).
+#
+# CAVEAT: consumption_evict's rules are coding-specific (read_file→edit_file
+# etc.). On τ-bench retail tools (find_user, update_address, cancel_order…)
+# none of the existing rules match, so consumption_evict will likely tag
+# nothing and tie `none`. That's itself a finding: supersession rules don't
+# generalize without per-domain authoring. If retail needs compaction, the
+# follow-up is a "generic verb-prefix" rule (write_X consumes earlier
+# read_X with shared id-arg). Don't tune rules before measuring.
+#
+# Wall-time budget: 10 × 4 = 40 trajectories, n_workers=4, ~30-40 min.
+# Cost budget: ~$0.30/task on retail × 40 = ~$12. Confirm before launching.
+
+models:
+  - anthropic/claude-haiku-4-5
+
+summarizer_model: anthropic/claude-haiku-4-5
+
+model_kwargs:
+  anthropic/claude-haiku-4-5:
+    max_new_tokens: 600
+    temperature: 0.5
+
+policies:
+  - name: none
+  - name: smart_evict
+    kwargs: { trigger_ratio: 0.85, target_ratio: 0.55, protect_recent: 3, min_obs_tokens: 300, use_hard_budget_trigger: false, max_drop_score: 0.4, emergency_ratio: 0.95 }
+  - name: consumption_evict
+    kwargs: { drop_threshold_tokens: 5000, protect_recent: 3, min_obs_tokens: 200, trigger_ratio: 0.85, use_hard_budget_trigger: false, preserve_facts: false, outline_mode: false }
+  - name: consumption_evict_outline
+    kwargs: { drop_threshold_tokens: 5000, protect_recent: 3, min_obs_tokens: 200, trigger_ratio: 0.85, use_hard_budget_trigger: false, preserve_facts: false, outline_mode: true }
+
+benchmarks:
+  - name: taubench
+    kwargs:
+      domain: retail
+      max_tasks: 10
+      user_model: claude-haiku-4-5
+      user_provider: anthropic
+
+budget_tokens: 35000
+hard_budget_tokens: 100000
+max_tasks: null
+n_workers: 4
+out_dir: studies/lifetime_cost/out/phase_e_taubench_retail

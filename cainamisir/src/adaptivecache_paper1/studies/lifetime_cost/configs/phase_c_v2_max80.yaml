@@ -1,0 +1,49 @@
+# Phase C v2 — same setup as phase_c_swebench_live but with max_steps=80
+# to test the hypothesis that compaction's quality cost (extra steps to
+# recover from dropped tool obs) was being killed by the 40-step ceiling.
+# Subset to the 2 informative tasks and 3 representative policies.
+
+models:
+  - vllm:Qwen/Qwen3-30B-A3B-Instruct-2507
+
+summarizer_model: vllm:Qwen/Qwen3-4B-Instruct-2507
+
+model_kwargs:
+  vllm:Qwen/Qwen3-30B-A3B-Instruct-2507:
+    max_new_tokens: 800
+    temperature: 0.0
+    enable_thinking: false
+    dtype: bfloat16
+    gpu_memory_utilization: 0.75
+    max_model_len: 50000
+    enable_prefix_caching: true
+  vllm:Qwen/Qwen3-4B-Instruct-2507:
+    max_new_tokens: 600
+    temperature: 0.0
+    enable_thinking: false
+    dtype: bfloat16
+    gpu_memory_utilization: 0.12
+    max_model_len: 8000
+    enable_prefix_caching: true
+
+policies:
+  - name: none
+  - name: evict_oldest
+    kwargs: { min_obs_tokens: 600, protect_recent: 4, trigger_ratio: 0.85, target_ratio: 0.50 }
+  - name: llm_reorganizer
+    kwargs: { drop_count: 6, trigger_ratio: 0.85, protect_recent: 3 }
+
+benchmarks:
+  - name: swebench_live
+    kwargs:
+      cache_dir: /scratch/swebench_repos
+      max_steps_per_task: 80
+      instance_ids:
+        - psf__requests-3362    # the long-context task
+        - psf__requests-2317    # the medium task
+
+budget_tokens: 20000
+hard_budget_tokens: 40000
+max_tasks: null
+n_workers: 1
+out_dir: studies/lifetime_cost/out/phase_c_v2_max80

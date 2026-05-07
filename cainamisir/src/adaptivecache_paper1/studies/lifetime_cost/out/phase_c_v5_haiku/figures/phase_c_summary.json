@@ -1,0 +1,68 @@
+{
+  "rows": [
+    {
+      "policy": "none",
+      "n_tasks": 4,
+      "n_resolved": 2,
+      "resolve_rate": 0.5,
+      "n_compactions_total": 0,
+      "mean_cost": 0.40284562500000004,
+      "mean_cost_agent_only": 0.40284562500000004,
+      "mean_compaction_cost": 0.0,
+      "cost_per_resolved": 0.8056912500000001,
+      "cost_per_resolved_agent_only": 0.8056912500000001,
+      "mean_steps": 25.0,
+      "mean_max_prompt_tokens": 94689.0,
+      "n_overflow_endings": 0
+    },
+    {
+      "policy": "llm_reorganizer",
+      "n_tasks": 4,
+      "n_resolved": 2,
+      "resolve_rate": 0.5,
+      "n_compactions_total": 0,
+      "mean_cost": 0.5609609875,
+      "mean_cost_agent_only": 0.5609609875,
+      "mean_compaction_cost": 0.0,
+      "cost_per_resolved": 1.121921975,
+      "cost_per_resolved_agent_only": 1.121921975,
+      "mean_steps": 26.75,
+      "mean_max_prompt_tokens": 86734.5,
+      "n_overflow_endings": 0
+    },
+    {
+      "policy": "smart_evict",
+      "n_tasks": 4,
+      "n_resolved": 2,
+      "resolve_rate": 0.5,
+      "n_compactions_total": 1,
+      "mean_cost": 0.6715690625,
+      "mean_cost_agent_only": 0.6715690625,
+      "mean_compaction_cost": 0.0,
+      "cost_per_resolved": 1.343138125,
+      "cost_per_resolved_agent_only": 1.343138125,
+      "mean_steps": 32.0,
+      "mean_max_prompt_tokens": 97303.25,
+      "n_overflow_endings": 0
+    },
+    {
+      "policy": "prefix_preserving",
+      "n_tasks": 4,
+      "n_resolved": 2,
+      "resolve_rate": 0.5,
+      "n_compactions_total": 19,
+      "mean_cost": 1.2105478,
+      "mean_cost_agent_only": 1.0684418,
+      "mean_compaction_cost": 0.142106,
+      "cost_per_resolved": 2.4210956,
+      "cost_per_resolved_agent_only": 2.1368836,
+      "mean_steps": 48.75,
+      "mean_max_prompt_tokens": 60067.0,
+      "n_overflow_endings": 0
+    }
+  ],
+  "frontier": [
+    "none"
+  ],
+  "cost_model": "anthropic/claude-haiku-4-5"
+}

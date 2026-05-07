@@ -1,0 +1,282 @@
+{
+  "policies": [
+    "none",
+    "fifo",
+    "kv_adaptive"
+  ],
+  "budget": 500,
+  "n_steps": 10,
+  "results": {
+    "none": {
+      "policy": "none",
+      "budget": 500,
+      "n_steps": 10,
+      "total_prompt_tokens": 7708,
+      "total_cached_tokens": 7280,
+      "mean_hit_rate": 0.9444732745199792,
+      "steps": [
+        {
+          "step": 1,
+          "prompt_tokens": 104,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "evicted": 0,
+          "latency_s": 158.6322741508484
+        },
+        {
+          "step": 2,
+          "prompt_tokens": 228,
+          "cached_tokens": 192,
+          "hit_rate": 0.8421052631578947,
+          "evicted": 0,
+          "latency_s": 1.612119197845459
+        },
+        {
+          "step": 3,
+          "prompt_tokens": 387,
+          "cached_tokens": 352,
+          "hit_rate": 0.9095607235142119,
+          "evicted": 0,
+          "latency_s": 1.6351103782653809
+        },
+        {
+          "step": 4,
+          "prompt_tokens": 533,
+          "cached_tokens": 496,
+          "hit_rate": 0.9305816135084428,
+          "evicted": 0,
+          "latency_s": 1.6381731033325195
+        },
+        {
+          "step": 5,
+          "prompt_tokens": 688,
+          "cached_tokens": 656,
+          "hit_rate": 0.9534883720930233,
+          "evicted": 0,
+          "latency_s": 1.6391403675079346
+        },
+        {
+          "step": 6,
+          "prompt_tokens": 842,
+          "cached_tokens": 800,
+          "hit_rate": 0.9501187648456056,
+          "evicted": 0,
+          "latency_s": 1.6063904762268066
+        },
+        {
+          "step": 7,
+          "prompt_tokens": 1000,
+          "cached_tokens": 960,
+          "hit_rate": 0.96,
+          "evicted": 0,
+          "latency_s": 1.6053698062896729
+        },
+        {
+          "step": 8,
+          "prompt_tokens": 1154,
+          "cached_tokens": 1120,
+          "hit_rate": 0.9705372616984402,
+          "evicted": 0,
+          "latency_s": 1.610447645187378
+        },
+        {
+          "step": 9,
+          "prompt_tokens": 1307,
+          "cached_tokens": 1280,
+          "hit_rate": 0.9793420045906657,
+          "evicted": 0,
+          "latency_s": 1.6055808067321777
+        },
+        {
+          "step": 10,
+          "prompt_tokens": 1465,
+          "cached_tokens": 1424,
+          "hit_rate": 0.9720136518771331,
+          "evicted": 0,
+          "latency_s": 1.4459741115570068
+        }
+      ]
+    },
+    "fifo": {
+      "policy": "fifo",
+      "budget": 500,
+      "n_steps": 10,
+      "total_prompt_tokens": 3669,
+      "total_cached_tokens": 1472,
+      "mean_hit_rate": 0.4011992368492777,
+      "steps": [
+        {
+          "step": 1,
+          "prompt_tokens": 104,
+          "cached_tokens": 96,
+          "hit_rate": 0.9230769230769231,
+          "evicted": 0,
+          "latency_s": 1.1514756679534912
+        },
+        {
+          "step": 2,
+          "prompt_tokens": 216,
+          "cached_tokens": 176,
+          "hit_rate": 0.8148148148148148,
+          "evicted": 0,
+          "latency_s": 1.6864304542541504
+        },
+        {
+          "step": 3,
+          "prompt_tokens": 375,
+          "cached_tokens": 336,
+          "hit_rate": 0.896,
+          "evicted": 0,
+          "latency_s": 1.6551427841186523
+        },
+        {
+          "step": 4,
+          "prompt_tokens": 522,
+          "cached_tokens": 480,
+          "hit_rate": 0.9195402298850575,
+          "evicted": 0,
+          "latency_s": 1.883641242980957
+        },
+        {
+          "step": 5,
+          "prompt_tokens": 405,
+          "cached_tokens": 64,
+          "hit_rate": 0.1580246913580247,
+          "evicted": 2,
+          "latency_s": 8.304993629455566
+        },
+        {
+          "step": 6,
+          "prompt_tokens": 408,
+          "cached_tokens": 64,
+          "hit_rate": 0.1568627450980392,
+          "evicted": 3,
+          "latency_s": 1.6410932540893555
+        },
+        {
+          "step": 7,
+          "prompt_tokens": 411,
+          "cached_tokens": 64,
+          "hit_rate": 0.15571776155717762,
+          "evicted": 4,
+          "latency_s": 1.6036067008972168
+        },
+        {
+          "step": 8,
+          "prompt_tokens": 410,
+          "cached_tokens": 64,
+          "hit_rate": 0.15609756097560976,
+          "evicted": 5,
+          "latency_s": 1.617250919342041
+        },
+        {
+          "step": 9,
+          "prompt_tokens": 409,
+          "cached_tokens": 64,
+          "hit_rate": 0.15647921760391198,
+          "evicted": 6,
+          "latency_s": 1.6049506664276123
+        },
+        {
+          "step": 10,
+          "prompt_tokens": 409,
+          "cached_tokens": 64,
+          "hit_rate": 0.15647921760391198,
+          "evicted": 7,
+          "latency_s": 1.5152568817138672
+        }
+      ]
+    },
+    "kv_adaptive": {
+      "policy": "kv_adaptive",
+      "budget": 500,
+      "n_steps": 10,
+      "total_prompt_tokens": 4217,
+      "total_cached_tokens": 4160,
+      "mean_hit_rate": 0.9864832819539957,
+      "steps": [
+        {
+          "step": 1,
+          "prompt_tokens": 104,
+          "cached_tokens": 96,
+          "hit_rate": 0.9230769230769231,
+          "evicted": 0,
+          "latency_s": 1.1127896308898926
+        },
+        {
+          "step": 2,
+          "prompt_tokens": 216,
+          "cached_tokens": 208,
+          "hit_rate": 0.9629629629629629,
+          "evicted": 0,
+          "latency_s": 1.594069004058838
+        },
+        {
+          "step": 3,
+          "prompt_tokens": 375,
+          "cached_tokens": 368,
+          "hit_rate": 0.9813333333333333,
+          "evicted": 0,
+          "latency_s": 1.4965405464172363
+        },
+        {
+          "step": 4,
+          "prompt_tokens": 522,
+          "cached_tokens": 512,
+          "hit_rate": 0.9808429118773946,
+          "evicted": 0,
+          "latency_s": 1.5774800777435303
+        },
+        {
+          "step": 5,
+          "prompt_tokens": 500,
+          "cached_tokens": 496,
+          "hit_rate": 0.992,
+          "evicted": 1,
+          "latency_s": 1.5399048328399658
+        },
+        {
+          "step": 6,
+          "prompt_tokens": 500,
+          "cached_tokens": 496,
+          "hit_rate": 0.992,
+          "evicted": 2,
+          "latency_s": 1.5690593719482422
+        },
+        {
+          "step": 7,
+          "prompt_tokens": 500,
+          "cached_tokens": 496,
+          "hit_rate": 0.992,
+          "evicted": 3,
+          "latency_s": 1.5454576015472412
+        },
+        {
+          "step": 8,
+          "prompt_tokens": 500,
+          "cached_tokens": 496,
+          "hit_rate": 0.992,
+          "evicted": 4,
+          "latency_s": 1.5359511375427246
+        },
+        {
+          "step": 9,
+          "prompt_tokens": 500,
+          "cached_tokens": 496,
+          "hit_rate": 0.992,
+          "evicted": 5,
+          "latency_s": 1.5596544742584229
+        },
+        {
+          "step": 10,
+          "prompt_tokens": 500,
+          "cached_tokens": 496,
+          "hit_rate": 0.992,
+          "evicted": 6,
+          "latency_s": 1.5383245944976807
+        }
+      ]
+    }
+  },
+  "timestamp": 1775540387.605612
+}

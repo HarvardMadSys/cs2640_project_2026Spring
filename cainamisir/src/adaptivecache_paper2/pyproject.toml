@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "adaptive-cache"
+version = "0.1.0"
+description = "Context management for LLM agents via layout optimization under prefix-caching cost model"
+requires-python = ">=3.10"
+dependencies = [
+    "openai>=1.0",
+    "numpy>=1.24",
+    "tiktoken>=0.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+swebench = [
+    "mini-swe-agent>=2.0",
+    "datasets>=2.0",
+    "litellm>=1.0",
+]
+local = [
+    "sglang>=0.4",
+    "transformers>=4.40",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/adaptive_cache", "src/harness"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

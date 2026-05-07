@@ -1,0 +1,13 @@
+{
+  "run_id": "none_999999",
+  "config": {
+    "dataset": "lite",
+    "split": "test",
+    "model_name": "anthropic/claude-haiku-4-5-20251001",
+    "cache_policy": "none",
+    "cache_budget": 999999,
+    "max_steps": 0,
+    "cost_limit": 0.0
+  },
+  "timestamp": 1775509770.36933
+}

@@ -1,0 +1,4 @@
+policy,anthropic/claude-sonnet-4-6,anthropic/claude-haiku-4-5,anthropic/claude-opus-4-7,openai/gpt-4.1,openai/gpt-4.1-mini,qwen/qwen3-30b-a3b,hf:Qwen/Qwen3-30B-A3B-Instruct-2507,Qwen/Qwen3-30B-A3B-Instruct-2507,Qwen/Qwen3-14B-Instruct-2507,hf:Qwen/Qwen3-14B-Instruct-2507,qwen/qwen3-8b,Qwen/Qwen3-4B-Instruct-2507,vllm:Qwen/Qwen3-4B-Instruct-2507,meta/llama-3.3-70b-together
+consumption_evict,0.110087,0.036696,0.550433,0.085155,0.017031,0.002744,0.002744,0.002744,0.001646,0.001646,0.001372,0.000686,0.000686,0.020956
+none,0.122978,0.040993,0.614890,0.085208,0.017042,0.002910,0.002910,0.002910,0.001746,0.001746,0.001455,0.000727,0.000727,0.022338
+smart_evict,0.104577,0.034859,0.522887,0.079954,0.015991,0.002593,0.002593,0.002593,0.001556,0.001556,0.001296,0.000648,0.000648,0.019702

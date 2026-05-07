@@ -1,0 +1,4 @@
+policy,anthropic/claude-sonnet-4-6,anthropic/claude-haiku-4-5,anthropic/claude-opus-4-7,openai/gpt-4.1,openai/gpt-4.1-mini,qwen/qwen3-30b-a3b,hf:Qwen/Qwen3-30B-A3B-Instruct-2507,Qwen/Qwen3-30B-A3B-Instruct-2507,qwen/qwen3-8b,meta/llama-3.3-70b-together
+none,0.006619,0.002206,0.033094,0.004483,0.000897,0.000167,0.000167,0.000167,0.000084,0.001003
+position_aware,0.006619,0.002206,0.033094,0.004483,0.000897,0.000167,0.000167,0.000167,0.000084,0.001003
+prefix_preserving,0.006619,0.002206,0.033094,0.004483,0.000897,0.000167,0.000167,0.000167,0.000084,0.001003

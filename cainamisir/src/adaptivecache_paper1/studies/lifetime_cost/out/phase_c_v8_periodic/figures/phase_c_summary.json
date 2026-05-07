@@ -1,0 +1,53 @@
+{
+  "rows": [
+    {
+      "policy": "none",
+      "n_tasks": 4,
+      "n_resolved": 2,
+      "resolve_rate": 0.5,
+      "n_compactions_total": 0,
+      "mean_cost": 0.5996906000000001,
+      "mean_cost_agent_only": 0.5996906000000001,
+      "mean_compaction_cost": 0.0,
+      "cost_per_resolved": 1.1993812000000001,
+      "cost_per_resolved_agent_only": 1.1993812000000001,
+      "mean_steps": 29.5,
+      "mean_max_prompt_tokens": 95847.25,
+      "n_overflow_endings": 0
+    },
+    {
+      "policy": "smart_evict",
+      "n_tasks": 4,
+      "n_resolved": 2,
+      "resolve_rate": 0.5,
+      "n_compactions_total": 5,
+      "mean_cost": 0.607971925,
+      "mean_cost_agent_only": 0.607971925,
+      "mean_compaction_cost": 0.0,
+      "cost_per_resolved": 1.21594385,
+      "cost_per_resolved_agent_only": 1.21594385,
+      "mean_steps": 32.5,
+      "mean_max_prompt_tokens": 99658.0,
+      "n_overflow_endings": 0
+    },
+    {
+      "policy": "score_periodic",
+      "n_tasks": 4,
+      "n_resolved": 2,
+      "resolve_rate": 0.5,
+      "n_compactions_total": 17,
+      "mean_cost": 0.7214457125,
+      "mean_cost_agent_only": 0.7082992125,
+      "mean_compaction_cost": 0.0131465,
+      "cost_per_resolved": 1.442891425,
+      "cost_per_resolved_agent_only": 1.416598425,
+      "mean_steps": 39.0,
+      "mean_max_prompt_tokens": 72840.25,
+      "n_overflow_endings": 0
+    }
+  ],
+  "frontier": [
+    "none"
+  ],
+  "cost_model": "anthropic/claude-haiku-4-5"
+}

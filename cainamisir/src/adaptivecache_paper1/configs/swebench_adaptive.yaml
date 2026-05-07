@@ -1,0 +1,42 @@
+# SWE-bench config for AdaptiveCache experiments
+# Usage: mini-swe-agent swebench -c configs/swebench_adaptive.yaml --subset lite
+
+model:
+  model_class: "harness.swe_model.AdaptiveCacheModel"
+  model_name: "anthropic/claude-sonnet-4-5-20250929"
+  cache_policy: "adaptive"
+  cache_budget: 64000
+  cost_tracking: "ignore_errors"
+  set_cache_control: "default_end"
+
+agent:
+  step_limit: 30
+  cost_limit: 3.0
+  system_template: |
+    SETTING: You are an autonomous programmer, and you're working directly in the command line with a special interface.
+
+    The special interface consists of a file editor that shows you {{WINDOW}} lines of a file at a time.
+    In addition to typical bash commands, you can also use the following commands to help you navigate and edit files.
+
+    COMMANDS:
+    {{command_docs}}
+
+    Please note that THE EDIT COMMAND REQUIRES PROPER INDENTATION.
+    If you'd like to add the line '        print(x)' you must fully write that out, with all those spaces before the code!
+    Indentation is important and code that is not indented correctly will fail and require fixing before you can proceed.
+
+    RESPONSE FORMAT:
+    Your shell session has started and you're in the repository folder.
+    You need to fix the failing test(s).
+    A git diff of your changes will be submitted as a patch.
+
+  instance_template: |
+    We're currently solving the following issue within our repository. Here's the issue text:
+    ISSUE:
+    {{ task }}
+
+    INSTRUCTIONS:
+    Now, you're going to solve this issue on your own.
+    Edit all the files you need to and run any checks or tests that you think are relevant.
+    When you're satisfied with all of the changes you've made, you can submit your changes to the code base by simply running the `submit` command.
+    Note however that you cannot use any interactive session commands (e.g. python, vim) in this environment, but you can write scripts and run them.

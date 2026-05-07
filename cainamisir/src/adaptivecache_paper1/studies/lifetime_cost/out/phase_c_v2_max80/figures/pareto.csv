@@ -1,0 +1,4 @@
+policy,n,n_resolved,resolve_rate,mean_cost_per_task
+evict_oldest,2,1,0.5,0.075153125
+llm_reorganizer,2,0,0.0,0.058278025000000004
+none,2,1,0.5,0.026932764999999997

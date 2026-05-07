@@ -1,0 +1,60 @@
+# Phase B (τ-bench) — A6000 (90 GB) variant with small summarizer.
+#
+# Two engines on the same GPU:
+#   - 30B-A3B serving model (~57 GB bf16) at gpu_memory_utilization=0.65 (~63 GB)
+#   - 4B summarizer         (~8 GB bf16)   at gpu_memory_utilization=0.18 (~17 GB)
+#   - Total: ~80 GB out of 97 GB; leaves ~17 GB headroom for KV / activations / overhead.
+#
+# Compaction triggers tightened from defaults:
+#   - trigger_ratio raised so compaction fires only when budget really bites
+#   - keep_recent_turns raised so the recent dialogue tail is intact
+#   - microcompact added: only summarizes the offending big message, no cliff
+#
+# Goal: at least one compaction policy at lower $/resolved than `none` —
+# the headline Pareto win for Paper 1 Phase B.
+
+models:
+  - vllm:Qwen/Qwen3-30B-A3B-Instruct-2507
+
+summarizer_model: vllm:Qwen/Qwen3-4B-Instruct-2507
+
+model_kwargs:
+  vllm:Qwen/Qwen3-30B-A3B-Instruct-2507:
+    max_new_tokens: 512
+    temperature: 0.0
+    enable_thinking: false
+    dtype: bfloat16
+    gpu_memory_utilization: 0.70
+    max_model_len: 20000
+    enable_prefix_caching: true
+  vllm:Qwen/Qwen3-4B-Instruct-2507:
+    max_new_tokens: 400
+    temperature: 0.0
+    enable_thinking: false
+    dtype: bfloat16
+    gpu_memory_utilization: 0.15
+    max_model_len: 20000
+    enable_prefix_caching: true
+
+policies:
+  - name: none
+  - name: position_aware
+    kwargs: { keep_first_turns: 3, keep_recent_turns: 10, trigger_ratio: 0.95, big_tool_obs_threshold_tokens: 600 }
+  - name: prefix_preserving
+    kwargs: { keep_first_turns: 3, keep_recent_turns: 10, trigger_ratio: 0.95, cooldown_steps: 8 }
+  - name: microcompact
+    kwargs: { per_msg_threshold_tokens: 1500, trigger_ratio: 0.95, protect_recent: 12 }
+
+benchmarks:
+  - name: taubench
+    kwargs:
+      domain: airline
+      max_tasks: 6
+      user_model: claude-haiku-4-5
+      user_provider: anthropic
+
+budget_tokens: 4000
+hard_budget_tokens: 12000
+max_tasks: null
+n_workers: 1
+out_dir: studies/lifetime_cost/out/phase_b_taubench_a6000

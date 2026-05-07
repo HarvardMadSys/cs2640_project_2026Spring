@@ -1,0 +1,890 @@
+[
+  {
+    "instance_id": "psf__requests-2317",
+    "policy": "consumption_evict",
+    "n_edits_attempted": 1,
+    "n_edits_applied": 1,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "test_requests.py::RequestsTestCase::test_HTTP_302_ALLOW_REDIRECT_GET": "pass",
+      "test_requests.py::RequestsTestCase::test_POSTBIN_GET_POST_FILES": "pass",
+      "test_requests.py::RequestsTestCase::test_POSTBIN_GET_POST_FILES_WITH_DATA": "pass",
+      "test_requests.py::RequestsTestCase::test_basicauth_with_netrc": "pass",
+      "test_requests.py::RequestsTestCase::test_json_param_post_content_type_works": "pass",
+      "test_requests.py::RequestsTestCase::test_manual_redirect_with_partial_body_read": "pass",
+      "test_requests.py::RequestsTestCase::test_requests_history_is_saved": "pass",
+      "test_requests.py::TestTimeout::test_encoded_methods": "pass"
+    },
+    "pass_to_pass_results": {
+      "test_requests.py::RequestsTestCase::test_BASICAUTH_TUPLE_HTTP_200_OK_GET": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGESTAUTH_QUOTES_QOP_VALUE": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGESTAUTH_WRONG_HTTP_401_GET": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGEST_AUTH_RETURNS_COOKIE": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGEST_AUTH_SETS_SESSION_COOKIES": "pass"
+    },
+    "real_resolved": true,
+    "note": ""
+  },
+  {
+    "instance_id": "psf__requests-3362",
+    "policy": "consumption_evict",
+    "n_edits_attempted": 3,
+    "n_edits_applied": 3,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/test_requests.py::TestRequests::test_response_decode_unicode": "pass"
+    },
+    "pass_to_pass_results": {
+      "tests/test_requests.py::TestRequests::test_entry_points": "pass",
+      "tests/test_requests.py::TestRequests::test_invalid_url[MissingSchema-hiwpefhipowhefopw]": "pass",
+      "tests/test_requests.py::TestRequests::test_invalid_url[InvalidSchema-localhost:3128]": "pass",
+      "tests/test_requests.py::TestRequests::test_invalid_url[InvalidSchema-localhost.localdomain:3128/]": "pass",
+      "tests/test_requests.py::TestRequests::test_invalid_url[InvalidSchema-10.122.1.1:3128/]": "pass"
+    },
+    "real_resolved": true,
+    "note": ""
+  },
+  {
+    "instance_id": "psf__requests-2148",
+    "policy": "consumption_evict",
+    "n_edits_attempted": 3,
+    "n_edits_applied": 3,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "test_requests.py::RequestsTestCase::test_DIGEST_AUTH_RETURNS_COOKIE": "pass",
+      "test_requests.py::RequestsTestCase::test_HTTP_200_OK_GET_ALTERNATIVE": "pass",
+      "test_requests.py::RequestsTestCase::test_HTTP_200_OK_HEAD": "pass",
+      "test_requests.py::RequestsTestCase::test_POSTBIN_GET_POST_FILES": "pass",
+      "test_requests.py::RequestsTestCase::test_auth_is_stripped_on_redirect_off_host": "pass",
+      "test_requests.py::RequestsTestCase::test_basicauth_with_netrc": "pass",
+      "test_requests.py::RequestsTestCase::test_cookie_quote_wrapped": "pass",
+      "test_requests.py::RequestsTestCase::test_generic_cookiejar_works": "pass",
+      "test_requests.py::RequestsTestCase::test_iter_content_handles_socket_error": "pass",
+      "test_requests.py::RequestsTestCase::test_unicode_multipart_post": "pass"
+    },
+    "pass_to_pass_results": {
+      "test_requests.py::RequestsTestCase::test_BASICAUTH_TUPLE_HTTP_200_OK_GET": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGESTAUTH_QUOTES_QOP_VALUE": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGESTAUTH_WRONG_HTTP_401_GET": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGEST_AUTH_SETS_SESSION_COOKIES": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGEST_STREAM": "pass"
+    },
+    "real_resolved": true,
+    "note": ""
+  },
+  {
+    "instance_id": "pallets__flask-4045",
+    "policy": "consumption_evict",
+    "n_edits_attempted": 3,
+    "n_edits_applied": 3,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/test_blueprints.py::test_dotted_name_not_allowed": "error",
+      "tests/test_blueprints.py::test_route_decorator_custom_endpoint_with_dots": "error"
+    },
+    "pass_to_pass_results": {
+      "tests/test_basic.py::test_method_route_no_methods": "error",
+      "tests/test_basic.py::test_disallow_string_for_allowed_methods": "error",
+      "tests/test_basic.py::test_error_handler_unknown_code": "error",
+      "tests/test_basic.py::test_request_locals": "error",
+      "tests/test_basic.py::test_exception_propagation": "error"
+    },
+    "real_resolved": false,
+    "note": "test_patch_apply_failed"
+  },
+  {
+    "instance_id": "pallets__flask-4992",
+    "policy": "consumption_evict",
+    "n_edits_attempted": 3,
+    "n_edits_applied": 3,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/test_config.py::test_config_from_file_toml": "error"
+    },
+    "pass_to_pass_results": {
+      "tests/test_config.py::test_config_from_pyfile": "error",
+      "tests/test_config.py::test_config_from_object": "error",
+      "tests/test_config.py::test_config_from_file_json": "error",
+      "tests/test_config.py::test_from_prefixed_env": "error",
+      "tests/test_config.py::test_from_prefixed_env_custom_prefix": "error"
+    },
+    "real_resolved": false,
+    "note": "test_patch_apply_failed"
+  },
+  {
+    "instance_id": "pytest-dev__pytest-5227",
+    "policy": "consumption_evict",
+    "n_edits_attempted": 1,
+    "n_edits_applied": 1,
+    "install_ok": true,
+    "install_log_tail": "\nall' method, because it does not have a 'pyproject.toml' and the 'wheel' package is not installed. pip 23.1 will enforce this behaviour change. A possible replacement is to enable the '--use-pep517' option. Discussion can be found at https://github.com/pypa/pip/issues/8559\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "testing/logging/test_reporting.py::test_log_cli_enabled_disabled[True]": "fail",
+      "testing/logging/test_reporting.py::test_log_cli_default_level": "fail",
+      "testing/logging/test_reporting.py::test_sections_single_new_line_after_test_outcome": "fail"
+    },
+    "pass_to_pass_results": {
+      "[100%]": "fail",
+      "[": "fail",
+      "[100%]------------------------------": "fail",
+      "testing/logging/test_reporting.py::test_live_logging_suspends_capture[True]": "fail",
+      "testing/logging/test_reporting.py::test_live_logging_suspends_capture[False]": "fail"
+    },
+    "real_resolved": false,
+    "note": ""
+  },
+  {
+    "instance_id": "pallets__flask-5063",
+    "policy": "consumption_evict",
+    "n_edits_attempted": 2,
+    "n_edits_applied": 2,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/test_cli.py::TestRoutes::test_subdomain": "error",
+      "tests/test_cli.py::TestRoutes::test_host": "error"
+    },
+    "pass_to_pass_results": {
+      "tests/test_cli.py::test_cli_name": "pass",
+      "tests/test_cli.py::test_find_best_app": "pass",
+      "tests/test_cli.py::test_prepare_import[test-path0-test]": "pass",
+      "tests/test_cli.py::test_prepare_import[test.py-path1-test]": "pass",
+      "tests/test_cli.py::test_prepare_import[a/test-path2-test]": "pass"
+    },
+    "real_resolved": false,
+    "note": "test_patch_apply_failed"
+  },
+  {
+    "instance_id": "pylint-dev__pylint-5859",
+    "policy": "consumption_evict",
+    "n_edits_attempted": 4,
+    "n_edits_applied": 4,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/checkers/unittest_misc.py::TestFixme::test_non_alphanumeric_codetag": "pass"
+    },
+    "pass_to_pass_results": {
+      "tests/checkers/unittest_misc.py::TestFixme::test_fixme_with_message": "pass",
+      "tests/checkers/unittest_misc.py::TestFixme::test_todo_without_message": "pass",
+      "tests/checkers/unittest_misc.py::TestFixme::test_xxx_without_space": "pass",
+      "tests/checkers/unittest_misc.py::TestFixme::test_xxx_middle": "pass",
+      "tests/checkers/unittest_misc.py::TestFixme::test_without_space_fixme": "pass"
+    },
+    "real_resolved": true,
+    "note": ""
+  },
+  {
+    "instance_id": "pylint-dev__pylint-7228",
+    "policy": "consumption_evict",
+    "n_edits_attempted": 10,
+    "n_edits_applied": 10,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/config/test_config.py::test_regex_error": "fail",
+      "tests/config/test_config.py::test_csv_regex_error": "fail"
+    },
+    "pass_to_pass_results": {
+      "tests/config/test_config.py::test_can_read_toml_env_variable": "pass",
+      "tests/config/test_config.py::test_unknown_message_id": "pass",
+      "tests/config/test_config.py::test_unknown_option_name": "pass",
+      "tests/config/test_config.py::test_unknown_short_option_name": "pass",
+      "tests/config/test_config.py::test_unknown_confidence": "pass"
+    },
+    "real_resolved": false,
+    "note": ""
+  },
+  {
+    "instance_id": "pytest-dev__pytest-7490",
+    "policy": "consumption_evict",
+    "n_edits_attempted": 3,
+    "n_edits_applied": 3,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "testing/test_skipping.py::TestXFail::test_dynamic_xfail_set_during_runtest_failed": "pass",
+      "testing/test_skipping.py::TestXFail::test_dynamic_xfail_set_during_runtest_passed_strict": "pass"
+    },
+    "pass_to_pass_results": {
+      "testing/test_skipping.py::test_importorskip": "pass",
+      "testing/test_skipping.py::TestEvaluation::test_no_marker": "pass",
+      "testing/test_skipping.py::TestEvaluation::test_marked_xfail_no_args": "pass",
+      "testing/test_skipping.py::TestEvaluation::test_marked_skipif_no_args": "pass",
+      "testing/test_skipping.py::TestEvaluation::test_marked_one_arg": "pass"
+    },
+    "real_resolved": true,
+    "note": ""
+  },
+  {
+    "instance_id": "psf__requests-2317",
+    "policy": "consumption_evict_facts",
+    "n_edits_attempted": 1,
+    "n_edits_applied": 1,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "test_requests.py::RequestsTestCase::test_HTTP_302_ALLOW_REDIRECT_GET": "pass",
+      "test_requests.py::RequestsTestCase::test_POSTBIN_GET_POST_FILES": "pass",
+      "test_requests.py::RequestsTestCase::test_POSTBIN_GET_POST_FILES_WITH_DATA": "pass",
+      "test_requests.py::RequestsTestCase::test_basicauth_with_netrc": "pass",
+      "test_requests.py::RequestsTestCase::test_json_param_post_content_type_works": "pass",
+      "test_requests.py::RequestsTestCase::test_manual_redirect_with_partial_body_read": "pass",
+      "test_requests.py::RequestsTestCase::test_requests_history_is_saved": "pass",
+      "test_requests.py::TestTimeout::test_encoded_methods": "pass"
+    },
+    "pass_to_pass_results": {
+      "test_requests.py::RequestsTestCase::test_BASICAUTH_TUPLE_HTTP_200_OK_GET": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGESTAUTH_QUOTES_QOP_VALUE": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGESTAUTH_WRONG_HTTP_401_GET": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGEST_AUTH_RETURNS_COOKIE": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGEST_AUTH_SETS_SESSION_COOKIES": "pass"
+    },
+    "real_resolved": true,
+    "note": ""
+  },
+  {
+    "instance_id": "psf__requests-3362",
+    "policy": "consumption_evict_facts",
+    "n_edits_attempted": 2,
+    "n_edits_applied": 2,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/test_requests.py::TestRequests::test_response_decode_unicode": "pass"
+    },
+    "pass_to_pass_results": {
+      "tests/test_requests.py::TestRequests::test_entry_points": "pass",
+      "tests/test_requests.py::TestRequests::test_invalid_url[MissingSchema-hiwpefhipowhefopw]": "pass",
+      "tests/test_requests.py::TestRequests::test_invalid_url[InvalidSchema-localhost:3128]": "pass",
+      "tests/test_requests.py::TestRequests::test_invalid_url[InvalidSchema-localhost.localdomain:3128/]": "pass",
+      "tests/test_requests.py::TestRequests::test_invalid_url[InvalidSchema-10.122.1.1:3128/]": "pass"
+    },
+    "real_resolved": true,
+    "note": ""
+  },
+  {
+    "instance_id": "pallets__flask-4045",
+    "policy": "consumption_evict_facts",
+    "n_edits_attempted": 3,
+    "n_edits_applied": 3,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/test_blueprints.py::test_dotted_name_not_allowed": "error",
+      "tests/test_blueprints.py::test_route_decorator_custom_endpoint_with_dots": "error"
+    },
+    "pass_to_pass_results": {
+      "tests/test_basic.py::test_method_route_no_methods": "error",
+      "tests/test_basic.py::test_disallow_string_for_allowed_methods": "error",
+      "tests/test_basic.py::test_error_handler_unknown_code": "error",
+      "tests/test_basic.py::test_request_locals": "error",
+      "tests/test_basic.py::test_exception_propagation": "error"
+    },
+    "real_resolved": false,
+    "note": "test_patch_apply_failed"
+  },
+  {
+    "instance_id": "psf__requests-2148",
+    "policy": "consumption_evict_facts",
+    "n_edits_attempted": 4,
+    "n_edits_applied": 4,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "test_requests.py::RequestsTestCase::test_DIGEST_AUTH_RETURNS_COOKIE": "pass",
+      "test_requests.py::RequestsTestCase::test_HTTP_200_OK_GET_ALTERNATIVE": "pass",
+      "test_requests.py::RequestsTestCase::test_HTTP_200_OK_HEAD": "pass",
+      "test_requests.py::RequestsTestCase::test_POSTBIN_GET_POST_FILES": "pass",
+      "test_requests.py::RequestsTestCase::test_auth_is_stripped_on_redirect_off_host": "pass",
+      "test_requests.py::RequestsTestCase::test_basicauth_with_netrc": "pass",
+      "test_requests.py::RequestsTestCase::test_cookie_quote_wrapped": "pass",
+      "test_requests.py::RequestsTestCase::test_generic_cookiejar_works": "pass",
+      "test_requests.py::RequestsTestCase::test_iter_content_handles_socket_error": "pass",
+      "test_requests.py::RequestsTestCase::test_unicode_multipart_post": "pass"
+    },
+    "pass_to_pass_results": {
+      "test_requests.py::RequestsTestCase::test_BASICAUTH_TUPLE_HTTP_200_OK_GET": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGESTAUTH_QUOTES_QOP_VALUE": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGESTAUTH_WRONG_HTTP_401_GET": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGEST_AUTH_SETS_SESSION_COOKIES": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGEST_STREAM": "pass"
+    },
+    "real_resolved": true,
+    "note": ""
+  },
+  {
+    "instance_id": "pallets__flask-4992",
+    "policy": "consumption_evict_facts",
+    "n_edits_attempted": 3,
+    "n_edits_applied": 3,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/test_config.py::test_config_from_file_toml": "error"
+    },
+    "pass_to_pass_results": {
+      "tests/test_config.py::test_config_from_pyfile": "error",
+      "tests/test_config.py::test_config_from_object": "error",
+      "tests/test_config.py::test_config_from_file_json": "error",
+      "tests/test_config.py::test_from_prefixed_env": "error",
+      "tests/test_config.py::test_from_prefixed_env_custom_prefix": "error"
+    },
+    "real_resolved": false,
+    "note": "test_patch_apply_failed"
+  },
+  {
+    "instance_id": "pytest-dev__pytest-5227",
+    "policy": "consumption_evict_facts",
+    "n_edits_attempted": 1,
+    "n_edits_applied": 1,
+    "install_ok": true,
+    "install_log_tail": "\nall' method, because it does not have a 'pyproject.toml' and the 'wheel' package is not installed. pip 23.1 will enforce this behaviour change. A possible replacement is to enable the '--use-pep517' option. Discussion can be found at https://github.com/pypa/pip/issues/8559\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "testing/logging/test_reporting.py::test_log_cli_enabled_disabled[True]": "fail",
+      "testing/logging/test_reporting.py::test_log_cli_default_level": "fail",
+      "testing/logging/test_reporting.py::test_sections_single_new_line_after_test_outcome": "fail"
+    },
+    "pass_to_pass_results": {
+      "[100%]": "fail",
+      "[": "fail",
+      "[100%]------------------------------": "fail",
+      "testing/logging/test_reporting.py::test_live_logging_suspends_capture[True]": "fail",
+      "testing/logging/test_reporting.py::test_live_logging_suspends_capture[False]": "fail"
+    },
+    "real_resolved": false,
+    "note": ""
+  },
+  {
+    "instance_id": "pylint-dev__pylint-5859",
+    "policy": "consumption_evict_facts",
+    "n_edits_attempted": 2,
+    "n_edits_applied": 2,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/checkers/unittest_misc.py::TestFixme::test_non_alphanumeric_codetag": "pass"
+    },
+    "pass_to_pass_results": {
+      "tests/checkers/unittest_misc.py::TestFixme::test_fixme_with_message": "pass",
+      "tests/checkers/unittest_misc.py::TestFixme::test_todo_without_message": "pass",
+      "tests/checkers/unittest_misc.py::TestFixme::test_xxx_without_space": "pass",
+      "tests/checkers/unittest_misc.py::TestFixme::test_xxx_middle": "pass",
+      "tests/checkers/unittest_misc.py::TestFixme::test_without_space_fixme": "pass"
+    },
+    "real_resolved": true,
+    "note": ""
+  },
+  {
+    "instance_id": "pallets__flask-5063",
+    "policy": "consumption_evict_facts",
+    "n_edits_attempted": 6,
+    "n_edits_applied": 6,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/test_cli.py::TestRoutes::test_subdomain": "error",
+      "tests/test_cli.py::TestRoutes::test_host": "error"
+    },
+    "pass_to_pass_results": {
+      "tests/test_cli.py::test_cli_name": "pass",
+      "tests/test_cli.py::test_find_best_app": "pass",
+      "tests/test_cli.py::test_prepare_import[test-path0-test]": "pass",
+      "tests/test_cli.py::test_prepare_import[test.py-path1-test]": "pass",
+      "tests/test_cli.py::test_prepare_import[a/test-path2-test]": "pass"
+    },
+    "real_resolved": false,
+    "note": "test_patch_apply_failed"
+  },
+  {
+    "instance_id": "pylint-dev__pylint-7228",
+    "policy": "consumption_evict_facts",
+    "n_edits_attempted": 14,
+    "n_edits_applied": 14,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/config/test_config.py::test_regex_error": "fail",
+      "tests/config/test_config.py::test_csv_regex_error": "fail"
+    },
+    "pass_to_pass_results": {
+      "tests/config/test_config.py::test_can_read_toml_env_variable": "pass",
+      "tests/config/test_config.py::test_unknown_message_id": "pass",
+      "tests/config/test_config.py::test_unknown_option_name": "pass",
+      "tests/config/test_config.py::test_unknown_short_option_name": "pass",
+      "tests/config/test_config.py::test_unknown_confidence": "pass"
+    },
+    "real_resolved": false,
+    "note": ""
+  },
+  {
+    "instance_id": "pytest-dev__pytest-7490",
+    "policy": "consumption_evict_facts",
+    "n_edits_attempted": 7,
+    "n_edits_applied": 7,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "testing/test_skipping.py::TestXFail::test_dynamic_xfail_set_during_runtest_failed": "fail",
+      "testing/test_skipping.py::TestXFail::test_dynamic_xfail_set_during_runtest_passed_strict": "fail"
+    },
+    "pass_to_pass_results": {
+      "testing/test_skipping.py::test_importorskip": "pass",
+      "testing/test_skipping.py::TestEvaluation::test_no_marker": "pass",
+      "testing/test_skipping.py::TestEvaluation::test_marked_xfail_no_args": "pass",
+      "testing/test_skipping.py::TestEvaluation::test_marked_skipif_no_args": "pass",
+      "testing/test_skipping.py::TestEvaluation::test_marked_one_arg": "pass"
+    },
+    "real_resolved": false,
+    "note": ""
+  },
+  {
+    "instance_id": "psf__requests-2317",
+    "policy": "none",
+    "n_edits_attempted": 1,
+    "n_edits_applied": 1,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "test_requests.py::RequestsTestCase::test_HTTP_302_ALLOW_REDIRECT_GET": "pass",
+      "test_requests.py::RequestsTestCase::test_POSTBIN_GET_POST_FILES": "pass",
+      "test_requests.py::RequestsTestCase::test_POSTBIN_GET_POST_FILES_WITH_DATA": "pass",
+      "test_requests.py::RequestsTestCase::test_basicauth_with_netrc": "pass",
+      "test_requests.py::RequestsTestCase::test_json_param_post_content_type_works": "pass",
+      "test_requests.py::RequestsTestCase::test_manual_redirect_with_partial_body_read": "pass",
+      "test_requests.py::RequestsTestCase::test_requests_history_is_saved": "pass",
+      "test_requests.py::TestTimeout::test_encoded_methods": "pass"
+    },
+    "pass_to_pass_results": {
+      "test_requests.py::RequestsTestCase::test_BASICAUTH_TUPLE_HTTP_200_OK_GET": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGESTAUTH_QUOTES_QOP_VALUE": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGESTAUTH_WRONG_HTTP_401_GET": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGEST_AUTH_RETURNS_COOKIE": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGEST_AUTH_SETS_SESSION_COOKIES": "pass"
+    },
+    "real_resolved": true,
+    "note": ""
+  },
+  {
+    "instance_id": "psf__requests-3362",
+    "policy": "none",
+    "n_edits_attempted": 1,
+    "n_edits_applied": 1,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/test_requests.py::TestRequests::test_response_decode_unicode": "pass"
+    },
+    "pass_to_pass_results": {
+      "tests/test_requests.py::TestRequests::test_entry_points": "pass",
+      "tests/test_requests.py::TestRequests::test_invalid_url[MissingSchema-hiwpefhipowhefopw]": "pass",
+      "tests/test_requests.py::TestRequests::test_invalid_url[InvalidSchema-localhost:3128]": "pass",
+      "tests/test_requests.py::TestRequests::test_invalid_url[InvalidSchema-localhost.localdomain:3128/]": "pass",
+      "tests/test_requests.py::TestRequests::test_invalid_url[InvalidSchema-10.122.1.1:3128/]": "pass"
+    },
+    "real_resolved": true,
+    "note": ""
+  },
+  {
+    "instance_id": "pallets__flask-4045",
+    "policy": "none",
+    "n_edits_attempted": 3,
+    "n_edits_applied": 3,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/test_blueprints.py::test_dotted_name_not_allowed": "error",
+      "tests/test_blueprints.py::test_route_decorator_custom_endpoint_with_dots": "error"
+    },
+    "pass_to_pass_results": {
+      "tests/test_basic.py::test_method_route_no_methods": "error",
+      "tests/test_basic.py::test_disallow_string_for_allowed_methods": "error",
+      "tests/test_basic.py::test_error_handler_unknown_code": "error",
+      "tests/test_basic.py::test_request_locals": "error",
+      "tests/test_basic.py::test_exception_propagation": "error"
+    },
+    "real_resolved": false,
+    "note": "test_patch_apply_failed"
+  },
+  {
+    "instance_id": "pallets__flask-4992",
+    "policy": "none",
+    "n_edits_attempted": 3,
+    "n_edits_applied": 3,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/test_config.py::test_config_from_file_toml": "error"
+    },
+    "pass_to_pass_results": {
+      "tests/test_config.py::test_config_from_pyfile": "error",
+      "tests/test_config.py::test_config_from_object": "error",
+      "tests/test_config.py::test_config_from_file_json": "error",
+      "tests/test_config.py::test_from_prefixed_env": "error",
+      "tests/test_config.py::test_from_prefixed_env_custom_prefix": "error"
+    },
+    "real_resolved": false,
+    "note": "test_patch_apply_failed"
+  },
+  {
+    "instance_id": "psf__requests-2148",
+    "policy": "none",
+    "n_edits_attempted": 4,
+    "n_edits_applied": 4,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "test_requests.py::RequestsTestCase::test_DIGEST_AUTH_RETURNS_COOKIE": "pass",
+      "test_requests.py::RequestsTestCase::test_HTTP_200_OK_GET_ALTERNATIVE": "pass",
+      "test_requests.py::RequestsTestCase::test_HTTP_200_OK_HEAD": "pass",
+      "test_requests.py::RequestsTestCase::test_POSTBIN_GET_POST_FILES": "pass",
+      "test_requests.py::RequestsTestCase::test_auth_is_stripped_on_redirect_off_host": "pass",
+      "test_requests.py::RequestsTestCase::test_basicauth_with_netrc": "pass",
+      "test_requests.py::RequestsTestCase::test_cookie_quote_wrapped": "pass",
+      "test_requests.py::RequestsTestCase::test_generic_cookiejar_works": "pass",
+      "test_requests.py::RequestsTestCase::test_iter_content_handles_socket_error": "pass",
+      "test_requests.py::RequestsTestCase::test_unicode_multipart_post": "pass"
+    },
+    "pass_to_pass_results": {
+      "test_requests.py::RequestsTestCase::test_BASICAUTH_TUPLE_HTTP_200_OK_GET": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGESTAUTH_QUOTES_QOP_VALUE": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGESTAUTH_WRONG_HTTP_401_GET": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGEST_AUTH_SETS_SESSION_COOKIES": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGEST_STREAM": "pass"
+    },
+    "real_resolved": true,
+    "note": ""
+  },
+  {
+    "instance_id": "pytest-dev__pytest-5227",
+    "policy": "none",
+    "n_edits_attempted": 1,
+    "n_edits_applied": 1,
+    "install_ok": true,
+    "install_log_tail": "\nall' method, because it does not have a 'pyproject.toml' and the 'wheel' package is not installed. pip 23.1 will enforce this behaviour change. A possible replacement is to enable the '--use-pep517' option. Discussion can be found at https://github.com/pypa/pip/issues/8559\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "testing/logging/test_reporting.py::test_log_cli_enabled_disabled[True]": "fail",
+      "testing/logging/test_reporting.py::test_log_cli_default_level": "fail",
+      "testing/logging/test_reporting.py::test_sections_single_new_line_after_test_outcome": "fail"
+    },
+    "pass_to_pass_results": {
+      "[100%]": "fail",
+      "[": "fail",
+      "[100%]------------------------------": "fail",
+      "testing/logging/test_reporting.py::test_live_logging_suspends_capture[True]": "fail",
+      "testing/logging/test_reporting.py::test_live_logging_suspends_capture[False]": "fail"
+    },
+    "real_resolved": false,
+    "note": ""
+  },
+  {
+    "instance_id": "pallets__flask-5063",
+    "policy": "none",
+    "n_edits_attempted": 2,
+    "n_edits_applied": 2,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/test_cli.py::TestRoutes::test_subdomain": "error",
+      "tests/test_cli.py::TestRoutes::test_host": "error"
+    },
+    "pass_to_pass_results": {
+      "tests/test_cli.py::test_cli_name": "pass",
+      "tests/test_cli.py::test_find_best_app": "pass",
+      "tests/test_cli.py::test_prepare_import[test-path0-test]": "pass",
+      "tests/test_cli.py::test_prepare_import[test.py-path1-test]": "pass",
+      "tests/test_cli.py::test_prepare_import[a/test-path2-test]": "pass"
+    },
+    "real_resolved": false,
+    "note": "test_patch_apply_failed"
+  },
+  {
+    "instance_id": "pylint-dev__pylint-7228",
+    "policy": "none",
+    "n_edits_attempted": 12,
+    "n_edits_applied": 12,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/config/test_config.py::test_regex_error": "fail",
+      "tests/config/test_config.py::test_csv_regex_error": "fail"
+    },
+    "pass_to_pass_results": {
+      "tests/config/test_config.py::test_can_read_toml_env_variable": "pass",
+      "tests/config/test_config.py::test_unknown_message_id": "pass",
+      "tests/config/test_config.py::test_unknown_option_name": "pass",
+      "tests/config/test_config.py::test_unknown_short_option_name": "pass",
+      "tests/config/test_config.py::test_unknown_confidence": "pass"
+    },
+    "real_resolved": false,
+    "note": ""
+  },
+  {
+    "instance_id": "pylint-dev__pylint-5859",
+    "policy": "none",
+    "n_edits_attempted": 7,
+    "n_edits_applied": 6,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/checkers/unittest_misc.py::TestFixme::test_non_alphanumeric_codetag": "pass"
+    },
+    "pass_to_pass_results": {
+      "tests/checkers/unittest_misc.py::TestFixme::test_fixme_with_message": "pass",
+      "tests/checkers/unittest_misc.py::TestFixme::test_todo_without_message": "pass",
+      "tests/checkers/unittest_misc.py::TestFixme::test_xxx_without_space": "pass",
+      "tests/checkers/unittest_misc.py::TestFixme::test_xxx_middle": "pass",
+      "tests/checkers/unittest_misc.py::TestFixme::test_without_space_fixme": "pass"
+    },
+    "real_resolved": true,
+    "note": ""
+  },
+  {
+    "instance_id": "pytest-dev__pytest-7490",
+    "policy": "none",
+    "n_edits_attempted": 3,
+    "n_edits_applied": 3,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "testing/test_skipping.py::TestXFail::test_dynamic_xfail_set_during_runtest_failed": "fail",
+      "testing/test_skipping.py::TestXFail::test_dynamic_xfail_set_during_runtest_passed_strict": "error"
+    },
+    "pass_to_pass_results": {
+      "testing/test_skipping.py::test_importorskip": "pass",
+      "testing/test_skipping.py::TestEvaluation::test_no_marker": "pass",
+      "testing/test_skipping.py::TestEvaluation::test_marked_xfail_no_args": "pass",
+      "testing/test_skipping.py::TestEvaluation::test_marked_skipif_no_args": "pass",
+      "testing/test_skipping.py::TestEvaluation::test_marked_one_arg": "pass"
+    },
+    "real_resolved": false,
+    "note": "test_patch_apply_failed"
+  },
+  {
+    "instance_id": "psf__requests-3362",
+    "policy": "smart_evict",
+    "n_edits_attempted": 1,
+    "n_edits_applied": 1,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/test_requests.py::TestRequests::test_response_decode_unicode": "pass"
+    },
+    "pass_to_pass_results": {
+      "tests/test_requests.py::TestRequests::test_entry_points": "pass",
+      "tests/test_requests.py::TestRequests::test_invalid_url[MissingSchema-hiwpefhipowhefopw]": "pass",
+      "tests/test_requests.py::TestRequests::test_invalid_url[InvalidSchema-localhost:3128]": "pass",
+      "tests/test_requests.py::TestRequests::test_invalid_url[InvalidSchema-localhost.localdomain:3128/]": "pass",
+      "tests/test_requests.py::TestRequests::test_invalid_url[InvalidSchema-10.122.1.1:3128/]": "pass"
+    },
+    "real_resolved": true,
+    "note": ""
+  },
+  {
+    "instance_id": "psf__requests-2317",
+    "policy": "smart_evict",
+    "n_edits_attempted": 3,
+    "n_edits_applied": 3,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "test_requests.py::RequestsTestCase::test_HTTP_302_ALLOW_REDIRECT_GET": "pass",
+      "test_requests.py::RequestsTestCase::test_POSTBIN_GET_POST_FILES": "pass",
+      "test_requests.py::RequestsTestCase::test_POSTBIN_GET_POST_FILES_WITH_DATA": "pass",
+      "test_requests.py::RequestsTestCase::test_basicauth_with_netrc": "pass",
+      "test_requests.py::RequestsTestCase::test_json_param_post_content_type_works": "pass",
+      "test_requests.py::RequestsTestCase::test_manual_redirect_with_partial_body_read": "pass",
+      "test_requests.py::RequestsTestCase::test_requests_history_is_saved": "pass",
+      "test_requests.py::TestTimeout::test_encoded_methods": "pass"
+    },
+    "pass_to_pass_results": {
+      "test_requests.py::RequestsTestCase::test_BASICAUTH_TUPLE_HTTP_200_OK_GET": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGESTAUTH_QUOTES_QOP_VALUE": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGESTAUTH_WRONG_HTTP_401_GET": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGEST_AUTH_RETURNS_COOKIE": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGEST_AUTH_SETS_SESSION_COOKIES": "pass"
+    },
+    "real_resolved": true,
+    "note": ""
+  },
+  {
+    "instance_id": "pallets__flask-4045",
+    "policy": "smart_evict",
+    "n_edits_attempted": 3,
+    "n_edits_applied": 3,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/test_blueprints.py::test_dotted_name_not_allowed": "error",
+      "tests/test_blueprints.py::test_route_decorator_custom_endpoint_with_dots": "error"
+    },
+    "pass_to_pass_results": {
+      "tests/test_basic.py::test_method_route_no_methods": "error",
+      "tests/test_basic.py::test_disallow_string_for_allowed_methods": "error",
+      "tests/test_basic.py::test_error_handler_unknown_code": "error",
+      "tests/test_basic.py::test_request_locals": "error",
+      "tests/test_basic.py::test_exception_propagation": "error"
+    },
+    "real_resolved": false,
+    "note": "test_patch_apply_failed"
+  },
+  {
+    "instance_id": "psf__requests-2148",
+    "policy": "smart_evict",
+    "n_edits_attempted": 6,
+    "n_edits_applied": 6,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "test_requests.py::RequestsTestCase::test_DIGEST_AUTH_RETURNS_COOKIE": "pass",
+      "test_requests.py::RequestsTestCase::test_HTTP_200_OK_GET_ALTERNATIVE": "pass",
+      "test_requests.py::RequestsTestCase::test_HTTP_200_OK_HEAD": "pass",
+      "test_requests.py::RequestsTestCase::test_POSTBIN_GET_POST_FILES": "pass",
+      "test_requests.py::RequestsTestCase::test_auth_is_stripped_on_redirect_off_host": "pass",
+      "test_requests.py::RequestsTestCase::test_basicauth_with_netrc": "pass",
+      "test_requests.py::RequestsTestCase::test_cookie_quote_wrapped": "pass",
+      "test_requests.py::RequestsTestCase::test_generic_cookiejar_works": "pass",
+      "test_requests.py::RequestsTestCase::test_iter_content_handles_socket_error": "pass",
+      "test_requests.py::RequestsTestCase::test_unicode_multipart_post": "pass"
+    },
+    "pass_to_pass_results": {
+      "test_requests.py::RequestsTestCase::test_BASICAUTH_TUPLE_HTTP_200_OK_GET": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGESTAUTH_QUOTES_QOP_VALUE": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGESTAUTH_WRONG_HTTP_401_GET": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGEST_AUTH_SETS_SESSION_COOKIES": "pass",
+      "test_requests.py::RequestsTestCase::test_DIGEST_STREAM": "pass"
+    },
+    "real_resolved": true,
+    "note": ""
+  },
+  {
+    "instance_id": "pallets__flask-4992",
+    "policy": "smart_evict",
+    "n_edits_attempted": 3,
+    "n_edits_applied": 3,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/test_config.py::test_config_from_file_toml": "error"
+    },
+    "pass_to_pass_results": {
+      "tests/test_config.py::test_config_from_pyfile": "error",
+      "tests/test_config.py::test_config_from_object": "error",
+      "tests/test_config.py::test_config_from_file_json": "error",
+      "tests/test_config.py::test_from_prefixed_env": "error",
+      "tests/test_config.py::test_from_prefixed_env_custom_prefix": "error"
+    },
+    "real_resolved": false,
+    "note": "test_patch_apply_failed"
+  },
+  {
+    "instance_id": "pytest-dev__pytest-5227",
+    "policy": "smart_evict",
+    "n_edits_attempted": 1,
+    "n_edits_applied": 1,
+    "install_ok": true,
+    "install_log_tail": "\nall' method, because it does not have a 'pyproject.toml' and the 'wheel' package is not installed. pip 23.1 will enforce this behaviour change. A possible replacement is to enable the '--use-pep517' option. Discussion can be found at https://github.com/pypa/pip/issues/8559\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "testing/logging/test_reporting.py::test_log_cli_enabled_disabled[True]": "fail",
+      "testing/logging/test_reporting.py::test_log_cli_default_level": "fail",
+      "testing/logging/test_reporting.py::test_sections_single_new_line_after_test_outcome": "fail"
+    },
+    "pass_to_pass_results": {
+      "[100%]": "fail",
+      "[": "fail",
+      "[100%]------------------------------": "fail",
+      "testing/logging/test_reporting.py::test_live_logging_suspends_capture[True]": "fail",
+      "testing/logging/test_reporting.py::test_live_logging_suspends_capture[False]": "fail"
+    },
+    "real_resolved": false,
+    "note": ""
+  },
+  {
+    "instance_id": "pallets__flask-5063",
+    "policy": "smart_evict",
+    "n_edits_attempted": 2,
+    "n_edits_applied": 2,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/test_cli.py::TestRoutes::test_subdomain": "error",
+      "tests/test_cli.py::TestRoutes::test_host": "error"
+    },
+    "pass_to_pass_results": {
+      "tests/test_cli.py::test_cli_name": "pass",
+      "tests/test_cli.py::test_find_best_app": "pass",
+      "tests/test_cli.py::test_prepare_import[test-path0-test]": "pass",
+      "tests/test_cli.py::test_prepare_import[test.py-path1-test]": "pass",
+      "tests/test_cli.py::test_prepare_import[a/test-path2-test]": "pass"
+    },
+    "real_resolved": false,
+    "note": "test_patch_apply_failed"
+  },
+  {
+    "instance_id": "pylint-dev__pylint-7228",
+    "policy": "smart_evict",
+    "n_edits_attempted": 12,
+    "n_edits_applied": 12,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/config/test_config.py::test_regex_error": "fail",
+      "tests/config/test_config.py::test_csv_regex_error": "fail"
+    },
+    "pass_to_pass_results": {
+      "tests/config/test_config.py::test_can_read_toml_env_variable": "pass",
+      "tests/config/test_config.py::test_unknown_message_id": "pass",
+      "tests/config/test_config.py::test_unknown_option_name": "pass",
+      "tests/config/test_config.py::test_unknown_short_option_name": "pass",
+      "tests/config/test_config.py::test_unknown_confidence": "pass"
+    },
+    "real_resolved": false,
+    "note": ""
+  },
+  {
+    "instance_id": "pylint-dev__pylint-5859",
+    "policy": "smart_evict",
+    "n_edits_attempted": 3,
+    "n_edits_applied": 3,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "tests/checkers/unittest_misc.py::TestFixme::test_non_alphanumeric_codetag": "pass"
+    },
+    "pass_to_pass_results": {
+      "tests/checkers/unittest_misc.py::TestFixme::test_fixme_with_message": "pass",
+      "tests/checkers/unittest_misc.py::TestFixme::test_todo_without_message": "pass",
+      "tests/checkers/unittest_misc.py::TestFixme::test_xxx_without_space": "pass",
+      "tests/checkers/unittest_misc.py::TestFixme::test_xxx_middle": "pass",
+      "tests/checkers/unittest_misc.py::TestFixme::test_without_space_fixme": "pass"
+    },
+    "real_resolved": true,
+    "note": ""
+  },
+  {
+    "instance_id": "pytest-dev__pytest-7490",
+    "policy": "smart_evict",
+    "n_edits_attempted": 2,
+    "n_edits_applied": 2,
+    "install_ok": true,
+    "install_log_tail": "\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n[notice] To update, run: python3.9 -m pip install --upgrade pip\n",
+    "fail_to_pass_results": {
+      "testing/test_skipping.py::TestXFail::test_dynamic_xfail_set_during_runtest_failed": "fail",
+      "testing/test_skipping.py::TestXFail::test_dynamic_xfail_set_during_runtest_passed_strict": "error"
+    },
+    "pass_to_pass_results": {
+      "testing/test_skipping.py::test_importorskip": "pass",
+      "testing/test_skipping.py::TestEvaluation::test_no_marker": "pass",
+      "testing/test_skipping.py::TestEvaluation::test_marked_xfail_no_args": "pass",
+      "testing/test_skipping.py::TestEvaluation::test_marked_skipif_no_args": "pass",
+      "testing/test_skipping.py::TestEvaluation::test_marked_one_arg": "pass"
+    },
+    "real_resolved": false,
+    "note": "test_patch_apply_failed"
+  }
+]
