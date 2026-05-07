@@ -17,6 +17,7 @@ import java.util.Vector;
 public class LightningClient extends DB {
 
     private JlightningClient client;
+    private long pendingId = -1;
 
     @Override
     public void init() throws DBException {
@@ -28,7 +29,16 @@ public class LightningClient extends DB {
     }
 
     @Override
-    public void cleanup() {}
+    public void cleanup() {
+        drainPending();
+    }
+
+    private void drainPending() {
+        if (pendingId != -1) {
+            client.release(pendingId);
+            pendingId = -1;
+        }
+    }
 
     private static long keyToId(String key) {
         String numStr = key.startsWith("user") ? key.substring(4) : key;
@@ -38,13 +48,14 @@ public class LightningClient extends DB {
     @Override
     public Status read(String table, String key, Set<String> fields,
                        Map<String, ByteIterator> result) {
+        drainPending();
         long id = keyToId(key);
         ByteBuffer payload = client.get(id);
         if (payload == null || payload.capacity() == 0) {
             return Status.NOT_FOUND;
         }
         decodeMultiPut(payload, fields, result);
-        client.release(id);
+        pendingId = id;
         return Status.OK;
     }
 
@@ -58,6 +69,7 @@ public class LightningClient extends DB {
     @Override
     public Status insert(String table, String key,
                          Map<String, ByteIterator> values) {
+        drainPending();
         String[] fields = new String[values.size()];
         Object[] vals = new Object[values.size()];
         materialize(values, fields, vals);
@@ -68,6 +80,7 @@ public class LightningClient extends DB {
     @Override
     public Status update(String table, String key,
                          Map<String, ByteIterator> values) {
+        drainPending();
         String[] fields = new String[values.size()];
         Object[] vals = new Object[values.size()];
         materialize(values, fields, vals);
@@ -77,6 +90,7 @@ public class LightningClient extends DB {
 
     @Override
     public Status delete(String table, String key) {
+        drainPending();
         client.delete(keyToId(key));
         return Status.OK;
     }
