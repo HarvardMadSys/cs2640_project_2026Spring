@@ -59,8 +59,8 @@ public final class YcsbDriver {
 
         Properties runProps = new Properties();
         runProps.putAll(props);
-        runProps.setProperty("insertstart", "0");
-        runProps.setProperty("insertcount", String.valueOf(records));
+        runProps.setProperty("insertstart", String.valueOf(loadStart));
+        runProps.setProperty("insertcount", String.valueOf(perProcRecords));
         Workload runWorkload = (Workload) Class.forName(workloadClass)
             .getDeclaredConstructor().newInstance();
         runWorkload.init(runProps);
