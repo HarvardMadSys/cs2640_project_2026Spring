@@ -36,7 +36,7 @@ LIGHTNING_BUILD = REPO_ROOT / "external" / "lightning" / "build"
 LIGHTNING_SOCKET = Path("/tmp/lightning")
 
 WORKLOADS = ["workloada", "workloadb", "workloadc", "workloadd", "workloadf"]
-THREAD_COUNTS = [1, 24, 64]
+THREAD_COUNTS = [1, 2, 4, 8]
 STORES = ["sas", "lightning"]
 
 DEFAULTS = {
