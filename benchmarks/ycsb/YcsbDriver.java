@@ -44,7 +44,8 @@ public final class YcsbDriver {
         int nprocs = Integer.parseInt(props.getProperty("nprocs", "1"));
         long perProcRecords = records / nprocs;
         long perProcOps = ops / nprocs;
-        long loadStart = procid * perProcRecords;
+        long blockSize = perProcRecords + perProcOps;
+        long loadStart = (long) procid * blockSize;
 
         String workloadClass = props.getProperty(
             "workload", "site.ycsb.workloads.CoreWorkload");
@@ -63,10 +64,10 @@ public final class YcsbDriver {
 
         Properties runProps = new Properties();
         runProps.putAll(props);
-        runProps.setProperty("insertstart", "0");
-        runProps.setProperty("insertcount", String.valueOf(records));
+        runProps.setProperty("insertstart", String.valueOf(loadStart));
+        runProps.setProperty("insertcount", String.valueOf(perProcRecords));
         runProps.setProperty("recordcount",
-            String.valueOf(records + (long) procid * perProcOps));
+            String.valueOf(loadStart + perProcRecords));
         Workload runWorkload = (Workload) Class.forName(workloadClass)
             .getDeclaredConstructor().newInstance();
         runWorkload.init(runProps);
