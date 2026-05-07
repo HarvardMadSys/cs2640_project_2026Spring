@@ -1,0 +1,5 @@
+phase,operation,count,total_seconds,ops_per_sec,latency_mean_ms,latency_p50_ms,latency_p95_ms,latency_p99_ms,run_id,backend,workers,policy,storage,file_count,file_size,dirs,ops,seed,oracle_cold_fraction,oracle_cold_access_fraction
+mdtest_tree,create,3000,0.142506,21051.8,0.366717,0.349929,0.401868,0.846366,20260506-131352-78d64b7c,posix,8,none,predictive_cold_segments,3000,0,64,6000,8001,0.9,0.1
+mdtest_tree,stat,3000,0.334835,8959.645,0.864772,0.855823,1.114914,1.24504,20260506-131352-78d64b7c,posix,8,none,predictive_cold_segments,3000,0,64,6000,8001,0.9,0.1
+mdtest_tree,read,3000,0.412587,7271.193,1.084234,1.071977,1.31839,1.501464,20260506-131352-78d64b7c,posix,8,none,predictive_cold_segments,3000,0,64,6000,8001,0.9,0.1
+mdtest_tree,delete,3000,0.014512,206726.665,0.009593,0.002664,0.003058,0.006101,20260506-131352-78d64b7c,posix,8,none,predictive_cold_segments,3000,0,64,6000,8001,0.9,0.1

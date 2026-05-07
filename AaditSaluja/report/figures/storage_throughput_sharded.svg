@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="680" viewBox="0 0 1120 680">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="105" y="36" font-family="Arial" font-size="24" font-weight="700" fill="#222">Packing variants: throughput tradeoff</text>
+<text x="105" y="62" font-family="Arial" font-size="15" fill="#555">Single-stream append packing beats sharded packing, but native remains fastest.</text>
+<line x1="105" x2="860" y1="565.0" y2="565.0" stroke="#e6e6e6"/>
+<text x="93" y="570.0" font-family="Arial" font-size="13" text-anchor="end" fill="#555">0</text>
+<line x1="105" x2="860" y1="470.0" y2="470.0" stroke="#e6e6e6"/>
+<text x="93" y="475.0" font-family="Arial" font-size="13" text-anchor="end" fill="#555">64</text>
+<line x1="105" x2="860" y1="375.0" y2="375.0" stroke="#e6e6e6"/>
+<text x="93" y="380.0" font-family="Arial" font-size="13" text-anchor="end" fill="#555">128</text>
+<line x1="105" x2="860" y1="280.0" y2="280.0" stroke="#e6e6e6"/>
+<text x="93" y="285.0" font-family="Arial" font-size="13" text-anchor="end" fill="#555">193</text>
+<line x1="105" x2="860" y1="185.0" y2="185.0" stroke="#e6e6e6"/>
+<text x="93" y="190.0" font-family="Arial" font-size="13" text-anchor="end" fill="#555">257</text>
+<line x1="105" x2="860" y1="90.0" y2="90.0" stroke="#e6e6e6"/>
+<text x="93" y="95.0" font-family="Arial" font-size="13" text-anchor="end" fill="#555">321</text>
+<line x1="105" x2="105" y1="90" y2="565" stroke="#333"/>
+<line x1="105" x2="860" y1="565" y2="565" stroke="#333"/>
+<text x="30" y="327.5" transform="rotate(-90 30 327.5)" font-family="Arial" font-size="15" fill="#333" text-anchor="middle">Aggregate ops/sec</text>
+<rect x="196.8" y="162.5" width="44.0" height="402.5" fill="#2f6fbb"/>
+<text x="218.8" y="157.5" font-family="Arial" font-size="11" text-anchor="middle" fill="#333">272</text>
+<rect x="246.8" y="273.3" width="44.0" height="291.7" fill="#8172b2"/>
+<text x="268.8" y="268.3" font-family="Arial" font-size="11" text-anchor="middle" fill="#333">197</text>
+<rect x="296.8" y="399.3" width="44.0" height="165.7" fill="#937860"/>
+<text x="318.8" y="394.3" font-family="Arial" font-size="11" text-anchor="middle" fill="#333">112</text>
+<rect x="346.8" y="394.8" width="44.0" height="170.2" fill="#64b5cd"/>
+<text x="368.8" y="389.8" font-family="Arial" font-size="11" text-anchor="middle" fill="#333">115</text>
+<text x="293.8" y="600" font-family="Arial" font-size="15" text-anchor="middle" fill="#222">Small dirs/files</text>
+<rect x="574.2" y="169.0" width="44.0" height="396.0" fill="#2f6fbb"/>
+<text x="596.2" y="164.0" font-family="Arial" font-size="11" text-anchor="middle" fill="#333">268</text>
+<rect x="624.2" y="287.6" width="44.0" height="277.4" fill="#8172b2"/>
+<text x="646.2" y="282.6" font-family="Arial" font-size="11" text-anchor="middle" fill="#333">187</text>
+<rect x="674.2" y="387.9" width="44.0" height="177.1" fill="#937860"/>
+<text x="696.2" y="382.9" font-family="Arial" font-size="11" text-anchor="middle" fill="#333">120</text>
+<rect x="724.2" y="431.9" width="44.0" height="133.1" fill="#64b5cd"/>
+<text x="746.2" y="426.9" font-family="Arial" font-size="11" text-anchor="middle" fill="#333">90</text>
+<text x="671.2" y="600" font-family="Arial" font-size="15" text-anchor="middle" fill="#222">Hot directory skew</text>
+<rect x="895" y="97" width="16" height="16" fill="#2f6fbb"/>
+<text x="919" y="110" font-family="Arial" font-size="14" fill="#333">Native</text>
+<rect x="895" y="125" width="16" height="16" fill="#8172b2"/>
+<text x="919" y="138" font-family="Arial" font-size="14" fill="#333">Append segments</text>
+<rect x="895" y="153" width="16" height="16" fill="#937860"/>
+<text x="919" y="166" font-family="Arial" font-size="14" fill="#333">Sharded by dir</text>
+<rect x="895" y="181" width="16" height="16" fill="#64b5cd"/>
+<text x="919" y="194" font-family="Arial" font-size="14" fill="#333">Sharded hash8</text>
+</svg>

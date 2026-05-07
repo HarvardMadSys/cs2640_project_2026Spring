@@ -1,0 +1,63 @@
+\begin{thebibliography}{10}
+
+\bibitem{cephfs-pinning}
+{Ceph}.
+\newblock {New in Luminous: CephFS Subtree Pinning}.
+\newblock \url{https://ceph.io/en/news/blog/2017/new-luminous-cephfs-subtree-pinning/}, 2017.
+
+\bibitem{cephfs}
+{Ceph}.
+\newblock {Ceph File System Documentation}.
+\newblock \url{https://docs.ceph.com/en/latest/cephfs/}, 2026.
+\newblock Accessed 2026-05-06.
+
+\bibitem{cephfs-multimds}
+{Ceph}.
+\newblock {CephFS: Configuring Multiple Active MDS Daemons}.
+\newblock \url{https://docs.ceph.com/en/squid/cephfs/multimds/}, 2026.
+\newblock Accessed 2026-05-06.
+
+\bibitem{ycsb}
+Brian~F. Cooper et~al.
+\newblock {YCSB Core Workload Properties}.
+\newblock \url{https://github.com/brianfrankcooper/YCSB/wiki/Core-Properties}, 2026.
+\newblock Accessed 2026-05-06.
+
+\bibitem{filebench}
+{Filebench Developers}.
+\newblock {Filebench Source Repository}.
+\newblock \url{https://github.com/filebench/filebench}, 2026.
+\newblock Accessed 2026-05-06.
+
+\bibitem{ior-mdtest}
+{IOR Developers}.
+\newblock {IOR and mdtest Documentation}.
+\newblock \url{https://ior.readthedocs.io/}, 2026.
+\newblock Accessed 2026-05-06.
+
+\bibitem{tablefs}
+Kai Ren and Garth Gibson.
+\newblock {TABLEFS}: Enhancing metadata efficiency in the local file system.
+\newblock In {\em Proceedings of the 2013 USENIX Annual Technical Conference (USENIX ATC 13)}, pages 145--156. USENIX Association, 2013.
+
+\bibitem{indexfs}
+Kai Ren, Qing Zheng, Swapnil Patil, and Garth Gibson.
+\newblock {IndexFS}: Scaling file system metadata performance with stateless caching and bulk insertion.
+\newblock In {\em Proceedings of the International Conference for High Performance Computing, Networking, Storage and Analysis (SC '14)}, 2014.
+
+\bibitem{mantle}
+Michael Sevilla, Noah Watkins, Carlos Maltzahn, Ike Nassi, Scott~A. Brandt, Sage Weil, Greg Farnum, and Sam Fineberg.
+\newblock {Mantle}: Programmable metadata load balancing for {CephFS}.
+\newblock In {\em Proceedings of the International Conference for High Performance Computing, Networking, Storage and Analysis (SC '17)}. ACM, 2017.
+
+\bibitem{deltafs}
+Qing Zheng, Chuck Cranor, Dan Tsafrir, George Amvrosiadis, Garth~A. Gibson, Bradley Settlemyer, and Gary Grider.
+\newblock {DeltaFS}: Exascale file systems scale better without dedicated servers.
+\newblock In {\em Proceedings of the 10th Parallel Data Storage Workshop (PDSW '15)}. IEEE, 2015.
+
+\bibitem{lunule}
+Ziliang Zong, Cheng Li, Jinsong Han, Zhao Zhang, and Yong Chen.
+\newblock {Lunule}: An efficient metadata management system for big data file systems.
+\newblock In {\em Proceedings of the 2014 IEEE International Conference on Cluster Computing (CLUSTER)}. IEEE, 2014.
+
+\end{thebibliography}

@@ -1,0 +1,5 @@
+host,port,clients,operations,keys,value_size,get_ratio,zipf_s,warmup,prefill,elapsed_seconds,throughput_rps,mean_latency_us,p50_latency_us,p95_latency_us,p99_latency_us,measured_ok_responses,measured_errors,warmup_ok_responses,warmup_errors
+10.10.1.1,9091,1,100000,1024,64,0.95,0.8,5000,1,0.754608,132519,6.06173,5,6,6,100000,0,5000,0
+10.10.1.1,9091,2,100000,1024,64,0.95,0.8,5000,1,0.713215,140210,12.3395,5,6,6,100000,0,5000,0
+10.10.1.1,9091,4,100000,1024,64,0.95,0.8,5000,1,0.449,222717,13.9935,5,6,7,100000,0,5000,0
+10.10.1.1,9091,8,100000,1024,64,0.95,0.8,5000,1,0.272669,366745,16.94,6,6,8,100000,0,5000,0

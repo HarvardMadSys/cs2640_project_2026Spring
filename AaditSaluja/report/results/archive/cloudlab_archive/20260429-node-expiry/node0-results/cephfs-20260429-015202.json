@@ -1,0 +1,127 @@
+{
+  "args": {
+    "branching": 8, 
+    "conffile": "/etc/ceph/ceph.conf", 
+    "csv": "/tmp/cs2640-bench-results-20260429-015202/cephfs-20260429-015202.csv", 
+    "depth": 2, 
+    "dirs": 4, 
+    "file_count": 40, 
+    "file_size": 16, 
+    "hot_min_interval": 32, 
+    "hot_threshold": 64, 
+    "hot_window": 128, 
+    "no_ceph_stats": true, 
+    "ops": 1000, 
+    "output": "/tmp/cs2640-bench-results-20260429-015202/cephfs-20260429-015202.json", 
+    "pin_ranks": [
+      0
+    ], 
+    "policy": "static", 
+    "root": "/cs2640-bench", 
+    "seed": 1, 
+    "suite": "custom", 
+    "workers": 1, 
+    "workload": "hotdirs_zipf"
+  }, 
+  "backend": "ceph-libcephfs", 
+  "ceph_stats": {
+    "after": {}, 
+    "before": {}, 
+    "delta": {}
+  }, 
+  "elapsed_seconds": 0.399433, 
+  "ended_unix": 1777441923.806919, 
+  "host": "5a8ac6d962cb", 
+  "policy_events": [
+    {
+      "action": "pin", 
+      "path": "/cs2640-bench/20260429-055203-ad9485f6/custom-17e54119", 
+      "policy": "static", 
+      "rank": 0, 
+      "reason": "round_robin_static_subtree_pin", 
+      "sequence": 1
+    }, 
+    {
+      "action": "pin", 
+      "path": "/cs2640-bench/20260429-055203-ad9485f6/custom-17e54119/dir0000", 
+      "policy": "static", 
+      "rank": 0, 
+      "reason": "round_robin_static_subtree_pin", 
+      "sequence": 2
+    }, 
+    {
+      "action": "pin", 
+      "path": "/cs2640-bench/20260429-055203-ad9485f6/custom-17e54119/dir0001", 
+      "policy": "static", 
+      "rank": 0, 
+      "reason": "round_robin_static_subtree_pin", 
+      "sequence": 3
+    }, 
+    {
+      "action": "pin", 
+      "path": "/cs2640-bench/20260429-055203-ad9485f6/custom-17e54119/dir0002", 
+      "policy": "static", 
+      "rank": 0, 
+      "reason": "round_robin_static_subtree_pin", 
+      "sequence": 4
+    }, 
+    {
+      "action": "pin", 
+      "path": "/cs2640-bench/20260429-055203-ad9485f6/custom-17e54119/dir0003", 
+      "policy": "static", 
+      "rank": 0, 
+      "reason": "round_robin_static_subtree_pin", 
+      "sequence": 5
+    }
+  ], 
+  "results": [
+    {
+      "backend": "ceph-libcephfs", 
+      "count": 40, 
+      "latency_mean_ms": 1.275295, 
+      "latency_p50_ms": 0.828147, 
+      "latency_p95_ms": 1.291859, 
+      "latency_p99_ms": 11.316943, 
+      "operation": "skewed_create", 
+      "ops_per_sec": 777.439, 
+      "phase": "hotdirs_zipf", 
+      "policy": "static", 
+      "run_id": "20260429-055203-ad9485f6", 
+      "total_seconds": 0.051451, 
+      "workers": 1
+    }, 
+    {
+      "backend": "ceph-libcephfs", 
+      "count": 40, 
+      "latency_mean_ms": 0.061917, 
+      "latency_p50_ms": 0.037074, 
+      "latency_p95_ms": 0.058949, 
+      "latency_p99_ms": 0.614045, 
+      "operation": "skewed_stat", 
+      "ops_per_sec": 15111.886, 
+      "phase": "hotdirs_zipf", 
+      "policy": "static", 
+      "run_id": "20260429-055203-ad9485f6", 
+      "total_seconds": 0.002647, 
+      "workers": 1
+    }, 
+    {
+      "backend": "ceph-libcephfs", 
+      "count": 40, 
+      "latency_mean_ms": 0.517201, 
+      "latency_p50_ms": 0.48244, 
+      "latency_p95_ms": 0.634587, 
+      "latency_p99_ms": 1.397004, 
+      "operation": "skewed_delete", 
+      "ops_per_sec": 1907.412, 
+      "phase": "hotdirs_zipf", 
+      "policy": "static", 
+      "run_id": "20260429-055203-ad9485f6", 
+      "total_seconds": 0.020971, 
+      "workers": 1
+    }
+  ], 
+  "root": "/cs2640-bench/20260429-055203-ad9485f6", 
+  "run_id": "20260429-055203-ad9485f6", 
+  "started_unix": 1777441923.407486
+}

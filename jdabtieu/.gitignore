@@ -1,0 +1,7 @@
+*.tar.gz
+ext4-*
+btrfs-*
+xfs-*
+f2fs-*
+zfs-*
+zfs2-randread

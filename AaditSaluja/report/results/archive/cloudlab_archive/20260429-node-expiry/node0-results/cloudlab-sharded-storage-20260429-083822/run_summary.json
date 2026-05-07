@@ -1,0 +1,70 @@
+{
+  "label": "20260429-083822",
+  "root": "/mnt/cephfs/cs2640-bench/sharded-storage-20260429-083822",
+  "runs": [
+    {
+      "workload": "sprite_lfs_smallfile",
+      "storage": "native",
+      "returncode": 0,
+      "seconds": 59.983,
+      "json": "/users/aadits/FinalProj/results/cloudlab-sharded-storage-20260429-083822/sprite_lfs_smallfile__native.json",
+      "log": "/users/aadits/FinalProj/results/cloudlab-sharded-storage-20260429-083822/sprite_lfs_smallfile__native.log"
+    },
+    {
+      "workload": "sprite_lfs_smallfile",
+      "storage": "append_segments",
+      "returncode": 0,
+      "seconds": 80.835,
+      "json": "/users/aadits/FinalProj/results/cloudlab-sharded-storage-20260429-083822/sprite_lfs_smallfile__append_segments.json",
+      "log": "/users/aadits/FinalProj/results/cloudlab-sharded-storage-20260429-083822/sprite_lfs_smallfile__append_segments.log"
+    },
+    {
+      "workload": "sprite_lfs_smallfile",
+      "storage": "sharded_directory",
+      "returncode": 0,
+      "seconds": 138.977,
+      "json": "/users/aadits/FinalProj/results/cloudlab-sharded-storage-20260429-083822/sprite_lfs_smallfile__sharded_directory.json",
+      "log": "/users/aadits/FinalProj/results/cloudlab-sharded-storage-20260429-083822/sprite_lfs_smallfile__sharded_directory.log"
+    },
+    {
+      "workload": "sprite_lfs_smallfile",
+      "storage": "sharded_hash8",
+      "returncode": 0,
+      "seconds": 135.197,
+      "json": "/users/aadits/FinalProj/results/cloudlab-sharded-storage-20260429-083822/sprite_lfs_smallfile__sharded_hash8.json",
+      "log": "/users/aadits/FinalProj/results/cloudlab-sharded-storage-20260429-083822/sprite_lfs_smallfile__sharded_hash8.log"
+    },
+    {
+      "workload": "hotdirs_zipf",
+      "storage": "native",
+      "returncode": 0,
+      "seconds": 42.261,
+      "json": "/users/aadits/FinalProj/results/cloudlab-sharded-storage-20260429-083822/hotdirs_zipf__native.json",
+      "log": "/users/aadits/FinalProj/results/cloudlab-sharded-storage-20260429-083822/hotdirs_zipf__native.log"
+    },
+    {
+      "workload": "hotdirs_zipf",
+      "storage": "append_segments",
+      "returncode": 0,
+      "seconds": 58.121,
+      "json": "/users/aadits/FinalProj/results/cloudlab-sharded-storage-20260429-083822/hotdirs_zipf__append_segments.json",
+      "log": "/users/aadits/FinalProj/results/cloudlab-sharded-storage-20260429-083822/hotdirs_zipf__append_segments.log"
+    },
+    {
+      "workload": "hotdirs_zipf",
+      "storage": "sharded_directory",
+      "returncode": 0,
+      "seconds": 88.292,
+      "json": "/users/aadits/FinalProj/results/cloudlab-sharded-storage-20260429-083822/hotdirs_zipf__sharded_directory.json",
+      "log": "/users/aadits/FinalProj/results/cloudlab-sharded-storage-20260429-083822/hotdirs_zipf__sharded_directory.log"
+    },
+    {
+      "workload": "hotdirs_zipf",
+      "storage": "sharded_hash8",
+      "returncode": 0,
+      "seconds": 115.95,
+      "json": "/users/aadits/FinalProj/results/cloudlab-sharded-storage-20260429-083822/hotdirs_zipf__sharded_hash8.json",
+      "log": "/users/aadits/FinalProj/results/cloudlab-sharded-storage-20260429-083822/hotdirs_zipf__sharded_hash8.log"
+    }
+  ]
+}

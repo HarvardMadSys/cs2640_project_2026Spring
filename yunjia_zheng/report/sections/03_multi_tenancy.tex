@@ -1,0 +1,88 @@
+\section{Multi-tenancy in Vector Databases}
+\label{sec:multitenancy}
+
+In production, vector database tenants rarely live in isolation. A
+typical deployment maintains a shared corpus of common knowledge,
+for example a public document collection or a base code repository,
+that every tenant queries. On top of that substrate, each tenant
+introduces a private overlay. Some tenants override specific
+records by substituting a tenant-local version of a shared vector
+under the same logical key, while others append entirely new
+documents that exist only for that tenant. We refer to the first
+pattern as per-tenant versioning and to the second as forking. In
+both cases a query issued by a tenant must be answered against the
+union of shared and tenant-private vectors, so the storage layer
+cannot simply isolate tenants into disjoint collections without
+either losing the substrate or duplicating it across all tenants.
+
+This setting raises two design questions. First, at what
+granularity should tenant data be separated inside the database,
+and what does each granularity choice imply for storage and query
+cost? Second, how should the shared corpus and the per-tenant
+overlay be represented so that the shared portion is paid for once
+while keeping query latency predictable? The remainder of this
+section reviews the data granularity primitives Milvus exposes.
+Section~\ref{sec:setup} then formalizes the two layout options within this design space and the experimental setup we use to
+characterize each one.
+
+\subsection{Data layout for multi-tenant collections}
+
+\mypar{Collection, partition, and partition key.}
+Milvus~\cite{wang2021milvus} exposes three nested units of
+organization for tenant data. A \emph{collection} is the heaviest
+unit, carrying its own schema, index configuration, and resource
+allocation, so two tenants placed in two different collections share
+nothing at the storage layer. A \emph{partition} is a sub-grouping
+inside a single collection, and a query can be constrained to a list
+of partitions so that only a subset of the data is consulted. The
+\emph{partition key} is a lightweight variant of the partition
+mechanism in which a scalar field, typically a tenant identifier, is
+hashed into one of a fixed number of auto-managed partitions and
+routes vectors to partitions automatically. The partition key is the
+mechanism Milvus recommends for deployments with many tenants
+because it avoids the operational overhead of explicitly managing
+per-tenant partitions.
+
+\mypar{Segments and how a collection lives on disk.} Below the
+partition level sits the \emph{segment}, the physical storage unit
+introduced in Section~\ref{sec:background}. Each segment holds a
+single data file together with its own vector index, and segments
+never cross partition boundaries. A partition therefore owns a set
+of segments, and a collection is the disjoint union of those
+per-partition segment sets. A partition key does not change this
+physical picture, it only shifts the routing decision into the
+database so that every vector is hashed to one of the auto-managed
+partitions before being assigned to a segment. As a result, the
+choice of granularity, whether collection, explicit partition, or
+partition key, controls how much storage and index state two tenants
+share, while the underlying segment, data file, and index structure
+remain identical.
+
+\subsection{Representing shared and per-tenant data}
+
+Given the granularity primitives reviewed in
+Section~\ref{sec:multitenancy}, there are two natural ways to
+represent a shared corpus together with per-tenant overlays. The
+first, \emph{fully replicated}, gives each tenant its own collection
+that contains both the shared vectors and the tenant's private vectors.
+This layout offers strong isolation, since two tenants share no
+schema, index, or in-memory state, but pays a storage cost
+proportional to the number of tenants because the shared corpus is
+duplicated in every collection. The second, \emph{shared partition},
+keeps a single collection in which the shared vectors live in one
+partition and each tenant's private vectors live in a dedicated
+partition. The shared corpus is then stored, indexed, and cached
+only once, but the partitions sit inside the same collection and
+contend for the same memory and page cache, so cross-tenant
+interference at query time is not bounded by construction.
+
+These two options frame the experiments in the remainder of this
+report. Under the fully replicated layout, sharing storage across
+tenants is only possible if the segments produced by independent
+ingest streams of near-identical data actually align, so we measure
+how much segment-level overlap stock Milvus exhibits in this regime.
+Under the shared partition layout, the shared corpus is stored only
+once but tenants contend for the same memory, so we measure how
+query throughput behaves once two tenants query concurrently against
+a single collection. The next two subsections describe the workloads
+and configurations used for each of these experiments.

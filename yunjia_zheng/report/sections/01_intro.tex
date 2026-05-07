@@ -1,0 +1,68 @@
+\section{Introduction}
+
+Vector databases~\cite{wang2021milvus, pan2024survey} have moved
+from single-tenant prototypes to shared infrastructure that serves
+many collections out of the same deployment. A common pattern is
+that several collections in the same cluster hold near-duplicate
+data: successive versions of a corpus held side by side during a
+staged rollout, filtered subsets carved out for specific tenants, or
+per-tenant overlays that customize a small fraction of records on
+top of a shared substrate. Because these versions overlap heavily
+at the raw vector level, a multi-tenant storage layer has an
+obvious opportunity to share segments and index structures across
+collections rather than duplicating them end to end. Whether that
+opportunity is reachable depends on two properties of today's
+systems: how much segment-level redundancy actually survives the
+ingest path when two near-identical collections are loaded back to
+back, and how query throughput behaves once tenants are forced to
+share the same physical resources for that redundant data.
+
+This report quantifies both properties on
+Milvus~\cite{wang2021milvus}. We frame two layout options for
+representing a shared corpus together with per-tenant private
+vectors. \emph{Fully replicated} gives each tenant its own collection
+and isolates them at every layer of the storage stack at the cost
+of duplicating the shared corpus across tenants. \emph{Shared
+partition} keeps a single collection in which the shared corpus
+and each tenant's private vectors live in distinct partitions, paying
+for the shared corpus only once but forcing tenants to contend for
+the same memory and page cache at query time. The fully replicated
+layout raises the question of whether stock Milvus produces
+segment boundaries stable enough for two near-identical collections
+to be served from common segments at all. The shared partition
+layout raises the question of whether the resulting resource
+sharing still delivers competitive query throughput once tenants
+run concurrently.
+
+A practical obstacle to studying these questions is that existing
+vector search benchmarks target single-tenant accuracy and latency
+and do not expose the multi-tenant patterns described above. We
+therefore construct two benchmarks on top of established corpora
+to probe the two layouts. The first repurposes
+CodeSearchNet~\cite{husain2019codesearchnet} from the VIBE
+benchmark~\cite{vibe2024} into two near-identical collections that
+differ only by a small prefix trim and is loaded under several
+Milvus configurations that progressively disable jitter and
+compaction, which lets us examine how the storage layer responds
+to two tenants whose data is almost identical. The second carves a
+Wikipedia corpus into a shared partition and two tenant partitions
+under three workload variants that vary how much of the cold
+vectors and queries fall on the shared partition, which lets us
+examine how query behavior responds when tenants compete for the
+same memory and page cache.
+
+The measurements show that segment-level overlap under stock
+Milvus is dense and scattered because flush jitter and size-based
+compaction push near-identical inputs along divergent merge paths,
+and that the underlying workload itself, in which top-100 ground
+truth neighbors are spread across many segments per query, leaves
+clear room for segment-granularity sharing once that
+non-determinism is removed. The shared partition layout, in turn,
+trades its storage savings for a sharp throughput cliff under
+concurrent tenants, with the signature of page-cache thrashing
+rather than CPU saturation. Together these results indicate that
+there is real opportunity to optimize the storage layout for
+multi-tenant vector databases, and that any such design must
+explicitly manage the working set in the page cache rather than
+rely on the current segment-per-partition layout and the operating
+system's default memory management.

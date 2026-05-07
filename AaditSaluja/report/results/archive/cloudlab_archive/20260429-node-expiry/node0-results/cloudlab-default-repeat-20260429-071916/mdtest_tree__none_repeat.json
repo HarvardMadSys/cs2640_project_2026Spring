@@ -1,0 +1,130 @@
+{
+  "args": {
+    "backend": "posix",
+    "branching": 8,
+    "conffile": "/etc/ceph/ceph.conf",
+    "csv": "/users/aadits/FinalProj/results/cloudlab-default-repeat-20260429-071916/mdtest_tree__none_repeat.csv",
+    "depth": 2,
+    "dirs": 32,
+    "file_count": 1200,
+    "file_size": 0,
+    "hot_min_interval": 32,
+    "hot_threshold": 64,
+    "hot_window": 128,
+    "no_ceph_stats": false,
+    "ops": 1200,
+    "output": "/users/aadits/FinalProj/results/cloudlab-default-repeat-20260429-071916/mdtest_tree__none_repeat.json",
+    "pin_ranks": [
+      0,
+      1
+    ],
+    "policy": "none",
+    "policy_file": null,
+    "policy_opt": [],
+    "root": "/mnt/cephfs/cs2640-bench/default-repeat-20260429-071916",
+    "seed": 1,
+    "segment_size": 67108864,
+    "storage": "native",
+    "storage_file": null,
+    "storage_opt": [],
+    "suite": "custom",
+    "workers": 4,
+    "workload": "mdtest_tree"
+  },
+  "backend": "posix",
+  "ceph_stats": {
+    "after": {
+      "available": true,
+      "df": {
+        "error": "2026-04-29T07:19:40.895-0600 7f2803de2640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T07:19:40.895-0600 7f2803de2640 -1 AuthRegistry(0x7f27fc066558) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T07:19:40.895-0600 7f2803de2640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T07:19:40.895-0600 7f2803de2640 -1 AuthRegistry(0x7f2803de0f80) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T07:19:40.899-0600 7f2801b7e640 -1 monclient(hunting): handle_auth_bad_method server allowed_methods [2] but i only support [1]\n2026-04-29T07:19:40.899-0600 7f2803de2640 -1 monclient: authenticate NOTE: no keyring found; disabled cephx authentication\n[errno 95] error connecting to the cluster"
+      },
+      "fs_status": {
+        "error": "2026-04-29T07:19:41.267-0600 7f2b0ff92640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T07:19:41.267-0600 7f2b0ff92640 -1 AuthRegistry(0x7f2b08066558) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T07:19:41.267-0600 7f2b0ff92640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T07:19:41.267-0600 7f2b0ff92640 -1 AuthRegistry(0x7f2b0ff90f80) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T07:19:41.271-0600 7f2b0dd2e640 -1 monclient(hunting): handle_auth_bad_method server allowed_methods [2] but i only support [1]\n2026-04-29T07:19:41.271-0600 7f2b0ff92640 -1 monclient: authenticate NOTE: no keyring found; disabled cephx authentication\n[errno 95] error connecting to the cluster"
+      }
+    },
+    "before": {
+      "available": true,
+      "df": {
+        "error": "2026-04-29T07:19:17.351-0600 7fb9ef760640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T07:19:17.351-0600 7fb9ef760640 -1 AuthRegistry(0x7fb9e8066558) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T07:19:17.351-0600 7fb9ef760640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T07:19:17.351-0600 7fb9ef760640 -1 AuthRegistry(0x7fb9ef75ef80) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T07:19:17.355-0600 7fb9eccfb640 -1 monclient(hunting): handle_auth_bad_method server allowed_methods [2] but i only support [1]\n2026-04-29T07:19:17.355-0600 7fb9ef760640 -1 monclient: authenticate NOTE: no keyring found; disabled cephx authentication\n[errno 95] error connecting to the cluster"
+      },
+      "fs_status": {
+        "error": "2026-04-29T07:19:17.723-0600 7f9d877e4640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T07:19:17.723-0600 7f9d877e4640 -1 AuthRegistry(0x7f9d80066558) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T07:19:17.723-0600 7f9d877e4640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T07:19:17.723-0600 7f9d877e4640 -1 AuthRegistry(0x7f9d877e2f80) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T07:19:17.727-0600 7f9d85580640 -1 monclient(hunting): handle_auth_bad_method server allowed_methods [2] but i only support [1]\n2026-04-29T07:19:17.727-0600 7f9d877e4640 -1 monclient: authenticate NOTE: no keyring found; disabled cephx authentication\n[errno 95] error connecting to the cluster"
+      }
+    },
+    "delta": {}
+  },
+  "elapsed_seconds": 22.801696,
+  "ended_unix": 1777468780.539357,
+  "host": "node0.ceph.cs2640.emulab.net",
+  "policy_events": [],
+  "results": [
+    {
+      "backend": "posix",
+      "count": 1200,
+      "latency_mean_ms": 12.698329,
+      "latency_p50_ms": 12.301208,
+      "latency_p95_ms": 18.590183,
+      "latency_p99_ms": 22.250416,
+      "operation": "create",
+      "ops_per_sec": 311.894,
+      "phase": "mdtest_tree",
+      "policy": "none",
+      "run_id": "20260429-071916-61dd3063",
+      "storage": "native",
+      "total_seconds": 3.847455,
+      "workers": 4
+    },
+    {
+      "backend": "posix",
+      "count": 1200,
+      "latency_mean_ms": 8.186884,
+      "latency_p50_ms": 7.757462,
+      "latency_p95_ms": 14.047143,
+      "latency_p99_ms": 19.112261,
+      "operation": "stat",
+      "ops_per_sec": 480.927,
+      "phase": "mdtest_tree",
+      "policy": "none",
+      "run_id": "20260429-071916-61dd3063",
+      "storage": "native",
+      "total_seconds": 2.495181,
+      "workers": 4
+    },
+    {
+      "backend": "posix",
+      "count": 1200,
+      "latency_mean_ms": 13.307412,
+      "latency_p50_ms": 11.6072,
+      "latency_p95_ms": 18.927994,
+      "latency_p99_ms": 49.270629,
+      "operation": "read",
+      "ops_per_sec": 294.119,
+      "phase": "mdtest_tree",
+      "policy": "none",
+      "run_id": "20260429-071916-61dd3063",
+      "storage": "native",
+      "total_seconds": 4.079985,
+      "workers": 4
+    },
+    {
+      "backend": "posix",
+      "count": 1200,
+      "latency_mean_ms": 23.118462,
+      "latency_p50_ms": 10.254976,
+      "latency_p95_ms": 121.997096,
+      "latency_p99_ms": 249.189132,
+      "operation": "delete",
+      "ops_per_sec": 172.802,
+      "phase": "mdtest_tree",
+      "policy": "none",
+      "run_id": "20260429-071916-61dd3063",
+      "storage": "native",
+      "total_seconds": 6.944356,
+      "workers": 4
+    }
+  ],
+  "root": "/mnt/cephfs/cs2640-bench/default-repeat-20260429-071916/20260429-071916-61dd3063",
+  "run_id": "20260429-071916-61dd3063",
+  "started_unix": 1777468757.7376611,
+  "storage_metrics": {}
+}

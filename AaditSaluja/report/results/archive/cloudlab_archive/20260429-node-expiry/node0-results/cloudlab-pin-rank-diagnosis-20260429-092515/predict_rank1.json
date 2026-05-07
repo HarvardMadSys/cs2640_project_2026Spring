@@ -1,0 +1,208 @@
+{
+  "args": {
+    "backend": "posix",
+    "branching": 8,
+    "conffile": "/etc/ceph/ceph.conf",
+    "csv": "/users/aadits/FinalProj/results/cloudlab-pin-rank-diagnosis-20260429-092515/predict_rank1.csv",
+    "depth": 2,
+    "dirs": 64,
+    "file_count": 3000,
+    "file_size": 512,
+    "hot_min_interval": 32,
+    "hot_threshold": 64,
+    "hot_window": 128,
+    "keep_data": true,
+    "no_ceph_stats": false,
+    "ops": 1000,
+    "output": "/users/aadits/FinalProj/results/cloudlab-pin-rank-diagnosis-20260429-092515/predict_rank1.json",
+    "pin_ranks": [
+      1
+    ],
+    "policy": "predictive_safe",
+    "policy_file": null,
+    "policy_opt": [
+      "threshold=512",
+      "window=1024",
+      "min_sequence=512"
+    ],
+    "root": "/mnt/cephfs/cs2640-bench/pin-rank-diagnosis-20260429-092515",
+    "seed": 1,
+    "segment_size": 67108864,
+    "storage": "native",
+    "storage_file": null,
+    "storage_opt": [],
+    "suite": "custom",
+    "workers": 8,
+    "workload": "hotdirs_zipf"
+  },
+  "backend": "posix",
+  "ceph_stats": {
+    "after": {
+      "available": true,
+      "df": {
+        "pools": [
+          {
+            "id": 1,
+            "name": "cephfs_data",
+            "stats": {
+              "bytes_used": 17862819840,
+              "kb_used": 17444160,
+              "max_avail": 94541971456,
+              "objects": 90235,
+              "percent_used": 0.05924871563911438,
+              "stored": 112300584
+            }
+          },
+          {
+            "id": 2,
+            "name": "cephfs_metadata",
+            "stats": {
+              "bytes_used": 1299972096,
+              "kb_used": 1269504,
+              "max_avail": 94541971456,
+              "objects": 839,
+              "percent_used": 0.00456249201670289,
+              "stored": 432415520
+            }
+          }
+        ],
+        "stats": {
+          "num_osds": 3,
+          "num_per_pool_osds": 3,
+          "total_avail_bytes": 299732041728,
+          "total_bytes": 322122547200,
+          "total_used_bytes": 19169280000,
+          "total_used_raw_bytes": 22390505472,
+          "total_used_raw_ratio": 0.06950927525758743
+        },
+        "stats_by_class": {
+          "hdd": {
+            "total_avail_bytes": 299732041728,
+            "total_bytes": 322122547200,
+            "total_used_bytes": 19169280000,
+            "total_used_raw_bytes": 22390505472,
+            "total_used_raw_ratio": 0.06950927525758743
+          }
+        }
+      },
+      "fs_status": {
+        "error": "Expecting value: line 2 column 1 (char 1)"
+      }
+    },
+    "before": {
+      "available": true,
+      "df": {
+        "pools": [
+          {
+            "id": 1,
+            "name": "cephfs_data",
+            "stats": {
+              "bytes_used": 17272995840,
+              "kb_used": 16868160,
+              "max_avail": 94751883264,
+              "objects": 87235,
+              "percent_used": 0.05728475749492645,
+              "stored": 110764584
+            }
+          },
+          {
+            "id": 2,
+            "name": "cephfs_metadata",
+            "stats": {
+              "bytes_used": 1259929600,
+              "kb_used": 1230400,
+              "max_avail": 94751883264,
+              "objects": 836,
+              "percent_used": 0.004412822425365448,
+              "stored": 419053408
+            }
+          }
+        ],
+        "stats": {
+          "num_osds": 3,
+          "num_per_pool_osds": 3,
+          "total_avail_bytes": 300361908224,
+          "total_bytes": 322122547200,
+          "total_used_bytes": 18539413504,
+          "total_used_raw_bytes": 21760638976,
+          "total_used_raw_ratio": 0.06755391508340836
+        },
+        "stats_by_class": {
+          "hdd": {
+            "total_avail_bytes": 300361908224,
+            "total_bytes": 322122547200,
+            "total_used_bytes": 18539413504,
+            "total_used_raw_bytes": 21760638976,
+            "total_used_raw_ratio": 0.06755391508340836
+          }
+        }
+      },
+      "fs_status": {
+        "error": "Expecting value: line 2 column 1 (char 1)"
+      }
+    },
+    "delta": {
+      "cephfs_data": {
+        "bytes_used": 589824000,
+        "objects": 3000,
+        "stored": 1536000
+      },
+      "cephfs_metadata": {
+        "bytes_used": 40042496,
+        "objects": 3,
+        "stored": 13362112
+      }
+    }
+  },
+  "elapsed_seconds": 58.040497,
+  "ended_unix": 1777476579.9186423,
+  "host": "node0.ceph.cs2640.emulab.net",
+  "policy_events": [
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/pin-rank-diagnosis-20260429-092515/20260429-092839-ccea8dd5/hotdirs_zipf-0c596e59/dir0000",
+      "policy": "predictive_safe",
+      "rank": 1,
+      "reason": "safe_create_hot count=519 window=1024",
+      "sequence": 644
+    }
+  ],
+  "results": [
+    {
+      "backend": "posix",
+      "count": 3000,
+      "latency_mean_ms": 135.156306,
+      "latency_p50_ms": 42.766364,
+      "latency_p95_ms": 298.36756,
+      "latency_p99_ms": 348.876784,
+      "operation": "skewed_create",
+      "ops_per_sec": 57.96,
+      "phase": "hotdirs_zipf",
+      "policy": "predictive_safe",
+      "run_id": "20260429-092839-ccea8dd5",
+      "storage": "native",
+      "total_seconds": 51.759785,
+      "workers": 8
+    },
+    {
+      "backend": "posix",
+      "count": 3000,
+      "latency_mean_ms": 15.897349,
+      "latency_p50_ms": 15.074097,
+      "latency_p95_ms": 29.910507,
+      "latency_p99_ms": 41.406706,
+      "operation": "skewed_stat",
+      "ops_per_sec": 494.312,
+      "phase": "hotdirs_zipf",
+      "policy": "predictive_safe",
+      "run_id": "20260429-092839-ccea8dd5",
+      "storage": "native",
+      "total_seconds": 6.069037,
+      "workers": 8
+    }
+  ],
+  "root": "/mnt/cephfs/cs2640-bench/pin-rank-diagnosis-20260429-092515/20260429-092839-ccea8dd5",
+  "run_id": "20260429-092839-ccea8dd5",
+  "started_unix": 1777476521.8781457,
+  "storage_metrics": {}
+}

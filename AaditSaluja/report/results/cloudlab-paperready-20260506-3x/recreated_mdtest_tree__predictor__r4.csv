@@ -1,0 +1,5 @@
+phase,operation,count,total_seconds,ops_per_sec,latency_mean_ms,latency_p50_ms,latency_p95_ms,latency_p99_ms,run_id,backend,workers,policy,storage,file_count,file_size,dirs,ops,seed,oracle_cold_fraction,oracle_cold_access_fraction,ycsb_distribution,ycsb_update_fraction,ycsb_hot_fraction,ycsb_hot_op_fraction,ycsb_zipf_alpha
+mdtest_tree,create,3000,0.156982,19110.448,0.388608,0.36536,0.418513,1.146261,20260506-184920-e360fe88,posix,8,none,predictive_cold_segments,3000,1024,64,6000,9104,0.9,0.1,zipfian,0.2,0.2,0.8,0.99
+mdtest_tree,stat,3000,0.39441,7606.293,0.99094,0.971141,1.366233,1.559671,20260506-184920-e360fe88,posix,8,none,predictive_cold_segments,3000,1024,64,6000,9104,0.9,0.1,zipfian,0.2,0.2,0.8,0.99
+mdtest_tree,read,3000,0.542362,5531.361,1.413712,1.368749,1.844404,2.090154,20260506-184920-e360fe88,posix,8,none,predictive_cold_segments,3000,1024,64,6000,9104,0.9,0.1,zipfian,0.2,0.2,0.8,0.99
+mdtest_tree,delete,3000,0.013762,217999.38,0.009671,0.002653,0.002965,0.006563,20260506-184920-e360fe88,posix,8,none,predictive_cold_segments,3000,1024,64,6000,9104,0.9,0.1,zipfian,0.2,0.2,0.8,0.99

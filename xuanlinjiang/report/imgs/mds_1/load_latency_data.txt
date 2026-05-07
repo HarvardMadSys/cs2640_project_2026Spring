@@ -1,0 +1,447 @@
+# Load-latency data (linear axes)
+# Generated for agent inspection — verify trends make sense
+#
+# Expected trends:
+#   - Normal phase: latency flat at low rates, rises steeply near saturation
+#   - Degraded phase: latency higher (especially for RS, MSR, MBR due to XOR/decode)
+#   - RAID-10 degraded: minimal penalty (mirror copy, no compute)
+#   - RS degraded (parity fail) < RS degraded (data fail) in penalty
+#
+# columns: code | fail_label | phase | rate_req_s | avg_lat_ms | p99_ms
+#
+
+[RAID-10(6,3) | fail disk 0 | before failure]
+  rate=    10.0 req/s  avg=  0.0127 ms  p99=  0.0320 ms  n=10000
+  rate=    20.0 req/s  avg=  0.0127 ms  p99=  0.0320 ms  n=10000
+  rate=    40.0 req/s  avg=  0.0127 ms  p99=  0.0320 ms  n=10000
+  rate=    80.0 req/s  avg=  0.0127 ms  p99=  0.0320 ms  n=10000
+  rate=   160.0 req/s  avg=  0.0128 ms  p99=  0.0320 ms  n=10000
+  rate=   320.0 req/s  avg=  0.0128 ms  p99=  0.0320 ms  n=10000
+  rate=   640.0 req/s  avg=  0.0128 ms  p99=  0.0320 ms  n=10000
+  rate=  1000.0 req/s  avg=  0.0128 ms  p99=  0.0320 ms  n=10000
+  rate=  1280.0 req/s  avg=  0.0129 ms  p99=  0.0320 ms  n=10000
+  rate=  2000.0 req/s  avg=  0.0129 ms  p99=  0.0408 ms  n=10000
+  rate=  2560.0 req/s  avg=  0.0130 ms  p99=  0.0440 ms  n=10000
+  rate=  4000.0 req/s  avg=  0.0131 ms  p99=  0.0440 ms  n=10000
+  rate=  5120.0 req/s  avg=  0.0132 ms  p99=  0.0440 ms  n=10000
+  rate=  8000.0 req/s  avg=  0.0136 ms  p99=  0.0440 ms  n=10000
+  rate= 10240.0 req/s  avg=  0.0138 ms  p99=  0.0476 ms  n=10000
+  rate= 16000.0 req/s  avg=  0.0147 ms  p99=  0.0560 ms  n=10000
+  rate= 20480.0 req/s  avg=  0.0154 ms  p99=  0.0640 ms  n=10000
+  rate= 32000.0 req/s  avg=  0.0181 ms  p99=  0.1050 ms  n=10000
+  rate= 40960.0 req/s  avg=  0.0213 ms  p99=  0.1439 ms  n=10000
+  rate= 64000.0 req/s  avg=  0.0511 ms  p99=  0.3567 ms  n=10000
+  rate= 69818.0 req/s  avg=  0.0921 ms  p99=  0.7154 ms  n=10000
+  rate= 75636.0 req/s  avg=  0.2291 ms  p99=  1.4803 ms  n=10000
+  rate= 81455.0 req/s  avg=  0.7379 ms  p99=  3.3880 ms  n=10000
+  rate= 81920.0 req/s  avg=  0.7965 ms  p99=  3.5329 ms  n=10000
+  rate= 87273.0 req/s  avg=  1.8133 ms  p99=  5.2223 ms  n=10000
+  rate= 89367.0 req/s  avg=  2.2660 ms  p99=  5.8697 ms  n=10000
+  rate= 93091.0 req/s  avg=  3.6292 ms  p99=  7.7962 ms  n=10000
+  rate= 96815.0 req/s  avg=  5.6747 ms  p99= 10.9736 ms  n=10000
+  rate= 98909.0 req/s  avg=  6.7572 ms  p99= 13.0060 ms  n=10000
+  rate=104262.0 req/s  avg=  9.3268 ms  p99= 18.0527 ms  n=10000
+  rate=104727.0 req/s  avg=  9.5377 ms  p99= 18.4739 ms  n=10000
+  rate=110545.0 req/s  avg= 12.0254 ms  p99= 23.4555 ms  n=10000
+  rate=111709.0 req/s  avg= 12.4920 ms  p99= 24.3891 ms  n=10000
+  rate=116364.0 req/s  avg= 14.2648 ms  p99= 27.9401 ms  n=10000
+  rate=119156.0 req/s  avg= 15.2616 ms  p99= 29.9305 ms  n=10000
+  rate=122182.0 req/s  avg= 16.2907 ms  p99= 31.9862 ms  n=10000
+  rate=126604.0 req/s  avg= 17.7061 ms  p99= 34.8137 ms  n=10000
+  rate=128000.0 req/s  avg= 18.1327 ms  p99= 35.6665 ms  n=10000
+  rate=134051.0 req/s  avg= 19.8787 ms  p99= 39.1545 ms  n=10000
+  rate=141498.0 req/s  avg= 21.8227 ms  p99= 43.0360 ms  n=10000
+  rate=148945.0 req/s  avg= 23.5722 ms  p99= 46.5321 ms  n=10000
+  rate=156393.0 req/s  avg= 25.1553 ms  p99= 49.6939 ms  n=10000
+  rate=163840.0 req/s  avg= 26.5943 ms  p99= 52.5677 ms  n=10000
+
+[RAID-10(6,3) | fail disk 0 | degraded]
+  rate=    10.0 req/s  avg=  0.0127 ms  p99=  0.0320 ms  n=10000
+  rate=    20.0 req/s  avg=  0.0127 ms  p99=  0.0320 ms  n=10000
+  rate=    40.0 req/s  avg=  0.0127 ms  p99=  0.0320 ms  n=10000
+  rate=    80.0 req/s  avg=  0.0127 ms  p99=  0.0320 ms  n=10000
+  rate=   160.0 req/s  avg=  0.0128 ms  p99=  0.0320 ms  n=10000
+  rate=   320.0 req/s  avg=  0.0128 ms  p99=  0.0320 ms  n=10000
+  rate=   640.0 req/s  avg=  0.0128 ms  p99=  0.0320 ms  n=10000
+  rate=  1000.0 req/s  avg=  0.0128 ms  p99=  0.0320 ms  n=10000
+  rate=  1280.0 req/s  avg=  0.0128 ms  p99=  0.0320 ms  n=10000
+  rate=  2000.0 req/s  avg=  0.0129 ms  p99=  0.0358 ms  n=10000
+  rate=  2560.0 req/s  avg=  0.0130 ms  p99=  0.0398 ms  n=10000
+  rate=  4000.0 req/s  avg=  0.0131 ms  p99=  0.0440 ms  n=10000
+  rate=  5120.0 req/s  avg=  0.0132 ms  p99=  0.0440 ms  n=10000
+  rate=  8000.0 req/s  avg=  0.0135 ms  p99=  0.0440 ms  n=10000
+  rate= 10240.0 req/s  avg=  0.0137 ms  p99=  0.0440 ms  n=10000
+  rate= 16000.0 req/s  avg=  0.0145 ms  p99=  0.0534 ms  n=10000
+  rate= 20480.0 req/s  avg=  0.0152 ms  p99=  0.0582 ms  n=10000
+  rate= 32000.0 req/s  avg=  0.0181 ms  p99=  0.0953 ms  n=10000
+  rate= 40960.0 req/s  avg=  0.0217 ms  p99=  0.1615 ms  n=10000
+  rate= 64000.0 req/s  avg=  0.0495 ms  p99=  0.4343 ms  n=10000
+  rate= 69818.0 req/s  avg=  0.0721 ms  p99=  0.6006 ms  n=10000
+  rate= 75636.0 req/s  avg=  0.2018 ms  p99=  1.5024 ms  n=10000
+  rate= 81455.0 req/s  avg=  0.6666 ms  p99=  3.0724 ms  n=10000
+  rate= 81920.0 req/s  avg=  0.7236 ms  p99=  3.1875 ms  n=10000
+  rate= 87273.0 req/s  avg=  2.1739 ms  p99=  4.5135 ms  n=10000
+  rate= 89367.0 req/s  avg=  4.9681 ms  p99=  7.7682 ms  n=10000
+  rate= 93091.0 req/s  avg= 10.4755 ms  p99= 14.4448 ms  n=10000
+  rate= 96815.0 req/s  avg= 16.6425 ms  p99= 22.4048 ms  n=10000
+  rate= 98909.0 req/s  avg= 19.9062 ms  p99= 26.6432 ms  n=10000
+  rate=104262.0 req/s  avg= 27.6535 ms  p99= 36.7433 ms  n=10000
+  rate=104727.0 req/s  avg= 28.2891 ms  p99= 37.5865 ms  n=10000
+  rate=110545.0 req/s  avg= 35.7897 ms  p99= 47.5540 ms  n=10000
+  rate=111709.0 req/s  avg= 37.1965 ms  p99= 49.4262 ms  n=10000
+  rate=116364.0 req/s  avg= 42.5413 ms  p99= 56.5335 ms  n=10000
+  rate=119156.0 req/s  avg= 45.5466 ms  p99= 60.5275 ms  n=10000
+  rate=122182.0 req/s  avg= 48.6490 ms  p99= 64.6565 ms  n=10000
+  rate=126604.0 req/s  avg= 52.9158 ms  p99= 70.3260 ms  n=10000
+  rate=128000.0 req/s  avg= 54.2016 ms  p99= 72.0340 ms  n=10000
+  rate=134051.0 req/s  avg= 59.4653 ms  p99= 79.0261 ms  n=10000
+  rate=141498.0 req/s  avg= 65.3254 ms  p99= 86.8103 ms  n=10000
+  rate=148945.0 req/s  avg= 70.5995 ms  p99= 93.8162 ms  n=10000
+  rate=156393.0 req/s  avg= 75.3719 ms  p99=100.1556 ms  n=10000
+  rate=163840.0 req/s  avg= 79.7099 ms  p99=105.9180 ms  n=10000
+
+[RS(6,3) | fail disk 0 | before failure]
+  rate=    10.0 req/s  avg=  0.0136 ms  p99=  0.0440 ms  n=10000
+  rate=    20.0 req/s  avg=  0.0136 ms  p99=  0.0440 ms  n=10000
+  rate=    40.0 req/s  avg=  0.0136 ms  p99=  0.0440 ms  n=10000
+  rate=    80.0 req/s  avg=  0.0136 ms  p99=  0.0440 ms  n=10000
+  rate=   160.0 req/s  avg=  0.0136 ms  p99=  0.0440 ms  n=10000
+  rate=   320.0 req/s  avg=  0.0136 ms  p99=  0.0440 ms  n=10000
+  rate=   640.0 req/s  avg=  0.0136 ms  p99=  0.0440 ms  n=10000
+  rate=  1000.0 req/s  avg=  0.0137 ms  p99=  0.0440 ms  n=10000
+  rate=  1280.0 req/s  avg=  0.0137 ms  p99=  0.0480 ms  n=10000
+  rate=  2000.0 req/s  avg=  0.0138 ms  p99=  0.0480 ms  n=10000
+  rate=  2560.0 req/s  avg=  0.0139 ms  p99=  0.0480 ms  n=10000
+  rate=  4000.0 req/s  avg=  0.0142 ms  p99=  0.0490 ms  n=10000
+  rate=  5120.0 req/s  avg=  0.0144 ms  p99=  0.0560 ms  n=10000
+  rate=  8000.0 req/s  avg=  0.0149 ms  p99=  0.0640 ms  n=10000
+  rate= 10240.0 req/s  avg=  0.0153 ms  p99=  0.0680 ms  n=10000
+  rate= 16000.0 req/s  avg=  0.0168 ms  p99=  0.0898 ms  n=10000
+  rate= 20480.0 req/s  avg=  0.0181 ms  p99=  0.1120 ms  n=10000
+  rate= 32000.0 req/s  avg=  0.0242 ms  p99=  0.2127 ms  n=10000
+  rate= 34909.0 req/s  avg=  0.0264 ms  p99=  0.2512 ms  n=10000
+  rate= 37818.0 req/s  avg=  0.0288 ms  p99=  0.2896 ms  n=10000
+  rate= 40727.0 req/s  avg=  0.0317 ms  p99=  0.3228 ms  n=10000
+  rate= 40960.0 req/s  avg=  0.0320 ms  p99=  0.3280 ms  n=10000
+  rate= 43636.0 req/s  avg=  0.0355 ms  p99=  0.3669 ms  n=10000
+  rate= 44684.0 req/s  avg=  0.0372 ms  p99=  0.3888 ms  n=10000
+  rate= 46545.0 req/s  avg=  0.0403 ms  p99=  0.4120 ms  n=10000
+  rate= 48407.0 req/s  avg=  0.0442 ms  p99=  0.4451 ms  n=10000
+  rate= 49455.0 req/s  avg=  0.0467 ms  p99=  0.4589 ms  n=10000
+  rate= 52131.0 req/s  avg=  0.0556 ms  p99=  0.5498 ms  n=10000
+  rate= 52364.0 req/s  avg=  0.0565 ms  p99=  0.5605 ms  n=10000
+  rate= 55273.0 req/s  avg=  0.0711 ms  p99=  0.6510 ms  n=10000
+  rate= 55855.0 req/s  avg=  0.0750 ms  p99=  0.6705 ms  n=10000
+  rate= 58182.0 req/s  avg=  0.0939 ms  p99=  0.8595 ms  n=10000
+  rate= 59578.0 req/s  avg=  0.1097 ms  p99=  1.0668 ms  n=10000
+  rate= 61091.0 req/s  avg=  0.1301 ms  p99=  1.2324 ms  n=10000
+  rate= 63302.0 req/s  avg=  0.1768 ms  p99=  1.5786 ms  n=10000
+  rate= 64000.0 req/s  avg=  0.1950 ms  p99=  1.6851 ms  n=10000
+  rate= 67025.0 req/s  avg=  0.3525 ms  p99=  3.0540 ms  n=10000
+  rate= 70749.0 req/s  avg=  0.7188 ms  p99=  5.8806 ms  n=10000
+  rate= 74473.0 req/s  avg=  1.2159 ms  p99=  8.4123 ms  n=10000
+  rate= 78196.0 req/s  avg=  1.8993 ms  p99= 10.8794 ms  n=10000
+  rate= 81920.0 req/s  avg=  2.7982 ms  p99= 13.0639 ms  n=10000
+
+[RS(6,3) | fail disk 0 | degraded]
+  rate=    10.0 req/s  avg=  0.0147 ms  p99=  0.0440 ms  n=10000
+  rate=    20.0 req/s  avg=  0.0147 ms  p99=  0.0440 ms  n=10000
+  rate=    40.0 req/s  avg=  0.0147 ms  p99=  0.0440 ms  n=10000
+  rate=    80.0 req/s  avg=  0.0147 ms  p99=  0.0440 ms  n=10000
+  rate=   160.0 req/s  avg=  0.0148 ms  p99=  0.0440 ms  n=10000
+  rate=   320.0 req/s  avg=  0.0148 ms  p99=  0.0440 ms  n=10000
+  rate=   640.0 req/s  avg=  0.0148 ms  p99=  0.0440 ms  n=10000
+  rate=  1000.0 req/s  avg=  0.0149 ms  p99=  0.0440 ms  n=10000
+  rate=  1280.0 req/s  avg=  0.0149 ms  p99=  0.0464 ms  n=10000
+  rate=  2000.0 req/s  avg=  0.0150 ms  p99=  0.0480 ms  n=10000
+  rate=  2560.0 req/s  avg=  0.0151 ms  p99=  0.0480 ms  n=10000
+  rate=  4000.0 req/s  avg=  0.0154 ms  p99=  0.0520 ms  n=10000
+  rate=  5120.0 req/s  avg=  0.0156 ms  p99=  0.0560 ms  n=10000
+  rate=  8000.0 req/s  avg=  0.0161 ms  p99=  0.0600 ms  n=10000
+  rate= 10240.0 req/s  avg=  0.0165 ms  p99=  0.0640 ms  n=10000
+  rate= 16000.0 req/s  avg=  0.0180 ms  p99=  0.0840 ms  n=10000
+  rate= 20480.0 req/s  avg=  0.0198 ms  p99=  0.1080 ms  n=10000
+  rate= 32000.0 req/s  avg=  0.0281 ms  p99=  0.2521 ms  n=10000
+  rate= 34909.0 req/s  avg=  0.0313 ms  p99=  0.3128 ms  n=10000
+  rate= 37818.0 req/s  avg=  0.0350 ms  p99=  0.3711 ms  n=10000
+  rate= 40727.0 req/s  avg=  0.0396 ms  p99=  0.4271 ms  n=10000
+  rate= 40960.0 req/s  avg=  0.0400 ms  p99=  0.4320 ms  n=10000
+  rate= 43636.0 req/s  avg=  0.0457 ms  p99=  0.4934 ms  n=10000
+  rate= 44684.0 req/s  avg=  0.0484 ms  p99=  0.5148 ms  n=10000
+  rate= 46545.0 req/s  avg=  0.0538 ms  p99=  0.5566 ms  n=10000
+  rate= 48407.0 req/s  avg=  0.0602 ms  p99=  0.6194 ms  n=10000
+  rate= 49455.0 req/s  avg=  0.0642 ms  p99=  0.6540 ms  n=10000
+  rate= 52131.0 req/s  avg=  0.0768 ms  p99=  0.7183 ms  n=10000
+  rate= 52364.0 req/s  avg=  0.0783 ms  p99=  0.7205 ms  n=10000
+  rate= 55273.0 req/s  avg=  0.1019 ms  p99=  0.8697 ms  n=10000
+  rate= 55855.0 req/s  avg=  0.1111 ms  p99=  0.9765 ms  n=10000
+  rate= 58182.0 req/s  avg=  0.1763 ms  p99=  1.4207 ms  n=10000
+  rate= 59578.0 req/s  avg=  0.2797 ms  p99=  2.3822 ms  n=10000
+  rate= 61091.0 req/s  avg=  0.4223 ms  p99=  3.4209 ms  n=10000
+  rate= 63302.0 req/s  avg=  0.7307 ms  p99=  5.2148 ms  n=10000
+  rate= 64000.0 req/s  avg=  0.8478 ms  p99=  5.7607 ms  n=10000
+  rate= 67025.0 req/s  avg=  1.5817 ms  p99=  8.0754 ms  n=10000
+  rate= 70749.0 req/s  avg=  2.7647 ms  p99= 10.6915 ms  n=10000
+  rate= 74473.0 req/s  avg=  6.0817 ms  p99= 19.0247 ms  n=10000
+  rate= 78196.0 req/s  avg=  9.4722 ms  p99= 28.4116 ms  n=10000
+  rate= 81920.0 req/s  avg= 14.7918 ms  p99= 40.5117 ms  n=10000
+
+[RS(6,3) | fail disk 3 | before failure]
+  rate=    10.0 req/s  avg=  0.0136 ms  p99=  0.0440 ms  n=10000
+  rate=    20.0 req/s  avg=  0.0136 ms  p99=  0.0440 ms  n=10000
+  rate=    40.0 req/s  avg=  0.0136 ms  p99=  0.0440 ms  n=10000
+  rate=    80.0 req/s  avg=  0.0136 ms  p99=  0.0440 ms  n=10000
+  rate=   160.0 req/s  avg=  0.0136 ms  p99=  0.0440 ms  n=10000
+  rate=   320.0 req/s  avg=  0.0136 ms  p99=  0.0440 ms  n=10000
+  rate=   640.0 req/s  avg=  0.0136 ms  p99=  0.0440 ms  n=10000
+  rate=  1000.0 req/s  avg=  0.0137 ms  p99=  0.0440 ms  n=10000
+  rate=  1280.0 req/s  avg=  0.0137 ms  p99=  0.0480 ms  n=10000
+  rate=  2000.0 req/s  avg=  0.0138 ms  p99=  0.0480 ms  n=10000
+  rate=  2560.0 req/s  avg=  0.0139 ms  p99=  0.0480 ms  n=10000
+  rate=  4000.0 req/s  avg=  0.0142 ms  p99=  0.0490 ms  n=10000
+  rate=  5120.0 req/s  avg=  0.0144 ms  p99=  0.0560 ms  n=10000
+  rate=  8000.0 req/s  avg=  0.0149 ms  p99=  0.0640 ms  n=10000
+  rate= 10240.0 req/s  avg=  0.0153 ms  p99=  0.0680 ms  n=10000
+  rate= 16000.0 req/s  avg=  0.0168 ms  p99=  0.0898 ms  n=10000
+  rate= 20480.0 req/s  avg=  0.0181 ms  p99=  0.1120 ms  n=10000
+  rate= 32000.0 req/s  avg=  0.0242 ms  p99=  0.2127 ms  n=10000
+  rate= 40960.0 req/s  avg=  0.0320 ms  p99=  0.3280 ms  n=10000
+  rate= 44684.0 req/s  avg=  0.0372 ms  p99=  0.3888 ms  n=10000
+  rate= 48407.0 req/s  avg=  0.0442 ms  p99=  0.4451 ms  n=10000
+  rate= 52131.0 req/s  avg=  0.0556 ms  p99=  0.5498 ms  n=10000
+  rate= 55855.0 req/s  avg=  0.0750 ms  p99=  0.6705 ms  n=10000
+  rate= 59578.0 req/s  avg=  0.1097 ms  p99=  1.0668 ms  n=10000
+  rate= 63302.0 req/s  avg=  0.1768 ms  p99=  1.5786 ms  n=10000
+  rate= 64000.0 req/s  avg=  0.1950 ms  p99=  1.6851 ms  n=10000
+  rate= 67025.0 req/s  avg=  0.3525 ms  p99=  3.0540 ms  n=10000
+  rate= 69818.0 req/s  avg=  0.6200 ms  p99=  5.1977 ms  n=10000
+  rate= 70749.0 req/s  avg=  0.7188 ms  p99=  5.8806 ms  n=10000
+  rate= 74473.0 req/s  avg=  1.2159 ms  p99=  8.4123 ms  n=10000
+  rate= 75636.0 req/s  avg=  1.4012 ms  p99=  9.2097 ms  n=10000
+  rate= 78196.0 req/s  avg=  1.8993 ms  p99= 10.8794 ms  n=10000
+  rate= 81455.0 req/s  avg=  2.6813 ms  p99= 12.8057 ms  n=10000
+  rate= 81920.0 req/s  avg=  2.7982 ms  p99= 13.0639 ms  n=10000
+  rate= 87273.0 req/s  avg=  4.3346 ms  p99= 16.5438 ms  n=10000
+  rate= 93091.0 req/s  avg=  8.1633 ms  p99= 26.1454 ms  n=10000
+  rate= 98909.0 req/s  avg= 11.5705 ms  p99= 35.0129 ms  n=10000
+  rate=104727.0 req/s  avg= 14.6248 ms  p99= 42.9491 ms  n=10000
+  rate=110545.0 req/s  avg= 17.3692 ms  p99= 50.8575 ms  n=10000
+  rate=116364.0 req/s  avg= 19.8497 ms  p99= 58.3451 ms  n=10000
+  rate=122182.0 req/s  avg= 22.1161 ms  p99= 65.4243 ms  n=10000
+  rate=128000.0 req/s  avg= 24.2162 ms  p99= 73.3211 ms  n=10000
+
+[RS(6,3) | fail disk 3 | degraded]
+  rate=    10.0 req/s  avg=  0.0136 ms  p99=  0.0440 ms  n=10000
+  rate=    20.0 req/s  avg=  0.0136 ms  p99=  0.0440 ms  n=10000
+  rate=    40.0 req/s  avg=  0.0136 ms  p99=  0.0440 ms  n=10000
+  rate=    80.0 req/s  avg=  0.0136 ms  p99=  0.0440 ms  n=10000
+  rate=   160.0 req/s  avg=  0.0136 ms  p99=  0.0440 ms  n=10000
+  rate=   320.0 req/s  avg=  0.0136 ms  p99=  0.0440 ms  n=10000
+  rate=   640.0 req/s  avg=  0.0136 ms  p99=  0.0440 ms  n=10000
+  rate=  1000.0 req/s  avg=  0.0137 ms  p99=  0.0440 ms  n=10000
+  rate=  1280.0 req/s  avg=  0.0137 ms  p99=  0.0464 ms  n=10000
+  rate=  2000.0 req/s  avg=  0.0138 ms  p99=  0.0480 ms  n=10000
+  rate=  2560.0 req/s  avg=  0.0139 ms  p99=  0.0480 ms  n=10000
+  rate=  4000.0 req/s  avg=  0.0141 ms  p99=  0.0520 ms  n=10000
+  rate=  5120.0 req/s  avg=  0.0143 ms  p99=  0.0560 ms  n=10000
+  rate=  8000.0 req/s  avg=  0.0148 ms  p99=  0.0600 ms  n=10000
+  rate= 10240.0 req/s  avg=  0.0152 ms  p99=  0.0640 ms  n=10000
+  rate= 16000.0 req/s  avg=  0.0164 ms  p99=  0.0811 ms  n=10000
+  rate= 20480.0 req/s  avg=  0.0180 ms  p99=  0.1054 ms  n=10000
+  rate= 32000.0 req/s  avg=  0.0246 ms  p99=  0.2390 ms  n=10000
+  rate= 40960.0 req/s  avg=  0.0333 ms  p99=  0.3811 ms  n=10000
+  rate= 44684.0 req/s  avg=  0.0387 ms  p99=  0.4616 ms  n=10000
+  rate= 48407.0 req/s  avg=  0.0471 ms  p99=  0.5353 ms  n=10000
+  rate= 52131.0 req/s  avg=  0.0570 ms  p99=  0.6176 ms  n=10000
+  rate= 55855.0 req/s  avg=  0.0708 ms  p99=  0.7339 ms  n=10000
+  rate= 59578.0 req/s  avg=  0.0896 ms  p99=  0.9095 ms  n=10000
+  rate= 63302.0 req/s  avg=  0.1460 ms  p99=  1.2436 ms  n=10000
+  rate= 64000.0 req/s  avg=  0.1642 ms  p99=  1.3360 ms  n=10000
+  rate= 67025.0 req/s  avg=  0.3425 ms  p99=  3.1302 ms  n=10000
+  rate= 69818.0 req/s  avg=  0.5734 ms  p99=  4.8873 ms  n=10000
+  rate= 70749.0 req/s  avg=  0.6687 ms  p99=  5.4477 ms  n=10000
+  rate= 74473.0 req/s  avg=  1.1293 ms  p99=  7.5879 ms  n=10000
+  rate= 75636.0 req/s  avg=  1.3084 ms  p99=  8.2966 ms  n=10000
+  rate= 78196.0 req/s  avg=  1.7936 ms  p99=  9.6775 ms  n=10000
+  rate= 81455.0 req/s  avg=  2.9448 ms  p99= 11.6021 ms  n=10000
+  rate= 81920.0 req/s  avg=  3.2204 ms  p99= 11.8272 ms  n=10000
+  rate= 87273.0 req/s  avg= 11.4822 ms  p99= 28.4839 ms  n=10000
+  rate= 93091.0 req/s  avg= 23.0432 ms  p99= 51.3062 ms  n=10000
+  rate= 98909.0 req/s  avg= 33.2376 ms  p99= 72.1743 ms  n=10000
+  rate=104727.0 req/s  avg= 42.2122 ms  p99= 87.2593 ms  n=10000
+  rate=110545.0 req/s  avg= 50.1353 ms  p99=100.5313 ms  n=10000
+  rate=116364.0 req/s  avg= 57.1843 ms  p99=110.3273 ms  n=10000
+  rate=122182.0 req/s  avg= 63.5485 ms  p99=120.9755 ms  n=10000
+  rate=128000.0 req/s  avg= 69.3254 ms  p99=128.6295 ms  n=10000
+
+[MSR(6,3,5) | fail disk 0 | before failure]
+  rate=    10.0 req/s  avg=  0.0247 ms  p99=  0.0720 ms  n=10000
+  rate=    20.0 req/s  avg=  0.0247 ms  p99=  0.0720 ms  n=10000
+  rate=    40.0 req/s  avg=  0.0247 ms  p99=  0.0720 ms  n=10000
+  rate=    80.0 req/s  avg=  0.0247 ms  p99=  0.0720 ms  n=10000
+  rate=   160.0 req/s  avg=  0.0247 ms  p99=  0.0720 ms  n=10000
+  rate=   320.0 req/s  avg=  0.0248 ms  p99=  0.0720 ms  n=10000
+  rate=   640.0 req/s  avg=  0.0249 ms  p99=  0.0720 ms  n=10000
+  rate=  1000.0 req/s  avg=  0.0251 ms  p99=  0.0720 ms  n=10000
+  rate=  1280.0 req/s  avg=  0.0252 ms  p99=  0.0720 ms  n=10000
+  rate=  2000.0 req/s  avg=  0.0255 ms  p99=  0.0793 ms  n=10000
+  rate=  2560.0 req/s  avg=  0.0259 ms  p99=  0.0840 ms  n=10000
+  rate=  4000.0 req/s  avg=  0.0267 ms  p99=  0.0944 ms  n=10000
+  rate=  5120.0 req/s  avg=  0.0274 ms  p99=  0.0976 ms  n=10000
+  rate=  8000.0 req/s  avg=  0.0294 ms  p99=  0.1200 ms  n=10000
+  rate= 10240.0 req/s  avg=  0.0313 ms  p99=  0.1435 ms  n=10000
+  rate= 16000.0 req/s  avg=  0.0401 ms  p99=  0.2742 ms  n=10000
+  rate= 20480.0 req/s  avg=  0.0545 ms  p99=  0.4872 ms  n=10000
+  rate= 22342.0 req/s  avg=  0.0656 ms  p99=  0.5850 ms  n=10000
+  rate= 24204.0 req/s  avg=  0.0847 ms  p99=  0.8151 ms  n=10000
+  rate= 26065.0 req/s  avg=  0.1120 ms  p99=  1.1152 ms  n=10000
+  rate= 27927.0 req/s  avg=  0.1521 ms  p99=  1.5690 ms  n=10000
+  rate= 29789.0 req/s  avg=  0.2297 ms  p99=  1.9900 ms  n=10000
+  rate= 31651.0 req/s  avg=  0.4165 ms  p99=  3.3042 ms  n=10000
+  rate= 32000.0 req/s  avg=  0.4717 ms  p99=  3.6638 ms  n=10000
+  rate= 33513.0 req/s  avg=  1.0024 ms  p99=  8.3299 ms  n=10000
+  rate= 34909.0 req/s  avg=  1.5881 ms  p99= 12.0993 ms  n=10000
+  rate= 35375.0 req/s  avg=  1.8201 ms  p99= 13.1826 ms  n=10000
+  rate= 37236.0 req/s  avg=  2.9324 ms  p99= 18.3379 ms  n=10000
+  rate= 37818.0 req/s  avg=  3.3708 ms  p99= 19.8209 ms  n=10000
+  rate= 39098.0 req/s  avg=  4.5221 ms  p99= 22.7222 ms  n=10000
+  rate= 40727.0 req/s  avg=  6.2398 ms  p99= 26.4464 ms  n=10000
+  rate= 40960.0 req/s  avg=  6.5230 ms  p99= 27.0040 ms  n=10000
+  rate= 43636.0 req/s  avg= 11.7147 ms  p99= 39.2011 ms  n=10000
+  rate= 46545.0 req/s  avg= 19.0096 ms  p99= 56.9569 ms  n=10000
+  rate= 49455.0 req/s  avg= 25.4811 ms  p99= 74.2492 ms  n=10000
+  rate= 52364.0 req/s  avg= 31.2445 ms  p99= 88.5472 ms  n=10000
+  rate= 55273.0 req/s  avg= 36.3832 ms  p99=103.3482 ms  n=10000
+  rate= 58182.0 req/s  avg= 40.9940 ms  p99=116.9089 ms  n=10000
+  rate= 61091.0 req/s  avg= 45.1521 ms  p99=130.7765 ms  n=10000
+  rate= 64000.0 req/s  avg= 49.0015 ms  p99=145.5325 ms  n=10000
+
+[MSR(6,3,5) | fail disk 0 | degraded]
+  rate=    10.0 req/s  avg=  0.0247 ms  p99=  0.0720 ms  n=10000
+  rate=    20.0 req/s  avg=  0.0247 ms  p99=  0.0720 ms  n=10000
+  rate=    40.0 req/s  avg=  0.0247 ms  p99=  0.0720 ms  n=10000
+  rate=    80.0 req/s  avg=  0.0247 ms  p99=  0.0720 ms  n=10000
+  rate=   160.0 req/s  avg=  0.0248 ms  p99=  0.0720 ms  n=10000
+  rate=   320.0 req/s  avg=  0.0248 ms  p99=  0.0720 ms  n=10000
+  rate=   640.0 req/s  avg=  0.0249 ms  p99=  0.0720 ms  n=10000
+  rate=  1000.0 req/s  avg=  0.0251 ms  p99=  0.0720 ms  n=10000
+  rate=  1280.0 req/s  avg=  0.0252 ms  p99=  0.0740 ms  n=10000
+  rate=  2000.0 req/s  avg=  0.0256 ms  p99=  0.0840 ms  n=10000
+  rate=  2560.0 req/s  avg=  0.0258 ms  p99=  0.0840 ms  n=10000
+  rate=  4000.0 req/s  avg=  0.0265 ms  p99=  0.0960 ms  n=10000
+  rate=  5120.0 req/s  avg=  0.0272 ms  p99=  0.0960 ms  n=10000
+  rate=  8000.0 req/s  avg=  0.0291 ms  p99=  0.1165 ms  n=10000
+  rate= 10240.0 req/s  avg=  0.0310 ms  p99=  0.1438 ms  n=10000
+  rate= 16000.0 req/s  avg=  0.0401 ms  p99=  0.2752 ms  n=10000
+  rate= 20480.0 req/s  avg=  0.0551 ms  p99=  0.5000 ms  n=10000
+  rate= 22342.0 req/s  avg=  0.0670 ms  p99=  0.6863 ms  n=10000
+  rate= 24204.0 req/s  avg=  0.0829 ms  p99=  0.9185 ms  n=10000
+  rate= 26065.0 req/s  avg=  0.1034 ms  p99=  1.1369 ms  n=10000
+  rate= 27927.0 req/s  avg=  0.1338 ms  p99=  1.3762 ms  n=10000
+  rate= 29789.0 req/s  avg=  0.1884 ms  p99=  1.8671 ms  n=10000
+  rate= 31651.0 req/s  avg=  0.3999 ms  p99=  3.1874 ms  n=10000
+  rate= 32000.0 req/s  avg=  0.4884 ms  p99=  3.9530 ms  n=10000
+  rate= 33513.0 req/s  avg=  0.9326 ms  p99=  7.8568 ms  n=10000
+  rate= 34909.0 req/s  avg=  1.4832 ms  p99= 11.1837 ms  n=10000
+  rate= 35375.0 req/s  avg=  1.6967 ms  p99= 12.2417 ms  n=10000
+  rate= 37236.0 req/s  avg=  2.7350 ms  p99= 16.5478 ms  n=10000
+  rate= 37818.0 req/s  avg=  3.1614 ms  p99= 17.9290 ms  n=10000
+  rate= 39098.0 req/s  avg=  4.2841 ms  p99= 20.5104 ms  n=10000
+  rate= 40727.0 req/s  avg=  9.4794 ms  p99= 28.2266 ms  n=10000
+  rate= 40960.0 req/s  avg= 11.0427 ms  p99= 31.1806 ms  n=10000
+  rate= 43636.0 req/s  avg= 30.5294 ms  p99= 70.8565 ms  n=10000
+  rate= 46545.0 req/s  avg= 52.4165 ms  p99=112.8862 ms  n=10000
+  rate= 49455.0 req/s  avg= 71.5539 ms  p99=154.7475 ms  n=10000
+  rate= 52364.0 req/s  avg= 88.5049 ms  p99=182.2774 ms  n=10000
+  rate= 55273.0 req/s  avg=103.6785 ms  p99=206.0228 ms  n=10000
+  rate= 58182.0 req/s  avg=117.3479 ms  p99=223.9032 ms  n=10000
+  rate= 61091.0 req/s  avg=129.7885 ms  p99=244.1197 ms  n=10000
+  rate= 64000.0 req/s  avg=141.0301 ms  p99=259.5862 ms  n=10000
+
+[MBR(6,3,5) | fail disk 0 | before failure]
+  rate=    10.0 req/s  avg=  0.0388 ms  p99=  0.1000 ms  n=10000
+  rate=    20.0 req/s  avg=  0.0388 ms  p99=  0.1000 ms  n=10000
+  rate=    40.0 req/s  avg=  0.0388 ms  p99=  0.1000 ms  n=10000
+  rate=    80.0 req/s  avg=  0.0388 ms  p99=  0.1000 ms  n=10000
+  rate=   160.0 req/s  avg=  0.0389 ms  p99=  0.1000 ms  n=10000
+  rate=   320.0 req/s  avg=  0.0390 ms  p99=  0.1000 ms  n=10000
+  rate=   640.0 req/s  avg=  0.0394 ms  p99=  0.1200 ms  n=10000
+  rate=  1000.0 req/s  avg=  0.0398 ms  p99=  0.1200 ms  n=10000
+  rate=  1280.0 req/s  avg=  0.0401 ms  p99=  0.1200 ms  n=10000
+  rate=  2000.0 req/s  avg=  0.0411 ms  p99=  0.1400 ms  n=10000
+  rate=  2560.0 req/s  avg=  0.0419 ms  p99=  0.1437 ms  n=10000
+  rate=  4000.0 req/s  avg=  0.0441 ms  p99=  0.1722 ms  n=10000
+  rate=  5120.0 req/s  avg=  0.0460 ms  p99=  0.1926 ms  n=10000
+  rate=  8000.0 req/s  avg=  0.0532 ms  p99=  0.2918 ms  n=10000
+  rate= 10240.0 req/s  avg=  0.0629 ms  p99=  0.4327 ms  n=10000
+  rate= 16000.0 req/s  avg=  0.1501 ms  p99=  1.3771 ms  n=10000
+  rate= 17455.0 req/s  avg=  0.2122 ms  p99=  2.1835 ms  n=10000
+  rate= 18909.0 req/s  avg=  0.3372 ms  p99=  2.8803 ms  n=10000
+  rate= 20364.0 req/s  avg=  0.6914 ms  p99=  5.1251 ms  n=10000
+  rate= 20480.0 req/s  avg=  0.7751 ms  p99=  5.7642 ms  n=10000
+  rate= 21818.0 req/s  avg=  1.8572 ms  p99= 15.0649 ms  n=10000
+  rate= 22342.0 req/s  avg=  2.3974 ms  p99= 18.2055 ms  n=10000
+  rate= 23273.0 req/s  avg=  3.6328 ms  p99= 23.7394 ms  n=10000
+  rate= 24204.0 req/s  avg=  5.2172 ms  p99= 30.0385 ms  n=10000
+  rate= 24727.0 req/s  avg=  6.3379 ms  p99= 32.9858 ms  n=10000
+  rate= 26065.0 req/s  avg=  9.9459 ms  p99= 40.4540 ms  n=10000
+  rate= 26182.0 req/s  avg= 10.2997 ms  p99= 41.1473 ms  n=10000
+  rate= 27636.0 req/s  avg= 17.4844 ms  p99= 58.3820 ms  n=10000
+  rate= 27927.0 req/s  avg= 19.3913 ms  p99= 62.7874 ms  n=10000
+  rate= 29091.0 req/s  avg= 26.6451 ms  p99= 80.2144 ms  n=10000
+  rate= 29789.0 req/s  avg= 30.7274 ms  p99= 91.4560 ms  n=10000
+  rate= 30545.0 req/s  avg= 34.9448 ms  p99=103.1659 ms  n=10000
+  rate= 31651.0 req/s  avg= 40.7687 ms  p99=117.8844 ms  n=10000
+  rate= 32000.0 req/s  avg= 42.5229 ms  p99=122.1413 ms  n=10000
+  rate= 33513.0 req/s  avg= 49.6988 ms  p99=140.0232 ms  n=10000
+  rate= 35375.0 req/s  avg= 57.6583 ms  p99=163.0208 ms  n=10000
+  rate= 37236.0 req/s  avg= 64.7905 ms  p99=183.8358 ms  n=10000
+  rate= 39098.0 req/s  avg= 71.2109 ms  p99=205.4464 ms  n=10000
+  rate= 40960.0 req/s  avg= 77.1536 ms  p99=228.1483 ms  n=10000
+
+[MBR(6,3,5) | fail disk 0 | degraded]
+  rate=    10.0 req/s  avg=  0.0387 ms  p99=  0.1000 ms  n=10000
+  rate=    20.0 req/s  avg=  0.0387 ms  p99=  0.1000 ms  n=10000
+  rate=    40.0 req/s  avg=  0.0388 ms  p99=  0.1000 ms  n=10000
+  rate=    80.0 req/s  avg=  0.0388 ms  p99=  0.1000 ms  n=10000
+  rate=   160.0 req/s  avg=  0.0389 ms  p99=  0.1000 ms  n=10000
+  rate=   320.0 req/s  avg=  0.0390 ms  p99=  0.1000 ms  n=10000
+  rate=   640.0 req/s  avg=  0.0394 ms  p99=  0.1200 ms  n=10000
+  rate=  1000.0 req/s  avg=  0.0398 ms  p99=  0.1200 ms  n=10000
+  rate=  1280.0 req/s  avg=  0.0401 ms  p99=  0.1200 ms  n=10000
+  rate=  2000.0 req/s  avg=  0.0410 ms  p99=  0.1386 ms  n=10000
+  rate=  2560.0 req/s  avg=  0.0417 ms  p99=  0.1413 ms  n=10000
+  rate=  4000.0 req/s  avg=  0.0439 ms  p99=  0.1681 ms  n=10000
+  rate=  5120.0 req/s  avg=  0.0460 ms  p99=  0.1897 ms  n=10000
+  rate=  8000.0 req/s  avg=  0.0534 ms  p99=  0.2738 ms  n=10000
+  rate= 10240.0 req/s  avg=  0.0637 ms  p99=  0.4391 ms  n=10000
+  rate= 16000.0 req/s  avg=  0.1432 ms  p99=  1.4773 ms  n=10000
+  rate= 17455.0 req/s  avg=  0.1946 ms  p99=  1.9812 ms  n=10000
+  rate= 18909.0 req/s  avg=  0.2831 ms  p99=  2.5351 ms  n=10000
+  rate= 20364.0 req/s  avg=  0.7536 ms  p99=  5.8496 ms  n=10000
+  rate= 20480.0 req/s  avg=  0.8250 ms  p99=  6.5084 ms  n=10000
+  rate= 21818.0 req/s  avg=  1.8599 ms  p99= 14.5770 ms  n=10000
+  rate= 22342.0 req/s  avg=  2.4129 ms  p99= 17.5618 ms  n=10000
+  rate= 23273.0 req/s  avg=  3.5726 ms  p99= 22.5892 ms  n=10000
+  rate= 24204.0 req/s  avg=  5.1484 ms  p99= 27.9111 ms  n=10000
+  rate= 24727.0 req/s  avg=  6.2615 ms  p99= 30.3427 ms  n=10000
+  rate= 26065.0 req/s  avg= 16.3098 ms  p99= 45.8211 ms  n=10000
+  rate= 26182.0 req/s  avg= 18.2173 ms  p99= 49.5299 ms  n=10000
+  rate= 27636.0 req/s  avg= 44.4541 ms  p99=104.0682 ms  n=10000
+  rate= 27927.0 req/s  avg= 50.2040 ms  p99=114.2712 ms  n=10000
+  rate= 29091.0 req/s  avg= 71.9956 ms  p99=155.5366 ms  n=10000
+  rate= 29789.0 req/s  avg= 84.1564 ms  p99=180.5587 ms  n=10000
+  rate= 30545.0 req/s  avg= 96.6460 ms  p99=210.2639 ms  n=10000
+  rate= 31651.0 req/s  avg=113.7984 ms  p99=245.2838 ms  n=10000
+  rate= 32000.0 req/s  avg=118.9519 ms  p99=254.8160 ms  n=10000
+  rate= 33513.0 req/s  avg=140.0842 ms  p99=288.3885 ms  n=10000
+  rate= 35375.0 req/s  avg=163.6644 ms  p99=323.9506 ms  n=10000
+  rate= 37236.0 req/s  avg=184.9321 ms  p99=351.3833 ms  n=10000
+  rate= 39098.0 req/s  avg=204.3048 ms  p99=382.9445 ms  n=10000
+  rate= 40960.0 req/s  avg=221.8015 ms  p99=407.8339 ms  n=10000
+
+# ── Sanity checks ──
+  RAID-10(6,3): lat ratio high/low rate = 2087.3x (expect >> 1 near saturation)
+  RS(6,3): lat ratio high/low rate = 1625.5x (expect >> 1 near saturation)
+  MSR(6,3,5): lat ratio high/low rate = 1921.0x (expect >> 1 near saturation)
+  MBR(6,3,5): lat ratio high/low rate = 1943.0x (expect >> 1 near saturation)

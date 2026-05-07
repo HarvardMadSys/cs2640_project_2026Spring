@@ -1,0 +1,17 @@
+workload,policy,elapsed_s,phase_s,ops,ops_per_s,weighted_mean_ms,weighted_p95_ms,max_p99_ms,pins,pin_failures,metadata_obj_delta,data_obj_delta,json,speedup_vs_none,mean_latency_vs_none
+mdtest_tree,none,34.858579,28.779471,4800,166.786,23.774,68.992,307.353,0,0,0,0,results/cloudlab-policy-matrix-20260429-065248/mdtest_tree__none.json,1.0,1.0
+mdtest_tree,static,60.577504,41.469179,4800,115.749,32.193,64.88,425.453,73,0,0,0,results/cloudlab-policy-matrix-20260429-065248/mdtest_tree__static.json,0.694,1.354
+mdtest_tree,predictive,25.810537,21.106525,4800,227.418,17.434,58.789,265.833,0,0,0,0,results/cloudlab-policy-matrix-20260429-065248/mdtest_tree__predictive.json,1.364,0.733
+mdtest_tree,LLM_policy,27.536265,23.345892,4800,205.604,19.279,78.676,255.876,0,0,0,0,results/cloudlab-policy-matrix-20260429-065248/mdtest_tree__LLM_policy.json,1.233,0.811
+sprite_lfs_smallfile,none,57.798972,56.85678,7200,126.634,27.771,68.976,275.09,0,0,0,0,results/cloudlab-policy-matrix-20260429-065248/sprite_lfs_smallfile__none.json,1.0,1.0
+sprite_lfs_smallfile,static,116.352574,113.515916,7200,63.427,40.635,112.538,259.872,17,0,0,0,results/cloudlab-policy-matrix-20260429-065248/sprite_lfs_smallfile__static.json,0.501,1.463
+sprite_lfs_smallfile,predictive,39.422181,38.184829,7200,188.557,15.356,53.787,251.71,0,0,0,0,results/cloudlab-policy-matrix-20260429-065248/sprite_lfs_smallfile__predictive.json,1.489,0.553
+sprite_lfs_smallfile,LLM_policy,82.184733,80.878703,7200,89.022,27.122,89.051,269.526,0,0,0,0,results/cloudlab-policy-matrix-20260429-065248/sprite_lfs_smallfile__LLM_policy.json,0.703,0.977
+hotdirs_zipf,none,16.720706,16.043605,5400,336.583,11.766,17.203,32.95,0,0,0,0,results/cloudlab-policy-matrix-20260429-065248/hotdirs_zipf__none.json,1.0,1.0
+hotdirs_zipf,static,134.723253,130.182791,5400,41.48,95.153,184.016,602.395,33,0,0,0,results/cloudlab-policy-matrix-20260429-065248/hotdirs_zipf__static.json,0.123,8.087
+hotdirs_zipf,predictive,186.772988,186.215319,5400,28.999,135.947,298.792,685.818,1,0,0,0,results/cloudlab-policy-matrix-20260429-065248/hotdirs_zipf__predictive.json,0.086,11.554
+hotdirs_zipf,LLM_policy,154.431242,153.849369,5400,35.099,112.695,232.323,769.119,1,0,0,0,results/cloudlab-policy-matrix-20260429-065248/hotdirs_zipf__LLM_policy.json,0.104,9.578
+filebench_varmail_like,none,76.979111,75.886786,4246,55.952,17.862,76.366,171.759,0,0,0,0,results/cloudlab-policy-matrix-20260429-065248/filebench_varmail_like__none.json,1.0,1.0
+filebench_varmail_like,static,253.240627,247.313025,4246,17.169,58.236,114.161,1697.201,49,0,0,0,results/cloudlab-policy-matrix-20260429-065248/filebench_varmail_like__static.json,0.307,3.26
+filebench_varmail_like,predictive,57.682995,56.762788,4246,74.803,13.358,44.168,213.079,0,0,0,0,results/cloudlab-policy-matrix-20260429-065248/filebench_varmail_like__predictive.json,1.337,0.748
+filebench_varmail_like,LLM_policy,123.532029,122.543591,4246,34.649,28.85,111.002,213.915,0,0,0,0,results/cloudlab-policy-matrix-20260429-065248/filebench_varmail_like__LLM_policy.json,0.619,1.615

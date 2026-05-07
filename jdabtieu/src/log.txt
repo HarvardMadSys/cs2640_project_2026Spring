@@ -1,0 +1,128 @@
+Base ext4 run
+./fsbench_run.sh --fs ext4 --mode preset --workload seqread    --size 160G --label ext4-seqread --cset-cpus 2-3 --cache-state cold --precondition device --age-passes 1 --mount-opts noatime,nodiratime
+
+root@node-0:~/fsbench# ./fsbench_run.sh --fs ext4 --mode preset --workload seqread    --size 160G --label ext4-seqread --cset-cpus 2-3 --cache-state cold --precondition device --age-passes 1 --mount-opts noatime,nodiratime
+[fsbench_run.sh] setting up cset shield on CPU(s): 2-3
+[fsbench_run.sh] preconditioning pass 1/1 on /dev/nvme0n1p4
+[fsbench_run.sh] formatting /dev/nvme0n1p4 as ext4
+mke2fs 1.47.0 (5-Feb-2023)
+[fsbench_run.sh] results archive will be written to /dev/shm/fsbench-results/20260502T194523Z_ext4-seqread.tar.gz
+root@node-0:~/fsbench# ./fsbench_run.sh --fs btrfs --mode preset --workload seqread    --size 160G --label ext4-seqread
+--cset-cpus 2-3 --cache-state cold --precondition device --age-passes 1 --mount-opts noatime,nodiratime
+[fsbench_run.sh] setting up cset shield on CPU(s): 2-3
+[fsbench_run.sh] preconditioning pass 1/1 on /dev/nvme0n1p4
+[fsbench_run.sh] formatting /dev/nvme0n1p4 as btrfs
+[fsbench_run.sh] results archive will be written to /dev/shm/fsbench-results/20260502T200159Z_ext4-seqread.tar.gz
+root@node-0:~/fsbench# ./fsbench_run.sh --fs xfs --mode preset --workload seqread    --size 160G --label ext4-seqread --
+cset-cpus 2-3 --cache-state cold --precondition device --age-passes 1 --mount-opts noatime,nodiratime
+[fsbench_run.sh] setting up cset shield on CPU(s): 2-3
+[fsbench_run.sh] preconditioning pass 1/1 on /dev/nvme0n1p4
+[fsbench_run.sh] formatting /dev/nvme0n1p4 as xfs
+[fsbench_run.sh] results archive will be written to /dev/shm/fsbench-results/20260502T202248Z_ext4-seqread.tar.gz
+root@node-0:~/fsbench# ./fsbench_run.sh --fs f2fs --mode preset --workload seqread    --size 160G --label ext4-seqread -
+-cset-cpus 2-3 --cache-state cold --precondition device --age-passes 1 --mount-opts noatime,nodiratime
+[fsbench_run.sh] setting up cset shield on CPU(s): 2-3
+[fsbench_run.sh] preconditioning pass 1/1 on /dev/nvme0n1p4
+[fsbench_run.sh] formatting /dev/nvme0n1p4 as f2fs
+[fsbench_run.sh] results archive will be written to /dev/shm/fsbench-results/20260502T212439Z_ext4-seqread.tar.gz
+root@node-0:~/fsbench# ./fsbench_run.sh --fs zfs --mode preset --workload seqread    --size 160G --label ext4-seqread --
+cset-cpus 2-3 --cache-state cold --precondition device --age-passes 1 --mount-opts noatime,nodiratime
+[fsbench_run.sh] setting up cset shield on CPU(s): 2-3
+[fsbench_run.sh] preconditioning pass 1/1 on /dev/nvme0n1p4
+[fsbench_run.sh] creating zpool fsbench_20260502T213746Z_ext4_seqread on /dev/nvme0n1p4
+[fsbench_run.sh] results archive will be written to /dev/shm/fsbench-results/20260502T213746Z_ext4-seqread.tar.gz
+root@node-0:~/fsbench# ./fsbench_run.sh --fs ext4 --mode preset --workload seqwrite    --size 160G --label ext4-seqread
+--cset-cpus 2-3 --cache-state cold --precondition device --age-passes 1 --mount-opts noatime,nodiratime
+[fsbench_run.sh] setting up cset shield on CPU(s): 2-3
+[fsbench_run.sh] preconditioning pass 1/1 on /dev/nvme0n1p4
+[fsbench_run.sh] formatting /dev/nvme0n1p4 as ext4
+mke2fs 1.47.0 (5-Feb-2023)
+[fsbench_run.sh] results archive will be written to /dev/shm/fsbench-results/20260502T220016Z_ext4-seqread.tar.gz
+root@node-0:~/fsbench# ./fsbench_run.sh --fs btrfs --mode preset --workload seqwrite    --size 160G --label ext4-seqread
+ --cset-cpus 2-3 --cache-state cold --precondition device --age-passes 1 --mount-opts noatime,nodiratime
+[fsbench_run.sh] setting up cset shield on CPU(s): 2-3
+[fsbench_run.sh] preconditioning pass 1/1 on /dev/nvme0n1p4
+[fsbench_run.sh] formatting /dev/nvme0n1p4 as btrfs
+[fsbench_run.sh] results archive will be written to /dev/shm/fsbench-results/20260502T221548Z_ext4-seqread.tar.gz
+root@node-0:~/fsbench# ./fsbench_run.sh --fs xfs --mode preset --workload seqwrite    --size 160G --label xfs-seqread --
+cset-cpus 2-3 --cache-state cold --precondition device --age-passes 1 --mount-opts noatime,nodiratime
+[fsbench_run.sh] setting up cset shield on CPU(s): 2-3
+[fsbench_run.sh] preconditioning pass 1/1 on /dev/nvme0n1p4
+[fsbench_run.sh] formatting /dev/nvme0n1p4 as xfs
+[fsbench_run.sh] results archive will be written to /dev/shm/fsbench-results/20260502T223205Z_xfs-seqread.tar.gz
+root@node-0:~/fsbench# mv /dev/shm/fsbench-results/20260502T221548Z_ext4-seqread.tar.gz /dev/shm/fsbench-results/20260502T221548Z_btrfs-seqread.tar.gz
+root@node-0:~/fsbench# ./fsbench_run.sh --fs f2fs --mode preset --workload seqwrite    --size 160G --label f2fs-seqread
+--cset-cpus 2-3 --cache-state cold --precondition device --age-passes 1 --mount-opts noatime,nodiratime
+[fsbench_run.sh] setting up cset shield on CPU(s): 2-3
+[fsbench_run.sh] preconditioning pass 1/1 on /dev/nvme0n1p4
+[fsbench_run.sh] formatting /dev/nvme0n1p4 as f2fs
+[fsbench_run.sh] results archive will be written to /dev/shm/fsbench-results/20260502T224730Z_f2fs-seqread.tar.gz
+root@node-0:~/fsbench# ./fsbench_run.sh --fs zfs --mode preset --workload seqwrite    --size 160G --label f2fs-seqread -
+-cset-cpus 2-3 --cache-state cold --precondition device --age-passes 1 --mount-opts noatime,nodiratime
+[fsbench_run.sh] setting up cset shield on CPU(s): 2-3
+[fsbench_run.sh] preconditioning pass 1/1 on /dev/nvme0n1p4
+[fsbench_run.sh] creating zpool fsbench_20260502T230054Z_f2fs_seqread on /dev/nvme0n1p4
+[fsbench_run.sh] results archive will be written to /dev/shm/fsbench-results/20260502T230054Z_f2fs-seqread.tar.gz
+root@node-0:~/fsbench# mv /dev/shm/fsbench-results/20260502T230054Z_f2fs-seqread.tar.gz /dev/shm/fsbench-results/20260502T230054Z_zfs-seqread.tar.gz
+root@node-0:~/fsbench# ./fsbench_run.sh --fs ext4 --mode preset --workload randread4k    --size 160G --label ext4-randread --cset-cpus 2-3 --cache-state cold --precondition device --age-passes 1 --mount-opts noatime,nodiratime
+[fsbench_run.sh] setting up cset shield on CPU(s): 2-3
+[fsbench_run.sh] preconditioning pass 1/1 on /dev/nvme0n1p4
+[fsbench_run.sh] formatting /dev/nvme0n1p4 as ext4
+mke2fs 1.47.0 (5-Feb-2023)
+[fsbench_run.sh] results archive will be written to /dev/shm/fsbench-results/20260502T233437Z_ext4-randread.tar.gz
+root@node-0:~/fsbench# ./fsbench_run.sh --fs btrfs --mode preset --workload randread4k    --size 160G --label btrfs-rand
+read --cset-cpus 2-3 --cache-state cold --precondition device --age-passes 1 --mount-opts noatime,nodiratime
+[fsbench_run.sh] setting up cset shield on CPU(s): 2-3
+[fsbench_run.sh] preconditioning pass 1/1 on /dev/nvme0n1p4
+[fsbench_run.sh] formatting /dev/nvme0n1p4 as btrfs
+[fsbench_run.sh] results archive will be written to /dev/shm/fsbench-results/20260503T000702Z_btrfs-randread.tar.gz
+root@node-0:~/fsbench# ./fsbench_run.sh --fs xfs --mode preset --workload randread4k    --size 160G --label xfs-randread
+ --cset-cpus 2-3 --cache-state cold --precondition device --age-passes 1 --mount-opts noatime,nodiratime
+[fsbench_run.sh] setting up cset shield on CPU(s): 2-3
+[fsbench_run.sh] preconditioning pass 1/1 on /dev/nvme0n1p4
+[fsbench_run.sh] formatting /dev/nvme0n1p4 as xfs
+[fsbench_run.sh] results archive will be written to /dev/shm/fsbench-results/20260503T002256Z_xfs-randread.tar.gz
+root@node-0:~/fsbench# ./fsbench_run.sh --fs f2fs --mode preset --workload randread4k    --size 160G --label f2fs-randre
+ad --cset-cpus 2-3 --cache-state cold --precondition device --age-passes 1 --mount-opts noatime,nodiratime
+[fsbench_run.sh] setting up cset shield on CPU(s): 2-3
+[fsbench_run.sh] preconditioning pass 1/1 on /dev/nvme0n1p4
+[fsbench_run.sh] formatting /dev/nvme0n1p4 as f2fs
+[fsbench_run.sh] results archive will be written to /dev/shm/fsbench-results/20260503T010103Z_f2fs-randread.tar.gz
+root@node-0:~/fsbench# ./fsbench_run.sh --fs zfs --mode preset --workload randread4k    --size 160G --label zfs-randread
+ --cset-cpus 2-3 --cache-state cold --precondition device --age-passes 1 --mount-opts noatime,nodiratime
+[fsbench_run.sh] setting up cset shield on CPU(s): 2-3
+[fsbench_run.sh] preconditioning pass 1/1 on /dev/nvme0n1p4
+[fsbench_run.sh] creating zpool fsbench_20260503T011413Z_zfs_randread on /dev/nvme0n1p4
+
+
+root      120074  0.0  0.0  14888 10932 ?        Ss   20:46   0:00 sshd: jdabtieu [priv]
+jdabtieu  120130  0.0  0.0  15024  7280 ?        S    20:46   0:00 sshd: jdabtieu@pts/2
+jdabtieu  120131  0.0  0.0   8648  5664 pts/2    Ss   20:46   0:00 -bash
+root      120141  0.0  0.0  16740  7236 pts/2    S+   20:46   0:00 sudo -s
+root      120142  0.0  0.0  16740  2544 pts/3    Ss   20:46   0:00 sudo -s
+root      120143  0.0  0.0   8656  5736 pts/3    S    20:46   0:00 /bin/bash
+root      120151  0.4  0.0      0     0 ?        I    20:46   0:05 [kworker/u32:0-btrfs-endio-write]
+root      120832  0.9  0.0      0     0 ?        I    20:57   0:05 [kworker/u32:2-btrfs-endio-write]
+root      120895  0.0  0.0      0     0 ?        I    21:00   0:00 [kworker/9:3]
+root      120949  2.2  0.0      0     0 ?        I    21:02   0:07 [kworker/u32:4-events_unbound]
+root      120953  0.7  0.0      0     0 ?        I    21:02   0:02 [kworker/u32:5-btrfs-endio-write]
+root      120954  1.0  0.0      0     0 ?        I    21:02   0:03 [kworker/u32:6-btrfs-endio-write]
+root      120955  1.0  0.0      0     0 ?        I    21:02   0:03 [kworker/u32:7-btrfs-endio-write]
+root      120956  1.5  0.0      0     0 ?        I    21:02   0:04 [kworker/u32:8-btrfs-endio-write]
+root      120971  1.1  0.0      0     0 ?        I    21:02   0:03 [kworker/u32:9-btrfs-endio-write]
+root      121008  1.4  0.0      0     0 ?        I    21:02   0:04 [kworker/u32:10-btrfs-endio-write]
+root      121009  1.7  0.0      0     0 ?        I    21:02   0:05 [kworker/u32:11-btrfs-endio-write]
+root      121010  1.1  0.0      0     0 ?        I    21:02   0:03 [kworker/u32:12-btrfs-endio-write]
+root      121011  1.3  0.0      0     0 ?        I    21:02   0:04 [kworker/u32:13-btrfs-endio-write]
+root      121012  1.3  0.0      0     0 ?        I    21:02   0:04 [kworker/u32:14-events_power_efficient]
+root      121013  1.9  0.0      0     0 ?        I    21:02   0:06 [kworker/u32:15-iou_exit]
+root      121014  1.2  0.0      0     0 ?        I    21:02   0:03 [kworker/u32:16-btrfs-endio-write]
+root      121015  1.3  0.0      0     0 ?        I    21:02   0:04 [kworker/u32:17-btrfs-endio-write]
+root      121016  1.8  0.0      0     0 ?        I    21:02   0:05 [kworker/u32:18-events_power_efficient]
+root      121017  1.3  0.0      0     0 ?        I    21:02   0:04 [kworker/u32:19-btrfs-endio-write]
+root      121018  1.5  0.0      0     0 ?        I    21:02   0:04 [kworker/u32:20-btrfs-endio-write]
+root      121019  1.3  0.0      0     0 ?        I    21:02   0:04 [kworker/u32:21-btrfs-endio-write]
+root      121020  0.9  0.0      0     0 ?        I    21:02   0:03 [kworker/u32:22-btrfs-endio-write]
+root      121021  1.7  0.0      0     0 ?        I    21:02   0:05 [kworker/u32:23-btrfs-endio-write]
+root      121157  1.7  0.0      0     0 ?        I    21:02   0:05 [kworker/u32:25-btrfs-endio-write]
+root      123806  0.0  0.0      0     0 ?        I    21:03   0:00 [kworker/11:1-cgroup_pidlist_destroy]

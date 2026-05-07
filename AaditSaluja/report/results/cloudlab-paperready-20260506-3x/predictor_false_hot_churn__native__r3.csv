@@ -1,0 +1,5 @@
+phase,operation,count,total_seconds,ops_per_sec,latency_mean_ms,latency_p50_ms,latency_p95_ms,latency_p99_ms,run_id,backend,workers,policy,storage,file_count,file_size,dirs,ops,seed,oracle_cold_fraction,oracle_cold_access_fraction,ycsb_distribution,ycsb_update_fraction,ycsb_hot_fraction,ycsb_hot_op_fraction,ycsb_zipf_alpha
+predictor_false_hot_churn,false_hot_probe_create,3000,17.669854,169.781,43.327934,2.772813,3.818354,1181.926233,20260506-194858-7990b3c0,posix,8,none,native,3000,4096,64,9000,9103,0.9,0.1,zipfian,0.2,0.2,0.8,0.99
+predictor_false_hot_churn,false_hot_probe_read,480,0.110354,4349.654,1.755674,1.718344,2.328983,2.589415,20260506-194858-7990b3c0,posix,8,none,native,3000,4096,64,9000,9103,0.9,0.1,zipfian,0.2,0.2,0.8,0.99
+predictor_false_hot_churn,false_hot_churn_create,9000,91.492811,98.368,63.409659,2.453728,291.629298,610.734598,20260506-194858-7990b3c0,posix,8,none,native,3000,4096,64,9000,9103,0.9,0.1,zipfian,0.2,0.2,0.8,0.99
+predictor_false_hot_churn,cleanup_delete,12000,46.26244,259.39,26.105852,14.508113,117.922765,164.333776,20260506-194858-7990b3c0,posix,8,none,native,3000,4096,64,9000,9103,0.9,0.1,zipfian,0.2,0.2,0.8,0.99

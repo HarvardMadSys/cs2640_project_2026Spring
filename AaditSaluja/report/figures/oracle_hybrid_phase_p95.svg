@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="760" viewBox="0 0 1320 760">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="80" y="38" font-family="Arial" font-size="24" font-weight="700" fill="#222">Oracle workload: per-phase p95 latency</text>
+<line x1="80" x2="1180" y1="590.0" y2="590.0" stroke="#e6e6e6"/>
+<text x="68" y="595.0" font-family="Arial" font-size="13" text-anchor="end" fill="#555">0</text>
+<line x1="80" x2="1180" y1="490.0" y2="490.0" stroke="#e6e6e6"/>
+<text x="68" y="495.0" font-family="Arial" font-size="13" text-anchor="end" fill="#555">112</text>
+<line x1="80" x2="1180" y1="390.0" y2="390.0" stroke="#e6e6e6"/>
+<text x="68" y="395.0" font-family="Arial" font-size="13" text-anchor="end" fill="#555">223</text>
+<line x1="80" x2="1180" y1="290.0" y2="290.0" stroke="#e6e6e6"/>
+<text x="68" y="295.0" font-family="Arial" font-size="13" text-anchor="end" fill="#555">335</text>
+<line x1="80" x2="1180" y1="190.0" y2="190.0" stroke="#e6e6e6"/>
+<text x="68" y="195.0" font-family="Arial" font-size="13" text-anchor="end" fill="#555">447</text>
+<line x1="80" x2="1180" y1="90.0" y2="90.0" stroke="#e6e6e6"/>
+<text x="68" y="95.0" font-family="Arial" font-size="13" text-anchor="end" fill="#555">558</text>
+<line x1="80" x2="80" y1="90" y2="590" stroke="#333"/>
+<line x1="80" x2="1180" y1="590" y2="590" stroke="#333"/>
+<text x="28" y="340.0" transform="rotate(-90 28 340.0)" font-family="Arial" font-size="15" fill="#333" text-anchor="middle">p95 latency (ms)</text>
+<rect x="146.0" y="584.8" width="40" height="5.2" rx="6" fill="#2f6fbb"/>
+<text x="166.0" y="576.8" font-family="Arial" font-size="12" text-anchor="middle" fill="#222">5.8</text>
+<rect x="204.0" y="583.5" width="40" height="6.5" rx="6" fill="#3aa675"/>
+<text x="224.0" y="575.5" font-family="Arial" font-size="12" text-anchor="middle" fill="#222">7.3</text>
+<text x="203.0" y="618" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">Bulk create</text>
+<rect x="322.0" y="587.8" width="40" height="2.2" rx="6" fill="#2f6fbb"/>
+<text x="342.0" y="579.8" font-family="Arial" font-size="12" text-anchor="middle" fill="#222">2.4</text>
+<rect x="380.0" y="587.8" width="40" height="2.2" rx="6" fill="#3aa675"/>
+<text x="400.0" y="579.8" font-family="Arial" font-size="12" text-anchor="middle" fill="#222">2.4</text>
+<text x="379.0" y="618" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">Hot stat</text>
+<rect x="498.0" y="586.5" width="40" height="3.5" rx="6" fill="#2f6fbb"/>
+<text x="518.0" y="578.5" font-family="Arial" font-size="12" text-anchor="middle" fill="#222">3.9</text>
+<rect x="556.0" y="586.5" width="40" height="3.5" rx="6" fill="#3aa675"/>
+<text x="576.0" y="578.5" font-family="Arial" font-size="12" text-anchor="middle" fill="#222">3.9</text>
+<text x="555.0" y="618" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">Hot read</text>
+<rect x="674.0" y="343.2" width="40" height="246.8" rx="6" fill="#2f6fbb"/>
+<text x="694.0" y="335.2" font-family="Arial" font-size="12" text-anchor="middle" fill="#222">275.5</text>
+<rect x="732.0" y="311.9" width="40" height="278.1" rx="6" fill="#3aa675"/>
+<text x="752.0" y="303.9" font-family="Arial" font-size="12" text-anchor="middle" fill="#222">310.4</text>
+<text x="731.0" y="618" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">Hot churn create</text>
+<rect x="850.0" y="223.5" width="40" height="366.5" rx="6" fill="#2f6fbb"/>
+<text x="870.0" y="215.5" font-family="Arial" font-size="12" text-anchor="middle" fill="#222">409.1</text>
+<rect x="908.0" y="135.5" width="40" height="454.5" rx="6" fill="#3aa675"/>
+<text x="928.0" y="127.5" font-family="Arial" font-size="12" text-anchor="middle" fill="#222">507.4</text>
+<text x="907.0" y="618" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">Hot churn delete</text>
+<rect x="1026.0" y="586.3" width="40" height="3.7" rx="6" fill="#2f6fbb"/>
+<text x="1046.0" y="578.3" font-family="Arial" font-size="12" text-anchor="middle" fill="#222">4.1</text>
+<rect x="1084.0" y="460.0" width="40" height="130.0" rx="6" fill="#3aa675"/>
+<text x="1104.0" y="452.0" font-family="Arial" font-size="12" text-anchor="middle" fill="#222">145.2</text>
+<text x="1083.0" y="618" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">Cleanup delete</text>
+<rect x="970" y="108" width="16" height="16" fill="#2f6fbb"/>
+<text x="994" y="121" font-family="Arial" font-size="14" fill="#333">Native</text>
+<rect x="1090" y="108" width="16" height="16" fill="#3aa675"/>
+<text x="1114" y="121" font-family="Arial" font-size="14" fill="#333">Hybrid cold-pack</text>
+</svg>

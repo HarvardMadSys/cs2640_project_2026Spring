@@ -1,0 +1,715 @@
+{
+  "args": {
+    "backend": "posix",
+    "branching": 8,
+    "conffile": "/etc/ceph/ceph.conf",
+    "csv": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/mdtest_tree__static.csv",
+    "depth": 2,
+    "dirs": 32,
+    "file_count": 1200,
+    "file_size": 0,
+    "hot_min_interval": 32,
+    "hot_threshold": 64,
+    "hot_window": 128,
+    "no_ceph_stats": false,
+    "ops": 1200,
+    "output": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/mdtest_tree__static.json",
+    "pin_ranks": [
+      0,
+      1
+    ],
+    "policy": "static",
+    "policy_file": null,
+    "policy_opt": [],
+    "root": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248",
+    "seed": 1,
+    "segment_size": 67108864,
+    "storage": "native",
+    "storage_file": null,
+    "storage_opt": [],
+    "suite": "custom",
+    "workers": 4,
+    "workload": "mdtest_tree"
+  },
+  "backend": "posix",
+  "ceph_stats": {
+    "after": {
+      "available": true,
+      "df": {
+        "error": "2026-04-29T06:54:27.217-0600 7f79f35d1640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T06:54:27.217-0600 7f79f35d1640 -1 AuthRegistry(0x7f79ec065448) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T06:54:27.221-0600 7f79f35d1640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T06:54:27.221-0600 7f79f35d1640 -1 AuthRegistry(0x7f79f35cff80) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T06:54:27.225-0600 7f79f136d640 -1 monclient(hunting): handle_auth_bad_method server allowed_methods [2] but i only support [1]\n2026-04-29T06:54:27.225-0600 7f79f35d1640 -1 monclient: authenticate NOTE: no keyring found; disabled cephx authentication\n[errno 95] error connecting to the cluster"
+      },
+      "fs_status": {
+        "error": "2026-04-29T06:54:27.589-0600 7f6782f69640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T06:54:27.589-0600 7f6782f69640 -1 AuthRegistry(0x7f677c066558) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T06:54:27.589-0600 7f6782f69640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T06:54:27.589-0600 7f6782f69640 -1 AuthRegistry(0x7f6782f67f80) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T06:54:27.593-0600 7f6780d05640 -1 monclient(hunting): handle_auth_bad_method server allowed_methods [2] but i only support [1]\n2026-04-29T06:54:27.593-0600 7f6782f69640 -1 monclient: authenticate NOTE: no keyring found; disabled cephx authentication\n[errno 95] error connecting to the cluster"
+      }
+    },
+    "before": {
+      "available": true,
+      "df": {
+        "error": "2026-04-29T06:53:25.901-0600 7fe52ce60640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T06:53:25.901-0600 7fe52ce60640 -1 AuthRegistry(0x7fe528065448) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T06:53:25.901-0600 7fe52ce60640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T06:53:25.901-0600 7fe52ce60640 -1 AuthRegistry(0x7fe52ce5ef80) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T06:53:25.905-0600 7fe52659c640 -1 monclient(hunting): handle_auth_bad_method server allowed_methods [2] but i only support [1]\n2026-04-29T06:53:25.905-0600 7fe52ce60640 -1 monclient: authenticate NOTE: no keyring found; disabled cephx authentication\n[errno 95] error connecting to the cluster"
+      },
+      "fs_status": {
+        "error": "2026-04-29T06:53:26.269-0600 7f5496837640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T06:53:26.269-0600 7f5496837640 -1 AuthRegistry(0x7f5490066558) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T06:53:26.273-0600 7f5496837640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T06:53:26.273-0600 7f5496837640 -1 AuthRegistry(0x7f5496835f80) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T06:53:26.277-0600 7f548f7fe640 -1 monclient(hunting): handle_auth_bad_method server allowed_methods [2] but i only support [1]\n2026-04-29T06:53:26.277-0600 7f5496837640 -1 monclient: authenticate NOTE: no keyring found; disabled cephx authentication\n[errno 13] RADOS permission denied (error connecting to the cluster)"
+      }
+    },
+    "delta": {}
+  },
+  "elapsed_seconds": 60.577504,
+  "ended_unix": 1777467266.8624573,
+  "host": "node0.ceph.cs2640.emulab.net",
+  "policy_events": [
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 1
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_0",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 2
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_1",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 3
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_2",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 4
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_3",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 5
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_4",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 6
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_5",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 7
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_6",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 8
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_7",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 9
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_0/d1_0",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 10
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_0/d1_1",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 11
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_0/d1_2",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 12
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_0/d1_3",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 13
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_0/d1_4",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 14
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_0/d1_5",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 15
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_0/d1_6",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 16
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_0/d1_7",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 17
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_1/d1_0",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 18
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_1/d1_1",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 19
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_1/d1_2",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 20
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_1/d1_3",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 21
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_1/d1_4",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 22
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_1/d1_5",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 23
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_1/d1_6",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 24
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_1/d1_7",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 25
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_2/d1_0",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 26
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_2/d1_1",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 27
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_2/d1_2",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 28
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_2/d1_3",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 29
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_2/d1_4",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 30
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_2/d1_5",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 31
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_2/d1_6",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 32
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_2/d1_7",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 33
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_3/d1_0",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 34
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_3/d1_1",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 35
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_3/d1_2",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 36
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_3/d1_3",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 37
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_3/d1_4",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 38
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_3/d1_5",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 39
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_3/d1_6",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 40
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_3/d1_7",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 41
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_4/d1_0",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 42
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_4/d1_1",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 43
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_4/d1_2",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 44
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_4/d1_3",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 45
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_4/d1_4",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 46
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_4/d1_5",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 47
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_4/d1_6",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 48
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_4/d1_7",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 49
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_5/d1_0",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 50
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_5/d1_1",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 51
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_5/d1_2",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 52
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_5/d1_3",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 53
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_5/d1_4",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 54
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_5/d1_5",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 55
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_5/d1_6",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 56
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_5/d1_7",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 57
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_6/d1_0",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 58
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_6/d1_1",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 59
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_6/d1_2",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 60
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_6/d1_3",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 61
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_6/d1_4",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 62
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_6/d1_5",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 63
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_6/d1_6",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 64
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_6/d1_7",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 65
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_7/d1_0",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 66
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_7/d1_1",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 67
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_7/d1_2",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 68
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_7/d1_3",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 69
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_7/d1_4",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 70
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_7/d1_5",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 71
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_7/d1_6",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 72
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f/mdtest_tree-396b57c2/d0_7/d1_7",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 73
+    }
+  ],
+  "results": [
+    {
+      "backend": "posix",
+      "count": 1200,
+      "latency_mean_ms": 13.379648,
+      "latency_p50_ms": 12.62499,
+      "latency_p95_ms": 21.495786,
+      "latency_p99_ms": 35.56116,
+      "operation": "create",
+      "ops_per_sec": 296.011,
+      "phase": "mdtest_tree",
+      "policy": "static",
+      "run_id": "20260429-065325-b3dd954f",
+      "storage": "native",
+      "total_seconds": 4.053907,
+      "workers": 4
+    },
+    {
+      "backend": "posix",
+      "count": 1200,
+      "latency_mean_ms": 10.928222,
+      "latency_p50_ms": 7.566423,
+      "latency_p95_ms": 15.144631,
+      "latency_p99_ms": 22.831991,
+      "operation": "stat",
+      "ops_per_sec": 358.997,
+      "phase": "mdtest_tree",
+      "policy": "static",
+      "run_id": "20260429-065325-b3dd954f",
+      "storage": "native",
+      "total_seconds": 3.342645,
+      "workers": 4
+    },
+    {
+      "backend": "posix",
+      "count": 1200,
+      "latency_mean_ms": 12.609927,
+      "latency_p50_ms": 11.847231,
+      "latency_p95_ms": 19.656028,
+      "latency_p99_ms": 24.985206,
+      "operation": "read",
+      "ops_per_sec": 306.002,
+      "phase": "mdtest_tree",
+      "policy": "static",
+      "run_id": "20260429-065325-b3dd954f",
+      "storage": "native",
+      "total_seconds": 3.921546,
+      "workers": 4
+    },
+    {
+      "backend": "posix",
+      "count": 1200,
+      "latency_mean_ms": 91.855509,
+      "latency_p50_ms": 58.495078,
+      "latency_p95_ms": 203.223624,
+      "latency_p99_ms": 425.452969,
+      "operation": "delete",
+      "ops_per_sec": 39.8,
+      "phase": "mdtest_tree",
+      "policy": "static",
+      "run_id": "20260429-065325-b3dd954f",
+      "storage": "native",
+      "total_seconds": 30.151081,
+      "workers": 4
+    }
+  ],
+  "root": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065325-b3dd954f",
+  "run_id": "20260429-065325-b3dd954f",
+  "started_unix": 1777467206.2849529,
+  "storage_metrics": {}
+}

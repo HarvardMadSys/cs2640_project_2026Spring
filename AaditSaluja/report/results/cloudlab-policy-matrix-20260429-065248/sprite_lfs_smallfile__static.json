@@ -1,0 +1,267 @@
+{
+  "args": {
+    "backend": "posix",
+    "branching": 16,
+    "conffile": "/etc/ceph/ceph.conf",
+    "csv": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/sprite_lfs_smallfile__static.csv",
+    "depth": 1,
+    "dirs": 32,
+    "file_count": 1800,
+    "file_size": 1024,
+    "hot_min_interval": 32,
+    "hot_threshold": 64,
+    "hot_window": 128,
+    "no_ceph_stats": false,
+    "ops": 1800,
+    "output": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/sprite_lfs_smallfile__static.json",
+    "pin_ranks": [
+      0,
+      1
+    ],
+    "policy": "static",
+    "policy_file": null,
+    "policy_opt": [],
+    "root": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248",
+    "seed": 1,
+    "segment_size": 67108864,
+    "storage": "native",
+    "storage_file": null,
+    "storage_opt": [],
+    "suite": "custom",
+    "workers": 4,
+    "workload": "sprite_lfs_smallfile"
+  },
+  "backend": "posix",
+  "ceph_stats": {
+    "after": {
+      "available": true,
+      "df": {
+        "error": "2026-04-29T06:58:21.749-0600 7f0ecbf45640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T06:58:21.749-0600 7f0ecbf45640 -1 AuthRegistry(0x7f0ec4066558) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T06:58:21.749-0600 7f0ecbf45640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T06:58:21.749-0600 7f0ecbf45640 -1 AuthRegistry(0x7f0ecbf43f80) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T06:58:21.753-0600 7f0ec9ce1640 -1 monclient(hunting): handle_auth_bad_method server allowed_methods [2] but i only support [1]\n2026-04-29T06:58:21.753-0600 7f0ecbf45640 -1 monclient: authenticate NOTE: no keyring found; disabled cephx authentication\n[errno 95] error connecting to the cluster"
+      },
+      "fs_status": {
+        "error": "2026-04-29T06:58:22.121-0600 7fe24cf77640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T06:58:22.121-0600 7fe24cf77640 -1 AuthRegistry(0x7fe248064bb8) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T06:58:22.125-0600 7fe24cf77640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T06:58:22.125-0600 7fe24cf77640 -1 AuthRegistry(0x7fe24cf75f80) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T06:58:22.125-0600 7fe24659c640 -1 monclient(hunting): handle_auth_bad_method server allowed_methods [2] but i only support [1]\n2026-04-29T06:58:22.125-0600 7fe24cf77640 -1 monclient: authenticate NOTE: no keyring found; disabled cephx authentication\n[errno 95] error connecting to the cluster"
+      }
+    },
+    "before": {
+      "available": true,
+      "df": {
+        "error": "2026-04-29T06:56:24.653-0600 7fa2b0109640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T06:56:24.653-0600 7fa2b0109640 -1 AuthRegistry(0x7fa2a8066558) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T06:56:24.657-0600 7fa2b0109640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T06:56:24.657-0600 7fa2b0109640 -1 AuthRegistry(0x7fa2b0107f80) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T06:56:24.657-0600 7fa2adea5640 -1 monclient(hunting): handle_auth_bad_method server allowed_methods [2] but i only support [1]\n2026-04-29T06:56:24.657-0600 7fa2b0109640 -1 monclient: authenticate NOTE: no keyring found; disabled cephx authentication\n[errno 95] error connecting to the cluster"
+      },
+      "fs_status": {
+        "error": "2026-04-29T06:56:25.029-0600 7f6470ab4640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T06:56:25.029-0600 7f6470ab4640 -1 AuthRegistry(0x7f646c066558) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T06:56:25.029-0600 7f6470ab4640 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin: (2) No such file or directory\n2026-04-29T06:56:25.029-0600 7f6470ab4640 -1 AuthRegistry(0x7f6470ab2f80) no keyring found at /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin, disabling cephx\n2026-04-29T06:56:25.033-0600 7f646a59c640 -1 monclient(hunting): handle_auth_bad_method server allowed_methods [2] but i only support [1]\n2026-04-29T06:56:25.033-0600 7f6470ab4640 -1 monclient: authenticate NOTE: no keyring found; disabled cephx authentication\n[errno 95] error connecting to the cluster"
+      }
+    },
+    "delta": {}
+  },
+  "elapsed_seconds": 116.352574,
+  "ended_unix": 1777467501.3939698,
+  "host": "node0.ceph.cs2640.emulab.net",
+  "policy_events": [
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065624-1410dbbb/sprite_lfs_smallfile-5b05c8fb",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 1
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065624-1410dbbb/sprite_lfs_smallfile-5b05c8fb/d0_0",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 2
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065624-1410dbbb/sprite_lfs_smallfile-5b05c8fb/d0_1",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 3
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065624-1410dbbb/sprite_lfs_smallfile-5b05c8fb/d0_2",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 4
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065624-1410dbbb/sprite_lfs_smallfile-5b05c8fb/d0_3",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 5
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065624-1410dbbb/sprite_lfs_smallfile-5b05c8fb/d0_4",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 6
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065624-1410dbbb/sprite_lfs_smallfile-5b05c8fb/d0_5",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 7
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065624-1410dbbb/sprite_lfs_smallfile-5b05c8fb/d0_6",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 8
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065624-1410dbbb/sprite_lfs_smallfile-5b05c8fb/d0_7",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 9
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065624-1410dbbb/sprite_lfs_smallfile-5b05c8fb/d0_8",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 10
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065624-1410dbbb/sprite_lfs_smallfile-5b05c8fb/d0_9",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 11
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065624-1410dbbb/sprite_lfs_smallfile-5b05c8fb/d0_10",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 12
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065624-1410dbbb/sprite_lfs_smallfile-5b05c8fb/d0_11",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 13
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065624-1410dbbb/sprite_lfs_smallfile-5b05c8fb/d0_12",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 14
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065624-1410dbbb/sprite_lfs_smallfile-5b05c8fb/d0_13",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 15
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065624-1410dbbb/sprite_lfs_smallfile-5b05c8fb/d0_14",
+      "policy": "static",
+      "rank": 1,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 16
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065624-1410dbbb/sprite_lfs_smallfile-5b05c8fb/d0_15",
+      "policy": "static",
+      "rank": 0,
+      "reason": "round_robin_static_subtree_pin",
+      "sequence": 17
+    }
+  ],
+  "results": [
+    {
+      "backend": "posix",
+      "count": 1800,
+      "latency_mean_ms": 55.576509,
+      "latency_p50_ms": 15.476812,
+      "latency_p95_ms": 209.618154,
+      "latency_p99_ms": 259.872104,
+      "operation": "create",
+      "ops_per_sec": 41.306,
+      "phase": "sprite_lfs_smallfile",
+      "policy": "static",
+      "run_id": "20260429-065624-1410dbbb",
+      "storage": "native",
+      "total_seconds": 43.577275,
+      "workers": 4
+    },
+    {
+      "backend": "posix",
+      "count": 1800,
+      "latency_mean_ms": 8.20379,
+      "latency_p50_ms": 7.145871,
+      "latency_p95_ms": 14.621537,
+      "latency_p99_ms": 19.575713,
+      "operation": "stat",
+      "ops_per_sec": 452.522,
+      "phase": "sprite_lfs_smallfile",
+      "policy": "static",
+      "run_id": "20260429-065624-1410dbbb",
+      "storage": "native",
+      "total_seconds": 3.977704,
+      "workers": 4
+    },
+    {
+      "backend": "posix",
+      "count": 1800,
+      "latency_mean_ms": 13.650404,
+      "latency_p50_ms": 13.370859,
+      "latency_p95_ms": 20.407668,
+      "latency_p99_ms": 24.875462,
+      "operation": "read",
+      "ops_per_sec": 288.806,
+      "phase": "sprite_lfs_smallfile",
+      "policy": "static",
+      "run_id": "20260429-065624-1410dbbb",
+      "storage": "native",
+      "total_seconds": 6.232563,
+      "workers": 4
+    },
+    {
+      "backend": "posix",
+      "count": 1800,
+      "latency_mean_ms": 85.1088,
+      "latency_p50_ms": 98.891143,
+      "latency_p95_ms": 205.505467,
+      "latency_p99_ms": 238.786659,
+      "operation": "delete",
+      "ops_per_sec": 30.136,
+      "phase": "sprite_lfs_smallfile",
+      "policy": "static",
+      "run_id": "20260429-065624-1410dbbb",
+      "storage": "native",
+      "total_seconds": 59.728374,
+      "workers": 4
+    }
+  ],
+  "root": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248/20260429-065624-1410dbbb",
+  "run_id": "20260429-065624-1410dbbb",
+  "started_unix": 1777467385.041396,
+  "storage_metrics": {}
+}

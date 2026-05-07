@@ -1,0 +1,137 @@
+package benchmark.materialization
+
+final case class MaterializationResult(
+    dataset: String,
+    sketchType: String,
+    materializationGroup: String,
+    queryName: String,
+    inputRows: Long,
+    numSketchRows: Long,
+    exactCardinality: Double,
+    approximateCardinality: Double,
+    buildTimeMs: Long,
+    buildMeanMs: Double,
+    buildMinMs: Long,
+    buildMaxMs: Long,
+    buildStddevMs: Double,
+    exactQueryTimeMs: Long,
+    exactQueryMeanMs: Double,
+    exactQueryMinMs: Long,
+    exactQueryMaxMs: Long,
+    exactQueryStddevMs: Double,
+    sketchQueryTimeMs: Long,
+    sketchQueryMeanMs: Double,
+    sketchQueryMinMs: Long,
+    sketchQueryMaxMs: Long,
+    sketchQueryStddevMs: Double,
+    sketchTableSizeBytes: Long,
+    averageSketchSizeBytes: Double,
+    rawInputSizeBytes: Long,
+    rawToSketchSizeRatio: Double,
+    workload5ExactMs: Long,
+    workload5SketchMs: Long,
+    workload10ExactMs: Long,
+    workload10SketchMs: Long,
+    runtimeTrials: Int,
+    relativeErrorMean: Double,
+    relativeErrorMedian: Double,
+    relativeErrorP95: Double,
+    relativeErrorMax: Double,
+    breakEvenQueries: String,
+    notes: String
+)
+
+object MaterializationResult {
+  val CsvHeader: String =
+    Seq(
+      "dataset",
+      "sketch_type",
+      "materialization_group",
+      "query_name",
+      "input_rows",
+      "num_sketch_rows",
+      "exact_cardinality",
+      "approximate_cardinality",
+      "build_time_ms",
+      "build_mean_ms",
+      "build_min_ms",
+      "build_max_ms",
+      "build_stddev_ms",
+      "exact_query_time_ms",
+      "exact_query_mean_ms",
+      "exact_query_min_ms",
+      "exact_query_max_ms",
+      "exact_query_stddev_ms",
+      "sketch_query_time_ms",
+      "sketch_query_mean_ms",
+      "sketch_query_min_ms",
+      "sketch_query_max_ms",
+      "sketch_query_stddev_ms",
+      "sketch_table_size_bytes",
+      "average_sketch_size_bytes",
+      "raw_input_size_bytes",
+      "raw_to_sketch_size_ratio",
+      "workload_5_exact_ms",
+      "workload_5_sketch_ms",
+      "workload_10_exact_ms",
+      "workload_10_sketch_ms",
+      "runtime_trials",
+      "relative_error_mean",
+      "relative_error_median",
+      "relative_error_p95",
+      "relative_error_max",
+      "break_even_queries",
+      "notes"
+    ).mkString(",")
+
+  def toCsv(result: MaterializationResult): String =
+    Seq(
+      result.dataset,
+      result.sketchType,
+      result.materializationGroup,
+      result.queryName,
+      result.inputRows.toString,
+      result.numSketchRows.toString,
+      formatDouble(result.exactCardinality),
+      formatDouble(result.approximateCardinality),
+      result.buildTimeMs.toString,
+      formatDouble(result.buildMeanMs),
+      result.buildMinMs.toString,
+      result.buildMaxMs.toString,
+      formatDouble(result.buildStddevMs),
+      result.exactQueryTimeMs.toString,
+      formatDouble(result.exactQueryMeanMs),
+      result.exactQueryMinMs.toString,
+      result.exactQueryMaxMs.toString,
+      formatDouble(result.exactQueryStddevMs),
+      result.sketchQueryTimeMs.toString,
+      formatDouble(result.sketchQueryMeanMs),
+      result.sketchQueryMinMs.toString,
+      result.sketchQueryMaxMs.toString,
+      formatDouble(result.sketchQueryStddevMs),
+      result.sketchTableSizeBytes.toString,
+      formatDouble(result.averageSketchSizeBytes),
+      result.rawInputSizeBytes.toString,
+      formatDouble(result.rawToSketchSizeRatio),
+      result.workload5ExactMs.toString,
+      result.workload5SketchMs.toString,
+      result.workload10ExactMs.toString,
+      result.workload10SketchMs.toString,
+      result.runtimeTrials.toString,
+      formatDouble(result.relativeErrorMean),
+      formatDouble(result.relativeErrorMedian),
+      formatDouble(result.relativeErrorP95),
+      formatDouble(result.relativeErrorMax),
+      result.breakEvenQueries,
+      result.notes
+    ).map(escapeCsv).mkString(",")
+
+  private def formatDouble(value: Double): String =
+    f"$value%.8f"
+
+  private def escapeCsv(value: String): String = {
+    val needsQuoting = value.exists(ch => ch == ',' || ch == '"' || ch == '\n' || ch == '\r')
+    if (!needsQuoting) value
+    else "\"" + value.replace("\"", "\"\"") + "\""
+  }
+}

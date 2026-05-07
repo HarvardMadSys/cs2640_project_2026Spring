@@ -1,0 +1,86 @@
+{
+  "label": "20260429-081452",
+  "root": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452",
+  "runs": [
+    {
+      "workload": "sprite_lfs_smallfile",
+      "variant": "default",
+      "returncode": 0,
+      "seconds": 62.529,
+      "json": "/users/aadits/FinalProj/results/cloudlab-improvement-matrix-20260429-081452/sprite_lfs_smallfile__default.json",
+      "log": "/users/aadits/FinalProj/results/cloudlab-improvement-matrix-20260429-081452/sprite_lfs_smallfile__default.log"
+    },
+    {
+      "workload": "sprite_lfs_smallfile",
+      "variant": "static_top",
+      "returncode": 0,
+      "seconds": 73.9,
+      "json": "/users/aadits/FinalProj/results/cloudlab-improvement-matrix-20260429-081452/sprite_lfs_smallfile__static_top.json",
+      "log": "/users/aadits/FinalProj/results/cloudlab-improvement-matrix-20260429-081452/sprite_lfs_smallfile__static_top.log"
+    },
+    {
+      "workload": "sprite_lfs_smallfile",
+      "variant": "prepin_hotset",
+      "returncode": 0,
+      "seconds": 70.388,
+      "json": "/users/aadits/FinalProj/results/cloudlab-improvement-matrix-20260429-081452/sprite_lfs_smallfile__prepin_hotset.json",
+      "log": "/users/aadits/FinalProj/results/cloudlab-improvement-matrix-20260429-081452/sprite_lfs_smallfile__prepin_hotset.log"
+    },
+    {
+      "workload": "sprite_lfs_smallfile",
+      "variant": "predictive_safe",
+      "returncode": 0,
+      "seconds": 55.987,
+      "json": "/users/aadits/FinalProj/results/cloudlab-improvement-matrix-20260429-081452/sprite_lfs_smallfile__predictive_safe.json",
+      "log": "/users/aadits/FinalProj/results/cloudlab-improvement-matrix-20260429-081452/sprite_lfs_smallfile__predictive_safe.log"
+    },
+    {
+      "workload": "sprite_lfs_smallfile",
+      "variant": "append_segments",
+      "returncode": 0,
+      "seconds": 90.293,
+      "json": "/users/aadits/FinalProj/results/cloudlab-improvement-matrix-20260429-081452/sprite_lfs_smallfile__append_segments.json",
+      "log": "/users/aadits/FinalProj/results/cloudlab-improvement-matrix-20260429-081452/sprite_lfs_smallfile__append_segments.log"
+    },
+    {
+      "workload": "hotdirs_zipf",
+      "variant": "default",
+      "returncode": 0,
+      "seconds": 39.577,
+      "json": "/users/aadits/FinalProj/results/cloudlab-improvement-matrix-20260429-081452/hotdirs_zipf__default.json",
+      "log": "/users/aadits/FinalProj/results/cloudlab-improvement-matrix-20260429-081452/hotdirs_zipf__default.log"
+    },
+    {
+      "workload": "hotdirs_zipf",
+      "variant": "static_top",
+      "returncode": 0,
+      "seconds": 115.131,
+      "json": "/users/aadits/FinalProj/results/cloudlab-improvement-matrix-20260429-081452/hotdirs_zipf__static_top.json",
+      "log": "/users/aadits/FinalProj/results/cloudlab-improvement-matrix-20260429-081452/hotdirs_zipf__static_top.log"
+    },
+    {
+      "workload": "hotdirs_zipf",
+      "variant": "prepin_hotset",
+      "returncode": 0,
+      "seconds": 102.022,
+      "json": "/users/aadits/FinalProj/results/cloudlab-improvement-matrix-20260429-081452/hotdirs_zipf__prepin_hotset.json",
+      "log": "/users/aadits/FinalProj/results/cloudlab-improvement-matrix-20260429-081452/hotdirs_zipf__prepin_hotset.log"
+    },
+    {
+      "workload": "hotdirs_zipf",
+      "variant": "predictive_safe",
+      "returncode": 0,
+      "seconds": 76.836,
+      "json": "/users/aadits/FinalProj/results/cloudlab-improvement-matrix-20260429-081452/hotdirs_zipf__predictive_safe.json",
+      "log": "/users/aadits/FinalProj/results/cloudlab-improvement-matrix-20260429-081452/hotdirs_zipf__predictive_safe.log"
+    },
+    {
+      "workload": "hotdirs_zipf",
+      "variant": "append_segments",
+      "returncode": 0,
+      "seconds": 57.377,
+      "json": "/users/aadits/FinalProj/results/cloudlab-improvement-matrix-20260429-081452/hotdirs_zipf__append_segments.json",
+      "log": "/users/aadits/FinalProj/results/cloudlab-improvement-matrix-20260429-081452/hotdirs_zipf__append_segments.log"
+    }
+  ]
+}

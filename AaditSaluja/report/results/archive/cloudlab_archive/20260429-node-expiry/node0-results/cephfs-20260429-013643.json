@@ -1,0 +1,90 @@
+{
+  "args": {
+    "branching": 2, 
+    "conffile": "/etc/ceph/ceph.conf", 
+    "csv": "/tmp/cs2640-bench-results-20260429-013643/cephfs-20260429-013643.csv", 
+    "depth": 1, 
+    "dirs": 32, 
+    "file_count": 20, 
+    "file_size": 16, 
+    "no_ceph_stats": true, 
+    "ops": 1000, 
+    "output": "/tmp/cs2640-bench-results-20260429-013643/cephfs-20260429-013643.json", 
+    "pin_ranks": [], 
+    "root": "/cs2640-bench", 
+    "seed": 1, 
+    "suite": "custom", 
+    "workers": 1, 
+    "workload": "mdtest_tree"
+  }, 
+  "backend": "ceph-libcephfs", 
+  "ceph_stats": {
+    "after": {}, 
+    "before": {}, 
+    "delta": {}
+  }, 
+  "elapsed_seconds": 0.330934, 
+  "ended_unix": 1777441003.850187, 
+  "host": "5a8ac6d962cb", 
+  "results": [
+    {
+      "backend": "ceph-libcephfs", 
+      "count": 20, 
+      "latency_mean_ms": 1.479292, 
+      "latency_p50_ms": 0.669479, 
+      "latency_p95_ms": 2.832174, 
+      "latency_p99_ms": 13.06262, 
+      "operation": "create", 
+      "ops_per_sec": 670.354, 
+      "phase": "mdtest_tree", 
+      "run_id": "20260429-053643-82bd2555", 
+      "total_seconds": 0.029835, 
+      "workers": 1
+    }, 
+    {
+      "backend": "ceph-libcephfs", 
+      "count": 20, 
+      "latency_mean_ms": 0.081849, 
+      "latency_p50_ms": 0.035048, 
+      "latency_p95_ms": 0.090456, 
+      "latency_p99_ms": 0.780458, 
+      "operation": "stat", 
+      "ops_per_sec": 11662.183, 
+      "phase": "mdtest_tree", 
+      "run_id": "20260429-053643-82bd2555", 
+      "total_seconds": 0.001715, 
+      "workers": 1
+    }, 
+    {
+      "backend": "ceph-libcephfs", 
+      "count": 20, 
+      "latency_mean_ms": 0.230062, 
+      "latency_p50_ms": 0.074983, 
+      "latency_p95_ms": 0.417638, 
+      "latency_p99_ms": 2.206788, 
+      "operation": "read", 
+      "ops_per_sec": 4233.677, 
+      "phase": "mdtest_tree", 
+      "run_id": "20260429-053643-82bd2555", 
+      "total_seconds": 0.004724, 
+      "workers": 1
+    }, 
+    {
+      "backend": "ceph-libcephfs", 
+      "count": 20, 
+      "latency_mean_ms": 0.378585, 
+      "latency_p50_ms": 0.351429, 
+      "latency_p95_ms": 0.42969, 
+      "latency_p99_ms": 0.83648, 
+      "operation": "delete", 
+      "ops_per_sec": 2600.474, 
+      "phase": "mdtest_tree", 
+      "run_id": "20260429-053643-82bd2555", 
+      "total_seconds": 0.007691, 
+      "workers": 1
+    }
+  ], 
+  "root": "/cs2640-bench/20260429-053643-82bd2555", 
+  "run_id": "20260429-053643-82bd2555", 
+  "started_unix": 1777441003.519253
+}

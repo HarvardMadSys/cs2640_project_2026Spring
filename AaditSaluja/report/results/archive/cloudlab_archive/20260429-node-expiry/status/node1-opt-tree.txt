@@ -1,0 +1,5 @@
+/opt/cs2640-ceph/etc/ceph.client.admin.keyring 151 bytes
+/opt/cs2640-ceph/etc/ceph.conf 186 bytes
+/opt/cs2640-ceph/etc/ceph.mon.keyring 228 bytes
+/opt/cs2640-ceph/lib/bootstrap-mds/ceph.keyring 113 bytes
+/opt/cs2640-ceph/lib/bootstrap-osd/ceph.keyring 113 bytes

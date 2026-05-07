@@ -1,0 +1,7 @@
+Awesome! The proposal is clearly written. The ideas are not new, but very clear. I think having a measurement of Ceph performance would be a good first step to demonstrate the performance bottlenecks in Ceph. This would strengthen your motivation. 
+
+The workloads used in the evaluation are also important. There are several public block workloads, but not many file workloads. We have some object-cache workloads you may be able to use. Feel free to email me when you need the traces. 
+
+As mentioned in class, we would love to see you explore the use of a coding agent to help with the engineering part. Just a reminder that you would need to submit an AI-use report on your experience, i.e., what worked and what did not work. 
+
+Look forward to your finding!

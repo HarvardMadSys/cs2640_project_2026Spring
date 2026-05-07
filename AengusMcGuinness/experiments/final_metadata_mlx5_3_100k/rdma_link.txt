@@ -1,0 +1,4 @@
+link mlx5_0/1 state ACTIVE physical_state LINK_UP netdev eno49np0 
+link mlx5_1/1 state DOWN physical_state DISABLED netdev eno50np1 
+link mlx5_2/1 state DOWN physical_state DISABLED netdev ens1f0np0 
+link mlx5_3/1 state ACTIVE physical_state LINK_UP netdev ens1f1np1 

@@ -1,0 +1,7 @@
+case,workload,storage,ops_per_sec,seconds,promotions,hot_promotions,cold_promotions,predicted_hot_dirs,native_writes,packed_writes
+native,oracle_hotcold_mix,native,727.458,7.148175,,,,,,
+oracle,oracle_hotcold_mix,oracle_cold_segments,4593.311,1.132081,,,,,380,720
+pred_read1,oracle_hotcold_mix,predictive_cold_segments,2731.04,1.904037,141,82,59,29,441,800
+pred_statonly4,oracle_hotcold_mix,predictive_cold_segments,2063.803,2.519621,86,86,0,4,386,800
+pred_statread2,oracle_hotcold_mix,predictive_cold_segments,1633.381,3.18358,134,84,50,28,434,800
+pred_statread4,oracle_hotcold_mix,predictive_cold_segments,2148.556,2.420231,87,86,1,5,387,800

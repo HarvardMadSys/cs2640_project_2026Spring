@@ -1,0 +1,4 @@
+count,run_id,total_seconds,workers,ops_per_sec,latency_p50_ms,policy,latency_p99_ms,latency_p95_ms,phase,latency_mean_ms,operation,backend
+20,20260429-055317-be2df7a9,0.035816,1,558.41,0.681043,predictive,15.790281,4.482794,hotdirs_zipf,1.778972,skewed_create,ceph-libcephfs
+20,20260429-055317-be2df7a9,0.002174,1,9200.053,0.041962,predictive,1.051545,0.118375,hotdirs_zipf,0.105071,skewed_stat,ceph-libcephfs
+20,20260429-055317-be2df7a9,0.008292,1,2411.975,0.364542,predictive,1.117985,0.473464,hotdirs_zipf,0.409138,skewed_delete,ceph-libcephfs

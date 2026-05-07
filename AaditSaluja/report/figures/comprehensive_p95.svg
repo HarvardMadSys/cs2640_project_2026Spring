@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="520" viewBox="0 0 1120 520">
+<rect width="100%" height="100%" fill="white"/>
+<text x="560.0" y="28" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700">Mean Phase p95 Latency</text>
+<text x="18" y="227.0" transform="rotate(-90 18 227.0)" text-anchor="middle" font-family="Arial, sans-serif" font-size="13">Mean p95 latency, ms (log scale)</text>
+<line x1="82" y1="402.00" x2="1096" y2="402.00" stroke="#e5e7eb" stroke-width="1"/>
+<text x="74" y="406.00" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#374151">0.50</text>
+<line x1="82" y1="365.90" x2="1096" y2="365.90" stroke="#e5e7eb" stroke-width="1"/>
+<text x="74" y="369.90" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#374151">1.00</text>
+<line x1="82" y1="329.79" x2="1096" y2="329.79" stroke="#e5e7eb" stroke-width="1"/>
+<text x="74" y="333.79" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#374151">2.00</text>
+<line x1="82" y1="282.07" x2="1096" y2="282.07" stroke="#e5e7eb" stroke-width="1"/>
+<text x="74" y="286.07" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#374151">5.00</text>
+<line x1="82" y1="245.96" x2="1096" y2="245.96" stroke="#e5e7eb" stroke-width="1"/>
+<text x="74" y="249.96" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#374151">10.0</text>
+<line x1="82" y1="209.86" x2="1096" y2="209.86" stroke="#e5e7eb" stroke-width="1"/>
+<text x="74" y="213.86" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#374151">20.0</text>
+<line x1="82" y1="162.13" x2="1096" y2="162.13" stroke="#e5e7eb" stroke-width="1"/>
+<text x="74" y="166.13" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#374151">50.0</text>
+<line x1="82" y1="126.03" x2="1096" y2="126.03" stroke="#e5e7eb" stroke-width="1"/>
+<text x="74" y="130.03" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#374151">100</text>
+<line x1="82" y1="89.93" x2="1096" y2="89.93" stroke="#e5e7eb" stroke-width="1"/>
+<text x="74" y="93.93" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#374151">200</text>
+<line x1="82" y1="402" x2="1096" y2="402" stroke="#111827"/>
+<line x1="82" y1="52" x2="82" y2="402" stroke="#111827"/>
+<rect x="111.50" y="317.59" width="34.00" height="84.41" fill="#4c78a8"/>
+<rect x="149.50" y="380.70" width="34.00" height="21.30" fill="#f58518"/>
+<rect x="187.50" y="379.01" width="34.00" height="22.99" fill="#54a24b"/>
+<text x="166.50" y="424" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#111827">IOR/mdtest</text>
+<rect x="280.50" y="173.94" width="34.00" height="228.06" fill="#4c78a8"/>
+<rect x="318.50" y="301.62" width="34.00" height="100.38" fill="#f58518"/>
+<rect x="356.50" y="243.76" width="34.00" height="158.24" fill="#54a24b"/>
+<text x="335.50" y="424" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#111827">Filebench-like</text>
+<rect x="449.50" y="195.36" width="34.00" height="206.64" fill="#4c78a8"/>
+<rect x="487.50" y="290.39" width="34.00" height="111.61" fill="#f58518"/>
+<rect x="525.50" y="392.19" width="34.00" height="9.81" fill="#54a24b"/>
+<text x="504.50" y="424" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#111827">Zipf hotdirs</text>
+<rect x="618.50" y="119.13" width="34.00" height="282.87" fill="#4c78a8"/>
+<rect x="656.50" y="156.74" width="34.00" height="245.26" fill="#f58518"/>
+<rect x="694.50" y="333.32" width="34.00" height="68.68" fill="#54a24b"/>
+<text x="673.50" y="424" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#111827">70% cold / 10% access</text>
+<rect x="787.50" y="117.01" width="34.00" height="284.99" fill="#4c78a8"/>
+<rect x="825.50" y="173.90" width="34.00" height="228.10" fill="#f58518"/>
+<rect x="863.50" y="182.90" width="34.00" height="219.10" fill="#54a24b"/>
+<text x="842.50" y="424" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#111827">90% cold / 10% access</text>
+<rect x="956.50" y="106.97" width="34.00" height="295.03" fill="#4c78a8"/>
+<rect x="994.50" y="63.62" width="34.00" height="338.38" fill="#f58518"/>
+<rect x="1032.50" y="161.58" width="34.00" height="240.42" fill="#54a24b"/>
+<text x="1011.50" y="424" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#111827">90% cold / 20% access</text>
+<rect x="82" y="477" width="14" height="14" fill="#4c78a8"/>
+<text x="102" y="488" font-family="Arial, sans-serif" font-size="12">native</text>
+<rect x="202" y="477" width="14" height="14" fill="#f58518"/>
+<text x="222" y="488" font-family="Arial, sans-serif" font-size="12">oracle</text>
+<rect x="322" y="477" width="14" height="14" fill="#54a24b"/>
+<text x="342" y="488" font-family="Arial, sans-serif" font-size="12">predictor</text>
+</svg>

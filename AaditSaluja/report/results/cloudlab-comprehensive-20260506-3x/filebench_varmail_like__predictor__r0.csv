@@ -1,0 +1,4 @@
+phase,operation,count,total_seconds,ops_per_sec,latency_mean_ms,latency_p50_ms,latency_p95_ms,latency_p99_ms,run_id,backend,workers,policy,storage,file_count,file_size,dirs,ops,seed,oracle_cold_fraction,oracle_cold_access_fraction
+filebench_varmail_like,initial_create,1500,0.144088,10410.285,0.090844,0.029142,0.040195,0.098243,20260506-131126-7b18964b,posix,1,none,predictive_cold_segments,3000,4096,64,6000,8000,0.9,0.1
+filebench_varmail_like,mixed_mail_ops,6000,26.431585,227.001,4.401331,0.901071,11.641818,29.954145,20260506-131126-7b18964b,posix,1,none,predictive_cold_segments,3000,4096,64,6000,8000,0.9,0.1
+filebench_varmail_like,cleanup_delete,2959,9.530569,310.475,3.215828,0.006514,14.638667,33.392661,20260506-131126-7b18964b,posix,1,none,predictive_cold_segments,3000,4096,64,6000,8000,0.9,0.1

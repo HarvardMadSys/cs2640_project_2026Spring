@@ -1,0 +1,128 @@
+# node0
+node0.ceph.cs2640.emulab.net
+Wed Apr 29 11:59:24 MDT 2026
+
+## mounts
+fs.emulab.net:/proj/cs2640 on /proj/cs2640 type nfs (rw,relatime,vers=3,rsize=131072,wsize=131072,namlen=255,hard,nolock,proto=tcp,timeo=600,retrans=2,sec=sys,mountaddr=155.98.33.74,mountvers=3,mountport=900,mountproto=tcp,local_lock=all,addr=155.98.33.74)
+ceph-fuse on /mnt/cephfs type fuse.ceph-fuse (rw,nosuid,nodev,relatime,user_id=0,group_id=0,allow_other)
+
+## ceph status
+  cluster:
+    id:     8a48f149-3926-43b2-8a75-8b839bcd4587
+    health: HEALTH_OK
+ 
+  services:
+    mon: 1 daemons, quorum node1 (age 10h)
+    mgr: node1(active, since 10h)
+    mds: cephfs:2 {0=node2=up:active,1=node3=up:active} 1 up:standby
+    osd: 3 osds: 3 up (since 10h), 3 in (since 10h)
+ 
+  data:
+    pools:   2 pools, 48 pgs
+    objects: 103.09k objects, 582 MiB
+    usage:   23 GiB used, 277 GiB / 300 GiB avail
+    pgs:     48 active+clean
+ 
+
+## ceph fs status
+cephfs - 1 clients
+======
++------+--------+-------+---------------+-------+-------+
+| Rank | State  |  MDS  |    Activity   |  dns  |  inos |
++------+--------+-------+---------------+-------+-------+
+|  [1m0[0m   | [1;32mactive[0m | node2 | Reqs:    0 /s | 93.0k | 93.0k |
+|  [1m1[0m   | [1;32mactive[0m | node3 | Reqs:    0 /s | 11.4k | 11.4k |
++------+--------+-------+---------------+-------+-------+
++-----------------+----------+-------+-------+
+|       Pool      |   type   |  used | avail |
++-----------------+----------+-------+-------+
+| cephfs_metadata | metadata | 1408M | 87.2G |
+|   cephfs_data   |   data   | 18.8G | 87.2G |
++-----------------+----------+-------+-------+
++-------------+
+| Standby MDS |
++-------------+
+|    node1    |
++-------------+
+MDS version: ceph version 14.2.22 (ca74598065096e6fcbd8433c8779a2be0c889351) nautilus (stable)
+
+## ceph df
+RAW STORAGE:
+    CLASS     SIZE        AVAIL       USED       RAW USED     %RAW USED 
+    hdd       300 GiB     277 GiB     20 GiB       23 GiB          7.74 
+    TOTAL     300 GiB     277 GiB     20 GiB       23 GiB          7.74 
+ 
+POOLS:
+    POOL                ID     PGS     STORED      OBJECTS     USED        %USED     MAX AVAIL 
+    cephfs_data          1      32     113 MiB     102.23k      19 GiB      6.71        87 GiB 
+    cephfs_metadata      2      16     469 MiB         853     1.4 GiB      0.52        87 GiB 
+
+## repo files
+/users/aadits/FinalProj/.gemini/settings.json
+/users/aadits/FinalProj/.gitignore
+/users/aadits/FinalProj/GEMINI.md
+/users/aadits/FinalProj/MidwayFeedback.txt
+/users/aadits/FinalProj/MidwayReport.pdf
+/users/aadits/FinalProj/NetworkTopo.png
+/users/aadits/FinalProj/Proposal.pdf
+/users/aadits/FinalProj/ProposalFeedback.txt
+/users/aadits/FinalProj/README.md
+/users/aadits/FinalProj/docker-compose.cephfs.yml
+/users/aadits/FinalProj/docs/BENCHMARKS.md
+/users/aadits/FinalProj/docs/PRESENTATION_LAYOUT.md
+/users/aadits/FinalProj/docs/PROJECT_NOTES.md
+/users/aadits/FinalProj/docs/SMALLDIRS_HOTDIRS_GRAPHS.md
+/users/aadits/FinalProj/policies/LLM_policy.py
+/users/aadits/FinalProj/policies/README.md
+/users/aadits/FinalProj/policies/example_predictive.py
+/users/aadits/FinalProj/policies/none.py
+/users/aadits/FinalProj/policies/predictive.py
+/users/aadits/FinalProj/policies/predictive_safe.py
+/users/aadits/FinalProj/policies/prepin_colocated_hotset.py
+/users/aadits/FinalProj/policies/prepin_hotset.py
+/users/aadits/FinalProj/policies/static.py
+/users/aadits/FinalProj/policies/static_top.py
+/users/aadits/FinalProj/requirements.txt
+/users/aadits/FinalProj/results/._cephfs-20260429-013536.csv
+/users/aadits/FinalProj/results/._cephfs-20260429-013536.json
+/users/aadits/FinalProj/results/._cephfs-20260429-013643.csv
+/users/aadits/FinalProj/results/._cephfs-20260429-013643.json
+/users/aadits/FinalProj/results/._cephfs-20260429-015202.csv
+/users/aadits/FinalProj/results/._cephfs-20260429-015202.json
+/users/aadits/FinalProj/results/._cephfs-20260429-015218-78100.csv
+/users/aadits/FinalProj/results/._cephfs-20260429-015218-78100.json
+/users/aadits/FinalProj/results/._cephfs-20260429-015218-78101.csv
+/users/aadits/FinalProj/results/._cephfs-20260429-015218-78101.json
+/users/aadits/FinalProj/results/._cephfs-20260429-015316-78886.csv
+/users/aadits/FinalProj/results/._cephfs-20260429-015316-78886.json
+/users/aadits/FinalProj/results/._cephfs-20260429-021310-93935.csv
+/users/aadits/FinalProj/results/._cephfs-20260429-021310-93935.json
+/users/aadits/FinalProj/results/cephfs-20260429-013536.csv
+/users/aadits/FinalProj/results/cephfs-20260429-013536.json
+/users/aadits/FinalProj/results/cephfs-20260429-013643.csv
+/users/aadits/FinalProj/results/cephfs-20260429-013643.json
+/users/aadits/FinalProj/results/cephfs-20260429-015202.csv
+/users/aadits/FinalProj/results/cephfs-20260429-015202.json
+/users/aadits/FinalProj/results/cephfs-20260429-015218-78100.csv
+/users/aadits/FinalProj/results/cephfs-20260429-015218-78100.json
+/users/aadits/FinalProj/results/cephfs-20260429-015218-78101.csv
+/users/aadits/FinalProj/results/cephfs-20260429-015218-78101.json
+/users/aadits/FinalProj/results/cephfs-20260429-015316-78886.csv
+/users/aadits/FinalProj/results/cephfs-20260429-015316-78886.json
+/users/aadits/FinalProj/results/cephfs-20260429-021310-93935.csv
+/users/aadits/FinalProj/results/cephfs-20260429-021310-93935.json
+/users/aadits/FinalProj/results/cloudlab-predictive-smoke.csv
+/users/aadits/FinalProj/results/cloudlab-predictive-smoke.json
+/users/aadits/FinalProj/results/cloudlab-smoke.csv
+/users/aadits/FinalProj/results/cloudlab-smoke.json
+/users/aadits/FinalProj/results/cloudlab-static-smoke.csv
+/users/aadits/FinalProj/results/cloudlab-static-smoke.json
+/users/aadits/FinalProj/scripts/cephfs_smoke.sh
+/users/aadits/FinalProj/scripts/cephfs_status.sh
+/users/aadits/FinalProj/scripts/cephfs_up.sh
+/users/aadits/FinalProj/scripts/cloudlab_native_ceph_node1_init.sh
+/users/aadits/FinalProj/scripts/run_cephfs_bench.sh
+/users/aadits/FinalProj/scripts/run_posix_bench.sh
+/users/aadits/FinalProj/storage_plugins/README.md
+/users/aadits/FinalProj/storage_plugins/append_segments.py
+/users/aadits/FinalProj/storage_plugins/sharded_segments.py

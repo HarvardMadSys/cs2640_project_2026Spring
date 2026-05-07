@@ -1,0 +1,5 @@
+phase,operation,count,total_seconds,ops_per_sec,latency_mean_ms,latency_p50_ms,latency_p95_ms,latency_p99_ms,run_id,backend,workers,policy,storage,file_count,file_size,dirs,ops,seed,oracle_cold_fraction,oracle_cold_access_fraction,ycsb_distribution,ycsb_update_fraction,ycsb_hot_fraction,ycsb_hot_op_fraction,ycsb_zipf_alpha
+ycsb_file_skew,ycsb_load_create,3000,22.901163,130.998,58.67295,3.287209,15.716782,2649.053133,20260506-162537-8b633efa,posix,8,none,native,3000,4096,64,9000,9102,0.9,0.1,hotspot,0.2,0.2,0.8,0.99
+ycsb_file_skew,ycsb_hotspot_read,7200,1.623938,4433.668,1.766976,1.399684,2.231289,2.743112,20260506-162537-8b633efa,posix,8,none,native,3000,4096,64,9000,9102,0.9,0.1,hotspot,0.2,0.2,0.8,0.99
+ycsb_file_skew,ycsb_hotspot_update,1800,25.563111,70.414,110.595679,129.173482,214.382731,298.685706,20260506-162537-8b633efa,posix,8,none,native,3000,4096,64,9000,9102,0.9,0.1,hotspot,0.2,0.2,0.8,0.99
+ycsb_file_skew,cleanup_delete,3000,10.411668,288.138,25.509816,1.538172,119.330587,157.729498,20260506-162537-8b633efa,posix,8,none,native,3000,4096,64,9000,9102,0.9,0.1,hotspot,0.2,0.2,0.8,0.99

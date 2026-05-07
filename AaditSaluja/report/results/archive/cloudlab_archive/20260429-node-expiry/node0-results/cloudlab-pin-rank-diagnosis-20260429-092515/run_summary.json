@@ -1,0 +1,35 @@
+{
+  "label": "20260429-092515",
+  "runs": [
+    {
+      "case": "default",
+      "returncode": 0,
+      "seconds": 29.831,
+      "json": "/users/aadits/FinalProj/results/cloudlab-pin-rank-diagnosis-20260429-092515/default.json"
+    },
+    {
+      "case": "prepin_rank0",
+      "returncode": 0,
+      "seconds": 34.081,
+      "json": "/users/aadits/FinalProj/results/cloudlab-pin-rank-diagnosis-20260429-092515/prepin_rank0.json"
+    },
+    {
+      "case": "prepin_rank1",
+      "returncode": 0,
+      "seconds": 62.302,
+      "json": "/users/aadits/FinalProj/results/cloudlab-pin-rank-diagnosis-20260429-092515/prepin_rank1.json"
+    },
+    {
+      "case": "predict_rank0",
+      "returncode": 0,
+      "seconds": 77.909,
+      "json": "/users/aadits/FinalProj/results/cloudlab-pin-rank-diagnosis-20260429-092515/predict_rank0.json"
+    },
+    {
+      "case": "predict_rank1",
+      "returncode": 0,
+      "seconds": 62.766,
+      "json": "/users/aadits/FinalProj/results/cloudlab-pin-rank-diagnosis-20260429-092515/predict_rank1.json"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "elapsed_seconds": 79.34783,
+  "ended_unix": 1778107010.7723205,
+  "job_kind": "external_filebench",
+  "log": "results/cloudlab-paperready-20260506-3x/direct_filebench_fileserver__external__r0.log",
+  "metrics": {
+    "ops_per_sec": 465.968
+  },
+  "phase_metrics": [
+    {
+      "operation": "filebench_io_summary",
+      "ops_per_sec": 465.968
+    },
+    {
+      "operation": "statfile1",
+      "ops_per_sec": 42.0
+    },
+    {
+      "operation": "deletefile1",
+      "ops_per_sec": 42.0
+    },
+    {
+      "operation": "closefile3",
+      "ops_per_sec": 42.0
+    },
+    {
+      "operation": "readfile1",
+      "ops_per_sec": 42.0
+    },
+    {
+      "operation": "openfile2",
+      "ops_per_sec": 42.0
+    },
+    {
+      "operation": "closefile2",
+      "ops_per_sec": 42.0
+    },
+    {
+      "operation": "appendfilerand1",
+      "ops_per_sec": 42.0
+    },
+    {
+      "operation": "openfile1",
+      "ops_per_sec": 42.0
+    },
+    {
+      "operation": "closefile1",
+      "ops_per_sec": 42.0
+    },
+    {
+      "operation": "wrtfile1",
+      "ops_per_sec": 42.0
+    },
+    {
+      "operation": "createfile1",
+      "ops_per_sec": 42.0
+    }
+  ],
+  "repeat": 0,
+  "result_kind": "external",
+  "seed": 9100,
+  "started_unix": 1778106931.4244905,
+  "variant": "external",
+  "workload": "filebench_fileserver",
+  "workload_id": "direct_filebench_fileserver"
+}

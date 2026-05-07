@@ -1,0 +1,95 @@
+{
+  "args": {
+    "branching": 8, 
+    "conffile": "/etc/ceph/ceph.conf", 
+    "csv": "/tmp/cs2640-bench-results-20260429-015218-78101/cephfs-20260429-015218-78101.csv", 
+    "depth": 2, 
+    "dirs": 4, 
+    "file_count": 40, 
+    "file_size": 16, 
+    "hot_min_interval": 1, 
+    "hot_threshold": 4, 
+    "hot_window": 16, 
+    "no_ceph_stats": true, 
+    "ops": 1000, 
+    "output": "/tmp/cs2640-bench-results-20260429-015218-78101/cephfs-20260429-015218-78101.json", 
+    "pin_ranks": [
+      0
+    ], 
+    "policy": "predictive", 
+    "root": "/cs2640-bench", 
+    "seed": 1, 
+    "suite": "custom", 
+    "workers": 1, 
+    "workload": "hotdirs_zipf"
+  }, 
+  "backend": "ceph-libcephfs", 
+  "ceph_stats": {
+    "after": {}, 
+    "before": {}, 
+    "delta": {}
+  }, 
+  "elapsed_seconds": 0.370638, 
+  "ended_unix": 1777441939.53061, 
+  "host": "5a8ac6d962cb", 
+  "policy_events": [
+    {
+      "action": "pin", 
+      "path": "/cs2640-bench/20260429-055219-3fee79cc/custom-59504f92/dir0000", 
+      "policy": "predictive", 
+      "rank": 0, 
+      "reason": "hot_directory count=4 window=16 threshold=4 trigger_op=skewed_create", 
+      "sequence": 5
+    }
+  ], 
+  "results": [
+    {
+      "backend": "ceph-libcephfs", 
+      "count": 40, 
+      "latency_mean_ms": 1.431167, 
+      "latency_p50_ms": 0.812531, 
+      "latency_p95_ms": 2.412307, 
+      "latency_p99_ms": 13.32768, 
+      "operation": "skewed_create", 
+      "ops_per_sec": 693.999, 
+      "phase": "hotdirs_zipf", 
+      "policy": "predictive", 
+      "run_id": "20260429-055219-3fee79cc", 
+      "total_seconds": 0.057637, 
+      "workers": 1
+    }, 
+    {
+      "backend": "ceph-libcephfs", 
+      "count": 40, 
+      "latency_mean_ms": 0.071657, 
+      "latency_p50_ms": 0.036478, 
+      "latency_p95_ms": 0.176251, 
+      "latency_p99_ms": 0.699809, 
+      "operation": "skewed_stat", 
+      "ops_per_sec": 10306.681, 
+      "phase": "hotdirs_zipf", 
+      "policy": "predictive", 
+      "run_id": "20260429-055219-3fee79cc", 
+      "total_seconds": 0.003881, 
+      "workers": 1
+    }, 
+    {
+      "backend": "ceph-libcephfs", 
+      "count": 40, 
+      "latency_mean_ms": 0.572932, 
+      "latency_p50_ms": 0.439405, 
+      "latency_p95_ms": 1.405847, 
+      "latency_p99_ms": 2.641273, 
+      "operation": "skewed_delete", 
+      "ops_per_sec": 1723.321, 
+      "phase": "hotdirs_zipf", 
+      "policy": "predictive", 
+      "run_id": "20260429-055219-3fee79cc", 
+      "total_seconds": 0.023211, 
+      "workers": 1
+    }
+  ], 
+  "root": "/cs2640-bench/20260429-055219-3fee79cc", 
+  "run_id": "20260429-055219-3fee79cc", 
+  "started_unix": 1777441939.159972
+}

@@ -1,0 +1,68 @@
+\section{Background}
+\label{sec:background}
+
+\subsection{Vector databases and k-nearest neighbor search}
+
+A vector database stores high dimensional vectors that represent
+unstructured records such as text passages, code snippets, or images
+embedded by a learned model. The dominant query primitive is
+$k$-nearest neighbor search: given a query vector, the system returns
+the $k$ corpus vectors closest to it under a fixed distance metric, for
+example cosine similarity or Euclidean distance. Because exhaustively
+scanning every vector is prohibitive at corpus sizes of tens or
+hundreds of millions, modern systems rely on approximate nearest
+neighbor indices that trade a small recall loss for one or two orders
+of magnitude in latency.
+
+The literature has produced several families of approximate nearest
+neighbor index, each making a different trade-off between build
+time, memory footprint, query latency, and recall.
+\emph{Hashing based} indices, exemplified by locality sensitive
+hashing, bucket vectors so that similar points collide with high
+probability, trading recall for very fast lookups.
+\emph{Inverted file} indices cluster the corpus into Voronoi cells
+and probe only the cells closest to the query at search time, and
+are often combined with product quantization to compress each
+vector down to a few bytes and shrink the resident memory footprint
+at the cost of some recall. \emph{Graph based} indices, of which
+HNSW~\cite{malkov2018hnsw} is the most widely deployed example,
+treat each vector as a node linked to its approximate neighbors and
+answer queries by greedy walks on the graph. Graph indices
+currently dominate published benchmarks for in-memory approximate
+nearest neighbor search. Across all of these families the
+index ultimately determines which vectors a query inspects, and
+therefore determines the query performance.
+
+\subsection{LSM based search architecture}
+
+Vector databases that ingest data continuously cannot rebuild a single
+monolithic index on every write. Systems such as
+Milvus~\cite{wang2021milvus} and Manu~\cite{guo2022manu} therefore
+adopt a log structured merge (LSM) style layout. Incoming vectors are
+first buffered in a mutable \emph{growing segment} held in memory.
+When the growing segment reaches a target size it is flushed to object
+storage as an immutable \emph{sealed segment}, after which a per
+segment vector index, typically an HNSW graph, is built over the
+flushed vectors. A collection therefore exists on disk as a sequence of
+sealed segments, each carrying its own data file and its own index
+structure, plus at most one growing segment in memory.
+
+The query path mirrors this layout. A search request is fanned out to
+every segment in the collection, including the growing one. Each
+segment independently searches its local index and returns its own
+top $k$ candidates, and a coordinator merges the per segment results
+into the global top $k$ that is returned to the client. Because every
+segment is consulted on every query, the per query cost scales with
+the number of segments and with the size of each segment's index,
+which means the segment layout, how many segments exist, how large
+they are, and which vectors they contain, directly determines query
+latency and the working set held in memory or page cache.
+%Two further mechanisms reshape this layout in practice. First, Milvus jitters the
+% flush threshold so that successive sealed segments do not all reach
+% the seal point at exactly the same vector count, which prevents
+% synchronized flushes across data nodes. Second, a background
+% compactor periodically merges small or partially deleted sealed
+% segments into larger ones, rewriting their files in the process.
+% Both mechanisms move vectors across segment boundaries after ingestion
+% and are central to the storage behavior we examine in the remainder
+% of this report.

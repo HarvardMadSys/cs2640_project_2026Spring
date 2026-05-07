@@ -1,0 +1,74 @@
+[
+  {
+    "cold_access_fraction": 0.2,
+    "cold_fraction": 0.7,
+    "csv": "results/cloudlab-predictor-profile-native-20260506/cold70_access20__native__r1.csv",
+    "json": "results/cloudlab-predictor-profile-native-20260506/cold70_access20__native__r1.json",
+    "log": "results/cloudlab-predictor-profile-native-20260506/cold70_access20__native__r1.log",
+    "repeat": 1,
+    "scenario": "cold70_access20",
+    "seed": 2001,
+    "variant": "native",
+    "wall_seconds": 66.395437
+  },
+  {
+    "cold_access_fraction": 0.2,
+    "cold_fraction": 0.9,
+    "csv": "results/cloudlab-predictor-profile-native-20260506/cold90_access20__native__r1.csv",
+    "json": "results/cloudlab-predictor-profile-native-20260506/cold90_access20__native__r1.json",
+    "log": "results/cloudlab-predictor-profile-native-20260506/cold90_access20__native__r1.log",
+    "repeat": 1,
+    "scenario": "cold90_access20",
+    "seed": 2001,
+    "variant": "native",
+    "wall_seconds": 64.429979
+  },
+  {
+    "cold_access_fraction": 0.1,
+    "cold_fraction": 0.9,
+    "csv": "results/cloudlab-predictor-profile-native-20260506/cold90_access10__native__r1.csv",
+    "json": "results/cloudlab-predictor-profile-native-20260506/cold90_access10__native__r1.json",
+    "log": "results/cloudlab-predictor-profile-native-20260506/cold90_access10__native__r1.log",
+    "repeat": 1,
+    "scenario": "cold90_access10",
+    "seed": 2001,
+    "variant": "native",
+    "wall_seconds": 59.34852
+  },
+  {
+    "cold_access_fraction": 0.2,
+    "cold_fraction": 0.9,
+    "csv": "results/cloudlab-predictor-profile-native-20260506/cold90_access20__native__r0.csv",
+    "json": "results/cloudlab-predictor-profile-native-20260506/cold90_access20__native__r0.json",
+    "log": "results/cloudlab-predictor-profile-native-20260506/cold90_access20__native__r0.log",
+    "repeat": 0,
+    "scenario": "cold90_access20",
+    "seed": 2000,
+    "variant": "native",
+    "wall_seconds": 64.347754
+  },
+  {
+    "cold_access_fraction": 0.2,
+    "cold_fraction": 0.7,
+    "csv": "results/cloudlab-predictor-profile-native-20260506/cold70_access20__native__r0.csv",
+    "json": "results/cloudlab-predictor-profile-native-20260506/cold70_access20__native__r0.json",
+    "log": "results/cloudlab-predictor-profile-native-20260506/cold70_access20__native__r0.log",
+    "repeat": 0,
+    "scenario": "cold70_access20",
+    "seed": 2000,
+    "variant": "native",
+    "wall_seconds": 70.39949
+  },
+  {
+    "cold_access_fraction": 0.1,
+    "cold_fraction": 0.9,
+    "csv": "results/cloudlab-predictor-profile-native-20260506/cold90_access10__native__r0.csv",
+    "json": "results/cloudlab-predictor-profile-native-20260506/cold90_access10__native__r0.json",
+    "log": "results/cloudlab-predictor-profile-native-20260506/cold90_access10__native__r0.log",
+    "repeat": 0,
+    "scenario": "cold90_access10",
+    "seed": 2000,
+    "variant": "native",
+    "wall_seconds": 61.459931
+  }
+]

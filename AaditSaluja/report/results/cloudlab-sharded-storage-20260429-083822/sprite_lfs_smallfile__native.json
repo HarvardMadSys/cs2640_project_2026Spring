@@ -1,0 +1,212 @@
+{
+  "args": {
+    "backend": "posix",
+    "branching": 32,
+    "conffile": "/etc/ceph/ceph.conf",
+    "csv": "/users/aadits/FinalProj/results/cloudlab-sharded-storage-20260429-083822/sprite_lfs_smallfile__native.csv",
+    "depth": 1,
+    "dirs": 64,
+    "file_count": 5000,
+    "file_size": 1024,
+    "hot_min_interval": 32,
+    "hot_threshold": 64,
+    "hot_window": 128,
+    "keep_data": true,
+    "no_ceph_stats": false,
+    "ops": 1000,
+    "output": "/users/aadits/FinalProj/results/cloudlab-sharded-storage-20260429-083822/sprite_lfs_smallfile__native.json",
+    "pin_ranks": [
+      0,
+      1
+    ],
+    "policy": "none",
+    "policy_file": null,
+    "policy_opt": [],
+    "root": "/mnt/cephfs/cs2640-bench/sharded-storage-20260429-083822",
+    "seed": 1,
+    "segment_size": 67108864,
+    "storage": "native",
+    "storage_file": null,
+    "storage_opt": [],
+    "suite": "custom",
+    "workers": 8,
+    "workload": "sprite_lfs_smallfile"
+  },
+  "backend": "posix",
+  "ceph_stats": {
+    "after": {
+      "available": true,
+      "df": {
+        "pools": [
+          {
+            "id": 1,
+            "name": "cephfs_data",
+            "stats": {
+              "bytes_used": 13796769792,
+              "kb_used": 13473408,
+              "max_avail": 95986581504,
+              "objects": 70006,
+              "percent_used": 0.04572153091430664,
+              "stored": 67550168
+            }
+          },
+          {
+            "id": 2,
+            "name": "cephfs_metadata",
+            "stats": {
+              "bytes_used": 1011875840,
+              "kb_used": 988160,
+              "max_avail": 95986581504,
+              "objects": 239,
+              "percent_used": 0.0035016443580389023,
+              "stored": 336370208
+            }
+          }
+        ],
+        "stats": {
+          "num_osds": 3,
+          "num_per_pool_osds": 3,
+          "total_avail_bytes": 304069410816,
+          "total_bytes": 322122547200,
+          "total_used_bytes": 14831910912,
+          "total_used_raw_bytes": 18053136384,
+          "total_used_raw_ratio": 0.056044310331344604
+        },
+        "stats_by_class": {
+          "hdd": {
+            "total_avail_bytes": 304069410816,
+            "total_bytes": 322122547200,
+            "total_used_bytes": 14831910912,
+            "total_used_raw_bytes": 18053136384,
+            "total_used_raw_ratio": 0.056044310331344604
+          }
+        }
+      },
+      "fs_status": {
+        "error": "Expecting value: line 2 column 1 (char 1)"
+      }
+    },
+    "before": {
+      "available": true,
+      "df": {
+        "pools": [
+          {
+            "id": 1,
+            "name": "cephfs_data",
+            "stats": {
+              "bytes_used": 12813729792,
+              "kb_used": 12513408,
+              "max_avail": 96315113472,
+              "objects": 65006,
+              "percent_used": 0.04246344417333603,
+              "stored": 62430172
+            }
+          },
+          {
+            "id": 2,
+            "name": "cephfs_metadata",
+            "stats": {
+              "bytes_used": 1029636096,
+              "kb_used": 1005504,
+              "max_avail": 96315113472,
+              "objects": 240,
+              "percent_used": 0.003550775581970811,
+              "stored": 342326144
+            }
+          }
+        ],
+        "stats": {
+          "num_osds": 3,
+          "num_per_pool_osds": 3,
+          "total_avail_bytes": 305051467776,
+          "total_bytes": 322122547200,
+          "total_used_bytes": 13849853952,
+          "total_used_raw_bytes": 17071079424,
+          "total_used_raw_ratio": 0.05299560725688934
+        },
+        "stats_by_class": {
+          "hdd": {
+            "total_avail_bytes": 305051467776,
+            "total_bytes": 322122547200,
+            "total_used_bytes": 13849853952,
+            "total_used_raw_bytes": 17071079424,
+            "total_used_raw_ratio": 0.05299560725688934
+          }
+        }
+      },
+      "fs_status": {
+        "error": "Expecting value: line 2 column 1 (char 1)"
+      }
+    },
+    "delta": {
+      "cephfs_data": {
+        "bytes_used": 983040000,
+        "objects": 5000,
+        "stored": 5119996
+      },
+      "cephfs_metadata": {
+        "bytes_used": -17760256,
+        "objects": -1,
+        "stored": -5955936
+      }
+    }
+  },
+  "elapsed_seconds": 55.311491,
+  "ended_unix": 1777473559.7618487,
+  "host": "node0.ceph.cs2640.emulab.net",
+  "policy_events": [],
+  "results": [
+    {
+      "backend": "posix",
+      "count": 5000,
+      "latency_mean_ms": 34.236608,
+      "latency_p50_ms": 26.676814,
+      "latency_p95_ms": 66.98664,
+      "latency_p99_ms": 208.813275,
+      "operation": "create",
+      "ops_per_sec": 171.641,
+      "phase": "sprite_lfs_smallfile",
+      "policy": "none",
+      "run_id": "20260429-083822-9770991f",
+      "storage": "native",
+      "total_seconds": 29.130607,
+      "workers": 8
+    },
+    {
+      "backend": "posix",
+      "count": 5000,
+      "latency_mean_ms": 16.168686,
+      "latency_p50_ms": 14.817906,
+      "latency_p95_ms": 30.718336,
+      "latency_p99_ms": 42.905975,
+      "operation": "stat",
+      "ops_per_sec": 459.367,
+      "phase": "sprite_lfs_smallfile",
+      "policy": "none",
+      "run_id": "20260429-083822-9770991f",
+      "storage": "native",
+      "total_seconds": 10.88454,
+      "workers": 8
+    },
+    {
+      "backend": "posix",
+      "count": 5000,
+      "latency_mean_ms": 23.272156,
+      "latency_p50_ms": 21.625738,
+      "latency_p95_ms": 43.366176,
+      "latency_p99_ms": 63.189695,
+      "operation": "read",
+      "ops_per_sec": 330.286,
+      "phase": "sprite_lfs_smallfile",
+      "policy": "none",
+      "run_id": "20260429-083822-9770991f",
+      "storage": "native",
+      "total_seconds": 15.138374,
+      "workers": 8
+    }
+  ],
+  "root": "/mnt/cephfs/cs2640-bench/sharded-storage-20260429-083822/20260429-083822-9770991f",
+  "run_id": "20260429-083822-9770991f",
+  "started_unix": 1777473504.4503572,
+  "storage_metrics": {}
+}

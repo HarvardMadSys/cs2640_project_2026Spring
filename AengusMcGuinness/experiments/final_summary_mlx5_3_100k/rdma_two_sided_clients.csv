@@ -1,0 +1,5 @@
+host,port,clients,operations,keys,value_size,get_ratio,zipf_s,warmup,prefill,elapsed_seconds,throughput_rps,mean_latency_us,p50_latency_us,p95_latency_us,p99_latency_us,measured_ok_responses,measured_errors,warmup_ok_responses,warmup_errors,trial,label,trial_count,elapsed_seconds_stddev,throughput_rps_stddev,mean_latency_us_stddev,p50_latency_us_stddev,p95_latency_us_stddev,p99_latency_us_stddev,measured_ok_responses_stddev,measured_errors_stddev,warmup_ok_responses_stddev,warmup_errors_stddev
+10.10.1.1,9091,1,100000,1024,64,0.95,0.8,5000,1,0.8878,117314,6.23083,5,5.33333,6,100000,0,5000,0,trial_1,Two-Sided RDMA,3,0.232956,26733.9,0.246026,0,0.57735,0,0,0,0,0
+10.10.1.1,9091,2,100000,1024,64,0.95,0.8,5000,1,0.88757,115139,11.2164,5,6,6,100000,0,5000,0,trial_1,Two-Sided RDMA,3,0.15139,21742.5,0.974412,0,0,0,0,0,0,0
+10.10.1.1,9091,4,100000,1024,64,0.95,0.8,5000,1,0.42972,233892,13.6513,5,6,7,100000,0,5000,0,trial_1,Two-Sided RDMA,3,0.0365059,20884.8,0.959284,0,0,0,0,0,0,0
+10.10.1.1,9091,8,100000,1024,64,0.95,0.8,5000,1,0.250315,403846,15.1644,6,6.33333,8,100000,0,5000,0,trial_1,Two-Sided RDMA,3,0.0307779,53089.2,2.81889,0,0.57735,0,0,0,0,0

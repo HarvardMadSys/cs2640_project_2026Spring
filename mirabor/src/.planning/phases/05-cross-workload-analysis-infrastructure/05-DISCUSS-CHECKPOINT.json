@@ -1,0 +1,17 @@
+{
+  "phase": "5",
+  "phase_name": "Cross-Workload Analysis Infrastructure",
+  "timestamp": "2026-04-20T12:30:00Z",
+  "areas_completed": ["Regime definitions for winner-per-regime"],
+  "areas_remaining": ["Statistical test for n.s. flagging", "Cross-workload plot design", "Multi-seed sweep scope"],
+  "decisions": {
+    "Regime definitions for winner-per-regime": [
+      {"question": "What cache fraction(s) define the 'small cache' regime?", "answer": "0.1% only (smallest cache_frac = 0.001 in mrc.csv)", "options_presented": ["0.1% only", "\u22640.5%", "\u22641%"]},
+      {"question": "What alpha(s) define the 'high skew' regime?", "answer": "\u03b1 \u2265 1.0 (three rows: 1.0, 1.1, 1.2)", "options_presented": ["\u03b1 \u2265 1.0", "\u03b1 \u2265 0.8", "\u03b1 = 1.2 only"]},
+      {"question": "How should 'mixed sizes' regime be defined?", "answer": "Byte-MRC on Court only (empirical \u2014 Court is the heavy-tailed workload per Phase 3 workload_stats; Congress is 'uniform sizes' by contrast; avoids arbitrary threshold)", "options_presented": ["Byte-MRC on Court only", "p95/median ratio threshold", "Drop 'mixed sizes'"]},
+      {"question": "How should 'OHW regime' be defined?", "answer": "Use empirical OHW ratios from workload_stats.json (whichever workload has higher OHW = high-OHW regime; the other = low-OHW)", "options_presented": ["Empirical from workload_stats", "OHW > 0.3 threshold", "Short-window OHW from one_hit_wonder.csv"]}
+    ]
+  },
+  "deferred_ideas": [],
+  "canonical_refs": [".planning/ROADMAP.md", ".planning/REQUIREMENTS.md", ".planning/PROJECT.md", "scripts/workload_stats_json.py", "scripts/check_wtlfu_acceptance.py", "scripts/plot_results.py"]
+}

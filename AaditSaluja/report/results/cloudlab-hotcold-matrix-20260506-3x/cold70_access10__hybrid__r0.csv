@@ -1,0 +1,7 @@
+phase,operation,count,total_seconds,ops_per_sec,latency_mean_ms,latency_p50_ms,latency_p95_ms,latency_p99_ms,run_id,backend,workers,policy,storage,file_count,file_size,dirs,ops,seed,oracle_cold_fraction,oracle_cold_access_fraction
+oracle_hotcold_mix,bulk_create,3000,8.118209,369.54,7.590064,0.040438,2.895457,3.750071,20260506-033619-efa26b17,posix,8,none,oracle_cold_segments,3000,4096,64,12000,1000,0.7,0.1
+oracle_hotcold_mix,oracle_access_stat,12000,1.459692,8220.91,0.941077,0.995062,1.374466,1.606488,20260506-033619-efa26b17,posix,8,none,oracle_cold_segments,3000,4096,64,12000,1000,0.7,0.1
+oracle_hotcold_mix,oracle_access_read,3000,0.528416,5677.349,1.383267,1.290898,2.052587,2.457783,20260506-033619-efa26b17,posix,8,none,oracle_cold_segments,3000,4096,64,12000,1000,0.7,0.1
+oracle_hotcold_mix,oracle_hot_churn_create,1500,17.823664,84.158,60.448028,2.019869,2.520585,6.038789,20260506-033619-efa26b17,posix,8,none,oracle_cold_segments,3000,4096,64,12000,1000,0.7,0.1
+oracle_hotcold_mix,oracle_hot_churn_delete,1500,1.408587,1064.897,4.417192,1.638,2.032507,4.226055,20260506-033619-efa26b17,posix,8,none,oracle_cold_segments,3000,4096,64,12000,1000,0.7,0.1
+oracle_hotcold_mix,cleanup_delete,3000,0.415685,7217.002,0.824841,0.003604,2.084432,2.515154,20260506-033619-efa26b17,posix,8,none,oracle_cold_segments,3000,4096,64,12000,1000,0.7,0.1

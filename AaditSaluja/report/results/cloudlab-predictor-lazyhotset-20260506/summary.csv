@@ -1,0 +1,4 @@
+case,workload,storage,ops_per_sec,seconds,promotions,hot_promotions,cold_promotions,predicted_hot_dirs,native_writes,packed_writes
+lazy_read,oracle_hotcold_mix,predictive_cold_segments,3689.278,1.40949,0,0,0,4,300,800
+lazy_statread,oracle_hotcold_mix,predictive_cold_segments,3958.622,1.313588,0,0,0,28,300,800
+lazy_statread_e4d2,oracle_hotcold_mix,predictive_cold_segments,3842.066,1.353439,0,0,0,32,300,800

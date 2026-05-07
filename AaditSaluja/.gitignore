@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.py[cod]
+.DS_Store
+
+# Local Ceph container state and ad hoc benchmark output.
+src/runtime/
+report/results/posix-latest.*

@@ -1,0 +1,107 @@
+{
+  "args": {
+    "backend": "posix",
+    "branching": 8,
+    "conffile": "/etc/ceph/ceph.conf",
+    "csv": "results/cloudlab-predictive-smoke.csv",
+    "depth": 2,
+    "dirs": 4,
+    "file_count": 40,
+    "file_size": 16,
+    "hot_min_interval": 8,
+    "hot_threshold": 4,
+    "hot_window": 16,
+    "no_ceph_stats": true,
+    "ops": 1000,
+    "output": "results/cloudlab-predictive-smoke.json",
+    "pin_ranks": [
+      0,
+      1
+    ],
+    "policy": "predictive",
+    "policy_file": null,
+    "policy_opt": [],
+    "root": "/mnt/cephfs/cs2640-bench/predictive-smoke",
+    "seed": 1,
+    "segment_size": 67108864,
+    "storage": "native",
+    "storage_file": null,
+    "storage_opt": [],
+    "suite": "custom",
+    "workers": 1,
+    "workload": "hotdirs_zipf"
+  },
+  "backend": "posix",
+  "ceph_stats": {
+    "after": {},
+    "before": {},
+    "delta": {}
+  },
+  "elapsed_seconds": 1.236313,
+  "ended_unix": 1777449935.1573672,
+  "host": "node0.ceph.cs2640.emulab.net",
+  "policy_events": [
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/predictive-smoke/20260429-020533-505ce426/hotdirs_zipf-20687ed1/dir0000",
+      "policy": "predictive",
+      "rank": 0,
+      "reason": "hot_directory count=7 window=16 threshold=4 trigger_op=skewed_create",
+      "sequence": 8
+    }
+  ],
+  "results": [
+    {
+      "backend": "posix",
+      "count": 40,
+      "latency_mean_ms": 7.409564,
+      "latency_p50_ms": 4.712944,
+      "latency_p95_ms": 5.963616,
+      "latency_p99_ms": 67.465768,
+      "operation": "skewed_create",
+      "ops_per_sec": 134.8,
+      "phase": "hotdirs_zipf",
+      "policy": "predictive",
+      "run_id": "20260429-020533-505ce426",
+      "storage": "native",
+      "total_seconds": 0.296735,
+      "workers": 1
+    },
+    {
+      "backend": "posix",
+      "count": 40,
+      "latency_mean_ms": 2.115737,
+      "latency_p50_ms": 2.06383,
+      "latency_p95_ms": 2.562045,
+      "latency_p99_ms": 2.690784,
+      "operation": "skewed_stat",
+      "ops_per_sec": 471.511,
+      "phase": "hotdirs_zipf",
+      "policy": "predictive",
+      "run_id": "20260429-020533-505ce426",
+      "storage": "native",
+      "total_seconds": 0.084834,
+      "workers": 1
+    },
+    {
+      "backend": "posix",
+      "count": 40,
+      "latency_mean_ms": 3.683865,
+      "latency_p50_ms": 3.501608,
+      "latency_p95_ms": 4.64333,
+      "latency_p99_ms": 6.450427,
+      "operation": "skewed_delete",
+      "ops_per_sec": 270.758,
+      "phase": "hotdirs_zipf",
+      "policy": "predictive",
+      "run_id": "20260429-020533-505ce426",
+      "storage": "native",
+      "total_seconds": 0.147734,
+      "workers": 1
+    }
+  ],
+  "root": "/mnt/cephfs/cs2640-bench/predictive-smoke/20260429-020533-505ce426",
+  "run_id": "20260429-020533-505ce426",
+  "started_unix": 1777449933.9210541,
+  "storage_metrics": {}
+}

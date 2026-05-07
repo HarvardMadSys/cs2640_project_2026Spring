@@ -1,0 +1,42 @@
+IOR-4.1.0+dev: MPI Coordinated Test of Parallel I/O
+Began               : Wed May  6 20:03:50 2026
+Command line        : /users/aadits/bench-tools/bin/ior -a POSIX -F -w -r -g -e -C -t 4096 -b 4096 -s 16384 -o /mnt/cephfs/cs2640-bench/direct_ior_512m__external__r4/iorfile
+Machine             : Linux node0.aadit.cs2640-pg0.cloudlab.umass.edu
+TestID              : 0
+StartTime           : Wed May  6 20:03:50 2026
+Path                : /mnt/cephfs/cs2640-bench/direct_ior_512m__external__r4/iorfile.00000000
+FS                  : 93.8 GiB   Used FS: 0.0%   Inodes: 0.0 Mi   Used Inodes: 200.0%
+
+Options: 
+api                 : POSIX
+apiVersion          : 
+test filename       : /mnt/cephfs/cs2640-bench/direct_ior_512m__external__r4/iorfile
+access              : file-per-process
+type                : independent
+segments            : 16384
+ordering in a file  : sequential
+ordering inter file : constant task offset
+task offset         : 1
+nodes               : 1
+tasks               : 8
+clients per node    : 8
+memoryBuffer        : CPU
+dataAccess          : CPU
+GPUDirect           : 0
+repetitions         : 1
+xfersize            : 4096 bytes
+blocksize           : 4096 bytes
+aggregate filesize  : 512 MiB
+
+Results: 
+
+access    bw(MiB/s)  IOPS       Latency(s)  block(KiB) xfer(KiB)  open(s)    wr/rd(s)   close(s)   total(s)   iter
+------    ---------  ----       ----------  ---------- ---------  --------   --------   --------   --------   ----
+write     47.31      12118      0.000660    4.00       4.00       0.004725   10.82      0.000207   10.82      0   
+read      130.56     33435      0.000183    4.00       4.00       0.001144   3.92       0.000161   3.92       0   
+
+Summary of all tests:
+Operation   Max(MiB)   Min(MiB)  Mean(MiB)     StdDev   Max(OPs)   Min(OPs)  Mean(OPs)     StdDev    Mean(s) Stonewall(s) Stonewall(MiB) Test# #Tasks tPN reps fPP reord reordoff reordrand seed segcnt   blksiz    xsize aggs(MiB)   API RefNum
+write          47.31      47.31      47.31       0.00   12112.02   12112.02   12112.02       0.00   10.82165         NA            NA     0      8   8    1   1     1        1         0    0  16384     4096     4096     512.0 POSIX      0
+read          130.56     130.56     130.56       0.00   33423.85   33423.85   33423.85       0.00    3.92151         NA            NA     0      8   8    1   1     1        1         0    0  16384     4096     4096     512.0 POSIX      0
+Finished            : Wed May  6 20:04:04 2026

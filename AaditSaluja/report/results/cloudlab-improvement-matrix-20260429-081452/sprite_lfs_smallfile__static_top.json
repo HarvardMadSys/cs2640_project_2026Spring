@@ -1,0 +1,471 @@
+{
+  "args": {
+    "backend": "posix",
+    "branching": 32,
+    "conffile": "/etc/ceph/ceph.conf",
+    "csv": "/users/aadits/FinalProj/results/cloudlab-improvement-matrix-20260429-081452/sprite_lfs_smallfile__static_top.csv",
+    "depth": 1,
+    "dirs": 64,
+    "file_count": 5000,
+    "file_size": 1024,
+    "hot_min_interval": 32,
+    "hot_threshold": 64,
+    "hot_window": 128,
+    "keep_data": true,
+    "no_ceph_stats": false,
+    "ops": 1000,
+    "output": "/users/aadits/FinalProj/results/cloudlab-improvement-matrix-20260429-081452/sprite_lfs_smallfile__static_top.json",
+    "pin_ranks": [
+      0,
+      1
+    ],
+    "policy": "static_top",
+    "policy_file": null,
+    "policy_opt": [
+      "max_depth=1"
+    ],
+    "root": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452",
+    "seed": 1,
+    "segment_size": 67108864,
+    "storage": "native",
+    "storage_file": null,
+    "storage_opt": [],
+    "suite": "custom",
+    "workers": 8,
+    "workload": "sprite_lfs_smallfile"
+  },
+  "backend": "posix",
+  "ceph_stats": {
+    "after": {
+      "available": true,
+      "df": {
+        "pools": [
+          {
+            "id": 1,
+            "name": "cephfs_data",
+            "stats": {
+              "bytes_used": 6881280000,
+              "kb_used": 6720000,
+              "max_avail": 98305638400,
+              "objects": 35001,
+              "percent_used": 0.022800931707024574,
+              "stored": 30720000
+            }
+          },
+          {
+            "id": 2,
+            "name": "cephfs_metadata",
+            "stats": {
+              "bytes_used": 990511104,
+              "kb_used": 967296,
+              "max_avail": 98305638400,
+              "objects": 221,
+              "percent_used": 0.003347368212416768,
+              "stored": 329227104
+            }
+          }
+        ],
+        "stats": {
+          "num_osds": 3,
+          "num_per_pool_osds": 3,
+          "total_avail_bytes": 311023042560,
+          "total_bytes": 322122547200,
+          "total_used_bytes": 7878279168,
+          "total_used_raw_bytes": 11099504640,
+          "total_used_raw_ratio": 0.03445739671587944
+        },
+        "stats_by_class": {
+          "hdd": {
+            "total_avail_bytes": 311023042560,
+            "total_bytes": 322122547200,
+            "total_used_bytes": 7878279168,
+            "total_used_raw_bytes": 11099504640,
+            "total_used_raw_ratio": 0.03445739671587944
+          }
+        }
+      },
+      "fs_status": {
+        "error": "Expecting value: line 2 column 1 (char 1)"
+      }
+    },
+    "before": {
+      "available": true,
+      "df": {
+        "pools": [
+          {
+            "id": 1,
+            "name": "cephfs_data",
+            "stats": {
+              "bytes_used": 5898240000,
+              "kb_used": 5760000,
+              "max_avail": 98649047040,
+              "objects": 30001,
+              "percent_used": 0.01954060047864914,
+              "stored": 25600000
+            }
+          },
+          {
+            "id": 2,
+            "name": "cephfs_metadata",
+            "stats": {
+              "bytes_used": 939917312,
+              "kb_used": 917888,
+              "max_avail": 98649047040,
+              "objects": 214,
+              "percent_used": 0.0031659086234867573,
+              "stored": 312400288
+            }
+          }
+        ],
+        "stats": {
+          "num_osds": 3,
+          "num_per_pool_osds": 3,
+          "total_avail_bytes": 312056676352,
+          "total_bytes": 322122547200,
+          "total_used_bytes": 6844645376,
+          "total_used_raw_bytes": 10065870848,
+          "total_used_raw_ratio": 0.03124857507646084
+        },
+        "stats_by_class": {
+          "hdd": {
+            "total_avail_bytes": 312056676352,
+            "total_bytes": 322122547200,
+            "total_used_bytes": 6844645376,
+            "total_used_raw_bytes": 10065870848,
+            "total_used_raw_ratio": 0.03124857507646084
+          }
+        }
+      },
+      "fs_status": {
+        "error": "Expecting value: line 2 column 1 (char 1)"
+      }
+    },
+    "delta": {
+      "cephfs_data": {
+        "bytes_used": 983040000,
+        "objects": 5000,
+        "stored": 5120000
+      },
+      "cephfs_metadata": {
+        "bytes_used": 50593792,
+        "objects": 7,
+        "stored": 16826816
+      }
+    }
+  },
+  "elapsed_seconds": 69.240399,
+  "ended_unix": 1777472226.992585,
+  "host": "node0.ceph.cs2640.emulab.net",
+  "policy_events": [
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_0",
+      "policy": "static_top",
+      "rank": 0,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 1
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_1",
+      "policy": "static_top",
+      "rank": 1,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 2
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_2",
+      "policy": "static_top",
+      "rank": 0,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 3
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_3",
+      "policy": "static_top",
+      "rank": 1,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 4
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_4",
+      "policy": "static_top",
+      "rank": 0,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 5
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_5",
+      "policy": "static_top",
+      "rank": 1,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 6
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_6",
+      "policy": "static_top",
+      "rank": 0,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 7
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_7",
+      "policy": "static_top",
+      "rank": 1,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 8
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_8",
+      "policy": "static_top",
+      "rank": 0,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 9
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_9",
+      "policy": "static_top",
+      "rank": 1,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 10
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_10",
+      "policy": "static_top",
+      "rank": 0,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 11
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_11",
+      "policy": "static_top",
+      "rank": 1,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 12
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_12",
+      "policy": "static_top",
+      "rank": 0,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 13
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_13",
+      "policy": "static_top",
+      "rank": 1,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 14
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_14",
+      "policy": "static_top",
+      "rank": 0,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 15
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_15",
+      "policy": "static_top",
+      "rank": 1,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 16
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_16",
+      "policy": "static_top",
+      "rank": 0,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 17
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_17",
+      "policy": "static_top",
+      "rank": 1,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 18
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_18",
+      "policy": "static_top",
+      "rank": 0,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 19
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_19",
+      "policy": "static_top",
+      "rank": 1,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 20
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_20",
+      "policy": "static_top",
+      "rank": 0,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 21
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_21",
+      "policy": "static_top",
+      "rank": 1,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 22
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_22",
+      "policy": "static_top",
+      "rank": 0,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 23
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_23",
+      "policy": "static_top",
+      "rank": 1,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 24
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_24",
+      "policy": "static_top",
+      "rank": 0,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 25
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_25",
+      "policy": "static_top",
+      "rank": 1,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 26
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_26",
+      "policy": "static_top",
+      "rank": 0,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 27
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_27",
+      "policy": "static_top",
+      "rank": 1,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 28
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_28",
+      "policy": "static_top",
+      "rank": 0,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 29
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_29",
+      "policy": "static_top",
+      "rank": 1,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 30
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_30",
+      "policy": "static_top",
+      "rank": 0,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 31
+    },
+    {
+      "action": "pin",
+      "path": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad/sprite_lfs_smallfile-afc163a3/d0_31",
+      "policy": "static_top",
+      "rank": 1,
+      "reason": "top_level_static rel_depth=1",
+      "sequence": 32
+    }
+  ],
+  "results": [
+    {
+      "backend": "posix",
+      "count": 5000,
+      "latency_mean_ms": 58.848788,
+      "latency_p50_ms": 30.154484,
+      "latency_p95_ms": 146.896196,
+      "latency_p99_ms": 235.066028,
+      "operation": "create",
+      "ops_per_sec": 115.988,
+      "phase": "sprite_lfs_smallfile",
+      "policy": "static_top",
+      "run_id": "20260429-081555-7af09cad",
+      "storage": "native",
+      "total_seconds": 43.107756,
+      "workers": 8
+    },
+    {
+      "backend": "posix",
+      "count": 5000,
+      "latency_mean_ms": 17.165516,
+      "latency_p50_ms": 16.429392,
+      "latency_p95_ms": 30.44231,
+      "latency_p99_ms": 39.903056,
+      "operation": "stat",
+      "ops_per_sec": 452.552,
+      "phase": "sprite_lfs_smallfile",
+      "policy": "static_top",
+      "run_id": "20260429-081555-7af09cad",
+      "storage": "native",
+      "total_seconds": 11.048455,
+      "workers": 8
+    },
+    {
+      "backend": "posix",
+      "count": 5000,
+      "latency_mean_ms": 23.100304,
+      "latency_p50_ms": 21.150588,
+      "latency_p95_ms": 44.729404,
+      "latency_p99_ms": 60.447216,
+      "operation": "read",
+      "ops_per_sec": 336.324,
+      "phase": "sprite_lfs_smallfile",
+      "policy": "static_top",
+      "run_id": "20260429-081555-7af09cad",
+      "storage": "native",
+      "total_seconds": 14.86662,
+      "workers": 8
+    }
+  ],
+  "root": "/mnt/cephfs/cs2640-bench/improvement-matrix-20260429-081452/20260429-081555-7af09cad",
+  "run_id": "20260429-081555-7af09cad",
+  "started_unix": 1777472157.7521858,
+  "storage_metrics": {}
+}

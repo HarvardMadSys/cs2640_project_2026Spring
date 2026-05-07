@@ -1,0 +1,161 @@
+\section{Benchmarking the two options}
+\label{sec:setup}
+
+\subsection{Fully replicated layout: near-identical CodeSearchNet collections}
+
+\mypar{Dataset and system.} We use the
+CodeSearchNet~\cite{husain2019codesearchnet} corpus from the VIBE
+benchmark~\cite{vibe2024}, 768 dimensional Jina
+embeddings~\cite{gunther2023jina} benchmarked with cosine. The
+\textit{original} variant is the full corpus, and \textit{trimmed2} drops
+the first 2\% of the corpus and recomputes ground truth against the
+remaining vectors, so it behaves like a second tenant whose collection is
+nearly but not byte-for-byte equal. Neighbor IDs from trimmed2 are
+remapped into the original index space when we compare the two. The
+system is Milvus~\cite{wang2021milvus} standalone built from source,
+backed by etcd, MinIO, and rocksmq. Each experiment creates one or two
+collections, inserts vectors in batches of 10{,}000, builds an
+HNSW~\cite{malkov2018hnsw} index ($M{=}16$, $\text{efC}{=}200$), and
+benchmarks Recall@100 at $\text{ef}{=}200$, following the evaluation
+methodology of ANN-Benchmarks~\cite{aumuller2020annbenchmarks}.
+Per-segment primary keys are read directly out of the MinIO Parquet
+binlogs so we can compute exact vector-level overlap between any two
+segments without modifying Milvus.
+
+\mypar{Flush, jitter, and compaction in Milvus.} Milvus organizes every
+collection as an append-only sequence of segments. Incoming vectors are
+first buffered in a growing segment in memory; when that segment reaches
+a target size it is \emph{flushed}, meaning it is sealed, written out to
+object storage as Parquet binlogs, and subsequently becomes a candidate
+for index building. Instead of sealing a growing segment at exactly the configured
+threshold, Milvus applies a random \emph{jitter} so that each segment
+is flushed around, but not exactly at, the target size. Jitter serves
+two purposes: it desynchronizes flushes across data nodes so that many
+parallel ingest streams do not hit the seal threshold at the same
+moment and overwhelm the control plane, and it acts as a tie breaker
+when several seal policies fire together so that not every segment is
+sealed at an identical size. The side effect on a single-node
+standalone run is that two otherwise identical ingest streams produce
+segments whose vector counts, and therefore whose vector-range boundaries,
+differ from run to run. Once segments are sealed, a background
+\emph{compactor} periodically inspects them and may merge several small
+or partially deleted segments into a new, larger one, rewriting their
+binlogs in the process. Compaction keeps the number of segments bounded
+and reclaims space from deleted vectors, but from the point of view of
+cross-collection comparison it is another source of shuffling: a vector
+that was originally flushed into segment $A$ may end up physically
+stored in a compacted segment $A'$ whose boundaries are unrelated to
+$A$'s original vector range.
+
+\mypar{Configurations.} We test three variants of Milvus that progressively
+remove non-determinism from the ingest path.
+\textbf{bothOn} is stock Milvus, segment size at flush time is jittered
+around the target and a background compactor may merge and rewrite small
+segments. \textbf{nojitter} disables the random jitter, every flush
+targets the exact same segment size, but background compaction still
+runs. \textbf{noJitterCompaction} additionally disables compaction, so
+each segment is exactly one flush worth of vectors and boundaries are
+fully determined by insert order and flush size.
+
+\subsection{Shared partition layout: split the  Wikipedia workload}
+
+\begin{table}[t]
+\centering
+\caption{Three workload variants for the shared partition layout.
+$\mathrm{QC}$ is the fraction of queries whose top 100 ground truth
+neighbors are predominantly served from the shared partition, and
+the scatter ratio gives the share of cold vectors assigned to the
+shared, $A$, and $B$ partitions.}
+\label{tab:wiki-variants}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lccrrr}
+\toprule
+variant & QC & scatter & shared & A & B \\
+\midrule
+QC02\_SS02 & 0.2 & 0.2/0.4/0.4 & 7.1M  & 14.2M & 14.2M \\
+QC02\_SS08 & 0.2 & 0.8/0.1/0.1 & 28.0M & 3.9M  & 3.9M  \\
+QC08\_SS08 & 0.8 & 0.8/0.1/0.1 & 28.1M & 3.7M  & 3.7M  \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{The six loaded collections, one per workload variant
+under each of the two compaction settings. All collections are
+loaded via mmap. The last column lists segment counts in the
+shared, $A$, and $B$ partitions.}
+\label{tab:wiki-collections}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrr}
+\toprule
+collection & segs & shared / A / B \\
+\midrule
+QC02\_SS02            & 275 & 55  / 111 / 109 \\
+QC02\_SS02\_nocompact & 861 & 171 / 345 / 345 \\
+QC02\_SS08            & 271 & 209 / 31  / 31  \\
+QC02\_SS08\_nocompact & 868 & 678 / 95  / 95  \\
+QC08\_SS08            & 264 & 204 / 29  / 31  \\
+QC08\_SS08\_nocompact & 860 & 680 / 90  / 90  \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\mypar{Pipeline.} We use a corpus of 35M Wikipedia chunks embedded
+with the Cohere v3 model and reembedded with BAAI
+\texttt{bge-base-en-v1.5} at 768 dimensions, together with 15{,}000
+queries drawn from the TriviaQA validation set. Ground truth is
+computed by exact $k$ nearest neighbor search at $k{=}100$ against
+the full corpus. The vector index is HNSW~\cite{malkov2018hnsw} with
+$M{=}16$, $\text{efC}{=}200$, and cosine distance, matching the
+configuration used in the fully replicated experiments.
+
+\mypar{Building the splits.} Each workload variant splits the
+corpus into one shared partition and two tenant partitions $A$ and
+$B$. The shared partition is grown greedily from the most frequently
+accessed ground truth vectors until a target fraction $\mathrm{QC}$
+of the queries has at least 50 of its top 100 ground truth neighbors
+inside the shared partition, that is, until $\mathrm{QC}$ of the
+queries are predominantly answerable from the shared corpus. The
+queries are then split evenly between tenants $A$ and $B$, and each
+query's remaining top 100 neighbors are routed into its own tenant
+partition. Cold vectors that no query touches in its top 100 are
+distributed across the shared partition, $A$, and $B$ according to a
+fixed scatter ratio.
+
+\mypar{Three workload variants.} We instantiate three variants that
+differ in $\mathrm{QC}$ and in the cold-vector scatter ratio, listed
+in \autoref{tab:wiki-variants}. \textbf{QC02\_SS02} keeps a small
+shared partition with relatively even cold-vector scatter, so each
+tenant partition holds 14.2M vectors. \textbf{QC02\_SS08} retains the
+same query coverage but pushes most cold vectors into the shared
+partition, producing a 28.0M vector shared partition and 3.9M vector
+tenant partitions. \textbf{QC08\_SS08} additionally raises query
+coverage so that the bulk of queries can be answered from the
+shared partition while the tenant partitions stay small.
+
+\mypar{Loading modes and compaction.} All variants are loaded with
+vectors and HNSW index files mmapped so that the operating system
+pages data in on demand rather than holding the whole collection in
+heap. We do not also evaluate a fully in-heap mode because the
+QC02\_SS08 and QC08\_SS08 variants carry shared partitions of
+roughly 28 million vectors that already exceed the RAM cap of the
+test machine, so an in-heap configuration is not feasible on those
+variants and a heap-versus-mmap comparison would only be possible
+on the smallest variant. We therefore vary only the compaction
+axis: each variant is loaded once with compaction enabled at the
+Milvus default and once with compaction disabled, leaving every
+segment as a single flush worth of vectors. The result is the six
+collections summarized in \autoref{tab:wiki-collections}.
+Compaction-disabled collections produce roughly three times as many
+segments as their compacted counterparts at the same total vector
+count, for example 861 segments versus 275 segments on QC02\_SS02.
+
+\mypar{Milvus configuration.} The Milvus server is configured with
+mmap enabled for both vectors and index files at a 512\,MB threshold, with the maximum segment size and a sealed ratio
+of 0.24, and a 96\,GB RAM cap. These settings keep the
+working set close to but not strictly inside main memory, so any
+cross-tenant resource pressure surfaces in the throughput
+measurements rather than being hidden by overprovisioned RAM.

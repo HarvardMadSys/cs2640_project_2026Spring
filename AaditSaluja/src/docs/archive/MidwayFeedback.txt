@@ -1,0 +1,14 @@
+It is great to see that you read many papers! 
+
+One potential caveat to look out for when using a small working set is that it may hit the CPU cache on many requests, leading to different results than with a larger working set. In some cases, tiny files might be stored inline. 
+
+Overall, it is good to see that you have started getting some preliminary results! 
+
+ 
+
+Suggestion for writing
+
+always include references
+always better to use a larger font (so that readers do not have to zoom in a lot)
+it would be helpful to have a clear takeaway in the figure caption
+a suggestion for presentation, it would be helpful to provide more background on the problem 

@@ -1,0 +1,3 @@
+phase,operation,count,total_seconds,ops_per_sec,latency_mean_ms,latency_p50_ms,latency_p95_ms,latency_p99_ms,run_id,backend,workers,policy,storage
+hotdirs_zipf,skewed_create,3000,18.801723,159.56,44.701528,32.889633,51.867356,250.257976,20260429-092515-740f3aae,posix,8,none,native
+hotdirs_zipf,skewed_stat,3000,5.766939,520.207,15.025092,12.781344,32.946131,49.122146,20260429-092515-740f3aae,posix,8,none,native

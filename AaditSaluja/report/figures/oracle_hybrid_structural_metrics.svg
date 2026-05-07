@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1380" height="920" viewBox="0 0 1380 920">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="72" y="40" font-family="Arial" font-size="24" font-weight="700" fill="#222">Oracle workload: structural metrics</text>
+<rect x="980" y="20" width="16" height="16" fill="#2f6fbb"/>
+<text x="1004" y="33" font-family="Arial" font-size="14" fill="#333">Native</text>
+<rect x="1098" y="20" width="16" height="16" fill="#3aa675"/>
+<text x="1122" y="33" font-family="Arial" font-size="14" fill="#333">Hybrid cold-pack</text>
+<rect x="1216" y="20" width="16" height="16" fill="#d97b29"/>
+<text x="1240" y="33" font-family="Arial" font-size="14" fill="#333">Hybrid + prepin</text>
+<rect x="72" y="96" width="598" height="250" rx="18" fill="#f8fafc" stroke="#d8e0eb"/>
+<text x="94" y="128" font-family="Arial" font-size="18" font-weight="700" fill="#222">Physical files created</text>
+<line x1="110" x2="640" y1="310" y2="310" stroke="#dfe6ef"/>
+<rect x="122.0" y="163.8" width="98" height="146.2" rx="10" fill="#2f6fbb"/>
+<text x="171.0" y="155.8" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">7500</text>
+<text x="171.0" y="334.0" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">Native</text>
+<rect x="264.0" y="249.0" width="98" height="61.0" rx="10" fill="#3aa675"/>
+<text x="313.0" y="241.0" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">3127</text>
+<text x="313.0" y="334.0" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">Hybrid cold-pack</text>
+<rect x="406.0" y="249.0" width="98" height="61.0" rx="10" fill="#d97b29"/>
+<text x="455.0" y="241.0" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">3127</text>
+<text x="455.0" y="334.0" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">Hybrid + prepin</text>
+<rect x="710" y="96" width="598" height="250" rx="18" fill="#f8fafc" stroke="#d8e0eb"/>
+<text x="732" y="128" font-family="Arial" font-size="18" font-weight="700" fill="#222">Materialized directories</text>
+<line x1="748" x2="1278" y1="310" y2="310" stroke="#dfe6ef"/>
+<rect x="760.0" y="165.1" width="98" height="144.9" rx="10" fill="#2f6fbb"/>
+<text x="809.0" y="157.1" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">65</text>
+<text x="809.0" y="334.0" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">Native</text>
+<rect x="902.0" y="294.4" width="98" height="15.6" rx="10" fill="#3aa675"/>
+<text x="951.0" y="286.4" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">7</text>
+<text x="951.0" y="334.0" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">Hybrid cold-pack</text>
+<rect x="1044.0" y="294.4" width="98" height="15.6" rx="10" fill="#d97b29"/>
+<text x="1093.0" y="286.4" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">7</text>
+<text x="1093.0" y="334.0" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">Hybrid + prepin</text>
+<rect x="72" y="388" width="598" height="250" rx="18" fill="#f8fafc" stroke="#d8e0eb"/>
+<text x="94" y="420" font-family="Arial" font-size="18" font-weight="700" fill="#222">Logical creates per physical file</text>
+<line x1="110" x2="640" y1="602" y2="602" stroke="#dfe6ef"/>
+<rect x="122.0" y="550.0" width="98" height="52.0" rx="10" fill="#2f6fbb"/>
+<text x="171.0" y="542.0" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">1.00</text>
+<text x="171.0" y="626.0" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">Native</text>
+<rect x="264.0" y="477.3" width="98" height="124.7" rx="10" fill="#3aa675"/>
+<text x="313.0" y="469.3" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">2.40</text>
+<text x="313.0" y="626.0" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">Hybrid cold-pack</text>
+<rect x="406.0" y="477.3" width="98" height="124.7" rx="10" fill="#d97b29"/>
+<text x="455.0" y="469.3" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">2.40</text>
+<text x="455.0" y="626.0" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">Hybrid + prepin</text>
+<rect x="710" y="388" width="598" height="250" rx="18" fill="#f8fafc" stroke="#d8e0eb"/>
+<text x="732" y="420" font-family="Arial" font-size="18" font-weight="700" fill="#222">Index flushes</text>
+<line x1="748" x2="1278" y1="602" y2="602" stroke="#dfe6ef"/>
+<rect x="760.0" y="594.0" width="98" height="8.0" rx="10" fill="#2f6fbb"/>
+<text x="809.0" y="586.0" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">0</text>
+<text x="809.0" y="626.0" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">Native</text>
+<rect x="902.0" y="583.3" width="98" height="18.7" rx="10" fill="#3aa675"/>
+<text x="951.0" y="575.3" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">18</text>
+<text x="951.0" y="626.0" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">Hybrid cold-pack</text>
+<rect x="1044.0" y="458.5" width="98" height="143.5" rx="10" fill="#d97b29"/>
+<text x="1093.0" y="450.5" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">138</text>
+<text x="1093.0" y="626.0" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">Hybrid + prepin</text>
+<rect x="72" y="680" width="1236" height="176" rx="18" fill="#f8fafc" stroke="#d8e0eb"/>
+<text x="94" y="712" font-family="Arial" font-size="18" font-weight="700" fill="#222">Packed create fraction (%)</text>
+<line x1="110" x2="1278" y1="820" y2="820" stroke="#dfe6ef"/>
+<rect x="122.0" y="812.0" width="98" height="8.0" rx="10" fill="#2f6fbb"/>
+<text x="171.0" y="804.0" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">0.0</text>
+<text x="171.0" y="842.0" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">Native</text>
+<rect x="264.0" y="772.2" width="98" height="47.8" rx="10" fill="#3aa675"/>
+<text x="313.0" y="764.2" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">58.3</text>
+<text x="313.0" y="842.0" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">Hybrid cold-pack</text>
+<rect x="406.0" y="772.2" width="98" height="47.8" rx="10" fill="#d97b29"/>
+<text x="455.0" y="764.2" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">58.3</text>
+<text x="455.0" y="842.0" font-family="Arial" font-size="13" text-anchor="middle" fill="#222">Hybrid + prepin</text>
+</svg>

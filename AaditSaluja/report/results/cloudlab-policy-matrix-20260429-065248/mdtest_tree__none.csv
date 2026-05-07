@@ -1,0 +1,5 @@
+phase,operation,count,total_seconds,ops_per_sec,latency_mean_ms,latency_p50_ms,latency_p95_ms,latency_p99_ms,run_id,backend,workers,policy,storage
+mdtest_tree,create,1200,6.136746,195.543,19.921064,12.548087,62.022095,179.981681,20260429-065248-1f560830,posix,4,none,native
+mdtest_tree,stat,1200,2.687268,446.55,8.792748,7.640291,15.185176,25.757693,20260429-065248-1f560830,posix,4,none,native
+mdtest_tree,read,1200,3.806676,315.236,12.581531,12.066304,19.981094,22.998619,20260429-065248-1f560830,posix,4,none,native
+mdtest_tree,delete,1200,16.148781,74.309,53.801528,10.995058,178.780759,307.35261,20260429-065248-1f560830,posix,4,none,native

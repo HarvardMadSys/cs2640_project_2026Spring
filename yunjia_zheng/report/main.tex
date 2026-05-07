@@ -1,0 +1,57 @@
+\documentclass[letterpaper,twocolumn,10pt]{article}
+\usepackage{usenix-2020-09}
+\usepackage{xcolor}
+\usepackage[inline]{enumitem}
+\usepackage{stfloats}
+\usepackage{makecell}
+
+\input{macro}
+\pagestyle{plain}
+
+\begin{document}
+\date{}
+
+% \title{Everything You Want to Know about Slab Rebalance in Memory Caches}
+% \title{Slab Rebalancing in Memory Caches: Algorithms, Trade-offs, and Empirical Insights}
+% \title{On the Effectiveness of Slab Rebalancing in Memory Caches}
+% \title{State of Slab Rebalancing: What Works and What Doesn’t}
+\title{Versioning Practice in Vector Databases}
+
+\maketitle
+
+\begin{abstract}
+Vector databases increasingly host multiple collections whose
+contents heavily overlap, such as successive corpus versions or
+per-tenant overlays on a shared substrate, which raises the
+question of whether the storage layer can serve them from common
+data. We study this question on Milvus through two complementary
+layouts. The fully replicated layout gives each tenant its own
+collection and exposes the segment boundaries that stock Milvus
+produces for near-identical inputs. The shared partition layout
+folds the shared corpus and the tenant-private vectors into a
+single collection and exposes the query throughput that arises
+when tenants contend for the same physical resources. Two
+benchmarks built on CodeSearchNet and Wikipedia drive the two
+layouts under several Milvus configurations. The fully replicated
+layout fails to share segments under stock settings because flush
+jitter and size-based compaction send near-identical inputs along
+divergent merge paths. The shared partition
+layout, in turn, trades its storage savings for a sharp throughput
+cliff under concurrent tenants, with stable refault counts and
+rising per-query read volume identifying page-cache thrashing.
+\end{abstract}
+
+\input{sections/01_intro}
+\input{sections/02_background}
+\input{sections/03_multi_tenancy}
+\input{sections/04_setup}
+\input{sections/05_result}
+\input{sections/06_nextStep}
+
+
+\newpage
+\bibliographystyle{plain}
+\bibliography{reference}
+
+
+\end{document}

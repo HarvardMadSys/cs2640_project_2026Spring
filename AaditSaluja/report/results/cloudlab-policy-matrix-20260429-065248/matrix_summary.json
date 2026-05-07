@@ -1,0 +1,150 @@
+{
+  "run_label": "20260429-065248",
+  "root_base": "/mnt/cephfs/cs2640-bench/policy-matrix-20260429-065248",
+  "runs": [
+    {
+      "workload": "mdtest_tree",
+      "policy": "none",
+      "returncode": 0,
+      "seconds": 36.614,
+      "json": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/mdtest_tree__none.json",
+      "csv": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/mdtest_tree__none.csv",
+      "log": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/mdtest_tree__none.log"
+    },
+    {
+      "workload": "mdtest_tree",
+      "policy": "static",
+      "returncode": 0,
+      "seconds": 62.334,
+      "json": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/mdtest_tree__static.json",
+      "csv": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/mdtest_tree__static.csv",
+      "log": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/mdtest_tree__static.log"
+    },
+    {
+      "workload": "mdtest_tree",
+      "policy": "predictive",
+      "returncode": 0,
+      "seconds": 27.566,
+      "json": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/mdtest_tree__predictive.json",
+      "csv": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/mdtest_tree__predictive.csv",
+      "log": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/mdtest_tree__predictive.log"
+    },
+    {
+      "workload": "mdtest_tree",
+      "policy": "LLM_policy",
+      "returncode": 0,
+      "seconds": 29.295,
+      "json": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/mdtest_tree__LLM_policy.json",
+      "csv": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/mdtest_tree__LLM_policy.csv",
+      "log": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/mdtest_tree__LLM_policy.log"
+    },
+    {
+      "workload": "sprite_lfs_smallfile",
+      "policy": "none",
+      "returncode": 0,
+      "seconds": 59.557,
+      "json": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/sprite_lfs_smallfile__none.json",
+      "csv": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/sprite_lfs_smallfile__none.csv",
+      "log": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/sprite_lfs_smallfile__none.log"
+    },
+    {
+      "workload": "sprite_lfs_smallfile",
+      "policy": "static",
+      "returncode": 0,
+      "seconds": 118.111,
+      "json": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/sprite_lfs_smallfile__static.json",
+      "csv": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/sprite_lfs_smallfile__static.csv",
+      "log": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/sprite_lfs_smallfile__static.log"
+    },
+    {
+      "workload": "sprite_lfs_smallfile",
+      "policy": "predictive",
+      "returncode": 0,
+      "seconds": 41.194,
+      "json": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/sprite_lfs_smallfile__predictive.json",
+      "csv": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/sprite_lfs_smallfile__predictive.csv",
+      "log": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/sprite_lfs_smallfile__predictive.log"
+    },
+    {
+      "workload": "sprite_lfs_smallfile",
+      "policy": "LLM_policy",
+      "returncode": 0,
+      "seconds": 83.946,
+      "json": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/sprite_lfs_smallfile__LLM_policy.json",
+      "csv": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/sprite_lfs_smallfile__LLM_policy.csv",
+      "log": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/sprite_lfs_smallfile__LLM_policy.log"
+    },
+    {
+      "workload": "hotdirs_zipf",
+      "policy": "none",
+      "returncode": 0,
+      "seconds": 18.479,
+      "json": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/hotdirs_zipf__none.json",
+      "csv": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/hotdirs_zipf__none.csv",
+      "log": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/hotdirs_zipf__none.log"
+    },
+    {
+      "workload": "hotdirs_zipf",
+      "policy": "static",
+      "returncode": 0,
+      "seconds": 136.484,
+      "json": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/hotdirs_zipf__static.json",
+      "csv": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/hotdirs_zipf__static.csv",
+      "log": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/hotdirs_zipf__static.log"
+    },
+    {
+      "workload": "hotdirs_zipf",
+      "policy": "predictive",
+      "returncode": 0,
+      "seconds": 188.533,
+      "json": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/hotdirs_zipf__predictive.json",
+      "csv": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/hotdirs_zipf__predictive.csv",
+      "log": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/hotdirs_zipf__predictive.log"
+    },
+    {
+      "workload": "hotdirs_zipf",
+      "policy": "LLM_policy",
+      "returncode": 0,
+      "seconds": 156.209,
+      "json": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/hotdirs_zipf__LLM_policy.json",
+      "csv": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/hotdirs_zipf__LLM_policy.csv",
+      "log": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/hotdirs_zipf__LLM_policy.log"
+    },
+    {
+      "workload": "filebench_varmail_like",
+      "policy": "none",
+      "returncode": 0,
+      "seconds": 78.743,
+      "json": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/filebench_varmail_like__none.json",
+      "csv": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/filebench_varmail_like__none.csv",
+      "log": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/filebench_varmail_like__none.log"
+    },
+    {
+      "workload": "filebench_varmail_like",
+      "policy": "static",
+      "returncode": 0,
+      "seconds": 255.004,
+      "json": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/filebench_varmail_like__static.json",
+      "csv": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/filebench_varmail_like__static.csv",
+      "log": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/filebench_varmail_like__static.log"
+    },
+    {
+      "workload": "filebench_varmail_like",
+      "policy": "predictive",
+      "returncode": 0,
+      "seconds": 59.439,
+      "json": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/filebench_varmail_like__predictive.json",
+      "csv": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/filebench_varmail_like__predictive.csv",
+      "log": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/filebench_varmail_like__predictive.log"
+    },
+    {
+      "workload": "filebench_varmail_like",
+      "policy": "LLM_policy",
+      "returncode": 0,
+      "seconds": 125.292,
+      "json": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/filebench_varmail_like__LLM_policy.json",
+      "csv": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/filebench_varmail_like__LLM_policy.csv",
+      "log": "/users/aadits/FinalProj/results/cloudlab-policy-matrix-20260429-065248/filebench_varmail_like__LLM_policy.log"
+    }
+  ]
+}

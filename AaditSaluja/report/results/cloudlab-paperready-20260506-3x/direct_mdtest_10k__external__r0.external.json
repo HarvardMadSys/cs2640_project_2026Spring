@@ -1,0 +1,42 @@
+{
+  "elapsed_seconds": 101.638731,
+  "ended_unix": 1778104620.4146898,
+  "job_kind": "external_mdtest",
+  "log": "results/cloudlab-paperready-20260506-3x/direct_mdtest_10k__external__r0.log",
+  "metrics": {
+    "ops_per_sec": 1938.416667
+  },
+  "phase_metrics": [
+    {
+      "operation": "File creation",
+      "ops_per_sec": 133.76
+    },
+    {
+      "operation": "File stat",
+      "ops_per_sec": 6904.909
+    },
+    {
+      "operation": "File read",
+      "ops_per_sec": 3416.522
+    },
+    {
+      "operation": "File removal",
+      "ops_per_sec": 504.32
+    },
+    {
+      "operation": "Tree creation",
+      "ops_per_sec": 663.131
+    },
+    {
+      "operation": "Tree removal",
+      "ops_per_sec": 7.858
+    }
+  ],
+  "repeat": 0,
+  "result_kind": "external",
+  "seed": 9100,
+  "started_unix": 1778104518.7759583,
+  "variant": "external",
+  "workload": "mdtest_10k",
+  "workload_id": "direct_mdtest_10k"
+}

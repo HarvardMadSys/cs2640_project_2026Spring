@@ -1,0 +1,15 @@
+# Latency Penalty Panel B — low-rate degraded vs RAID-10 baseline
+# Baseline: RAID-10 no-failure  read=0.0121 ms  write=0.0170 ms
+#
+# Expected:
+#   RAID-10 fail: ~1x read (reads from mirror), >1x write (only 1 disk)
+#   RS fail data: read ratio > 1 (must decode from k disks)
+#   RS fail parity: read ratio ~1 (parity not needed for reads)
+#   MSR/MBR fail: read ratio > 1 (regenerating read from d helpers)
+#
+# code | fail_label | read_ratio | write_ratio
+  RAID-10      fail=0       read=1.000x  write=1.000x
+  RS           fail=0       read=1.111x  write=1.368x
+  RS           fail=3       read=1.000x  write=1.368x
+  MSR          fail=0       read=1.772x  write=2.704x
+  MBR          fail=0       read=2.771x  write=4.287x

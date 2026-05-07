@@ -1,0 +1,36 @@
+# Trade-off Panel A: Storage vs Repair Download (normalized to RAID-10)
+# RAID-10 reference: repair=8.5333 MB, storage=51.2000 MB
+# total_logical=50000 blocks, block_size=512 B
+#
+# ── Normalized theory points ──
+# RAID-10(6,3): repair=1.000x, storage=1.000x
+# MSR(6,3,5):   repair=1.667x, storage=1.000x
+# MBR(6,3,5):   repair=1.250x, storage=1.250x
+# RS(6,3):      repair=3.000x, storage=1.000x
+#
+# ── Expected ordering ──
+# Storage (norm):  RAID-10 = RS = MSR (1.0x) < MBR (1.25x)
+# Repair  (norm):  RAID-10 (1.0x) < MBR (1.25x) < MSR (1.67x) < RS (3.0x)
+#
+# ── MSR/MBR boundary curve samples (normalized) ──
+# gamma  alpha  repair_norm  storage_norm
+  3.7500  3.7500  1.2500  1.2500
+  3.7843  3.7020  1.2614  1.2340
+  3.8185  3.6541  1.2728  1.2180
+  3.8528  3.6061  1.2843  1.2020
+  3.8870  3.5581  1.2957  1.1860
+  3.9213  3.5102  1.3071  1.1701
+  3.9556  3.4622  1.3185  1.1541
+  3.9898  3.4142  1.3299  1.1381
+  4.0241  3.3663  1.3414  1.1221
+  4.0584  3.3183  1.3528  1.1061
+  4.0909  3.2727  1.3636  1.0909
+  4.1823  3.2453  1.3941  1.0818
+  4.2736  3.2179  1.4245  1.0726
+  4.3650  3.1905  1.4550  1.0635
+  4.4564  3.1631  1.4855  1.0544
+  4.5477  3.1357  1.5159  1.0452
+  4.6391  3.1083  1.5464  1.0361
+  4.7305  3.0809  1.5768  1.0270
+  4.8218  3.0534  1.6073  1.0178
+  4.9132  3.0260  1.6377  1.0087

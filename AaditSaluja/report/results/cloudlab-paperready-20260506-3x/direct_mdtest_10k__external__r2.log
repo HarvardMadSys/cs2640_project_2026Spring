@@ -1,0 +1,31 @@
+-- started at 05/06/2026 15:58:46 --
+
+mdtest-4.1.0+dev was launched with 8 total task(s) on 1 node(s)
+Command line used: /users/aadits/bench-tools/bin/mdtest '-d' '/mnt/cephfs/cs2640-bench/direct_mdtest_10k__external__r2' '-n' '1250' '-F' '-L' '-P' '-C' '-T' '-E' '-r' '-w' '1024' '-e' '1024' '--random-seed' '9102'
+Nodemap: 11111111
+Path                : /mnt/cephfs/cs2640-bench/direct_mdtest_10k__external__r2
+FS                  : 93.9 GiB   Used FS: 0.0%   Inodes: 0.0 Mi   Used Inodes: 200.0%
+random seed: 9102
+8 tasks, 10000 files
+
+SUMMARY rate (in ops/sec): (of 1 iterations)
+   Operation                     Max            Min           Mean        Std Dev
+   ---------                     ---            ---           ----        -------
+   File creation                 126.383        126.383        126.383          0.000
+   File stat                    6339.498       6339.498       6339.498          0.000
+   File read                    3802.864       3802.864       3802.864          0.000
+   File removal                 1406.522       1406.522       1406.522          0.000
+   Tree creation                 793.774        793.774        793.774          0.000
+   Tree removal                    8.546          8.546          8.546          0.000
+
+SUMMARY time (in ms/op): (of 1 iterations)
+   Operation                     Max            Min           Mean        Std Dev
+   ---------                     ---            ---           ----        -------
+   File creation                  79.125         79.125         79.125          0.000
+   File stat                       1.577          1.577          1.577          0.000
+   File read                       2.630          2.630          2.630          0.000
+   File removal                    7.110          7.110          7.110          0.000
+   Tree creation                   0.001          0.001          0.001          0.000
+   Tree removal                    0.117          0.117          0.117          0.000
+-- finished at 05/06/2026 16:00:17 --
+

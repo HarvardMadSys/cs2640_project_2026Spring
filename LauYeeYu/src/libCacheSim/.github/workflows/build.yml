@@ -1,0 +1,47 @@
+name: build
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+  macos:
+    name: macos / clang
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare
+        run: bash scripts/install_dependency.sh
+      - name: Configure CMake
+        run: cmake -G Ninja -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      - name: Build
+        run: ninja -C ${{github.workspace}}/build
+      - name: Test
+        working-directory: ${{github.workspace}}/build
+        run: ctest -C ${{env.BUILD_TYPE}} --output-on-failure --parallel
+
+  ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare
+        run: bash scripts/install_dependency.sh
+      - name: Configure CMake with LSan
+        run: |
+          cmake -G Ninja -B ${{github.workspace}}/build \
+                -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                -DCMAKE_C_FLAGS="-fsanitize=leak" \
+                -DCMAKE_CXX_FLAGS="-fsanitize=leak"
+      - name: Build
+        run: ninja -C ${{github.workspace}}/build
+      - name: Test with LSan
+        working-directory: ${{github.workspace}}/build
+        run: |
+          export ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:verbosity=1"
+          ctest -C ${{env.BUILD_TYPE}} --output-on-failure --parallel
+

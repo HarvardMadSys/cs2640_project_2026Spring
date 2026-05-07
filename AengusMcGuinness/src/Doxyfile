@@ -1,0 +1,78 @@
+# Doxygen configuration for CS2640 Final Project.
+#
+# Generate with:
+#   doxygen Doxyfile
+#
+# Output:
+#   docs/doxygen/html/index.html
+
+PROJECT_NAME           = "CS2640 Final Project: RDMA Key-Value Cache"
+PROJECT_BRIEF          = "TCP, two-sided RDMA, and one-sided RDMA cache prototype"
+PROJECT_NUMBER         = 0.1.0
+OUTPUT_DIRECTORY       = docs/doxygen
+CREATE_SUBDIRS         = NO
+
+INPUT                  = docs/doxygen_main.md \
+                         include \
+                         src \
+                         benchmarks \
+                         tests
+USE_MDFILE_AS_MAINPAGE = docs/doxygen_main.md
+FILE_PATTERNS          = *.hpp *.cpp *.md
+RECURSIVE              = YES
+EXCLUDE_PATTERNS       = */build/* */.cache/* */.venv-plot/*
+
+OPTIMIZE_OUTPUT_FOR_C  = NO
+MARKDOWN_SUPPORT       = YES
+AUTOLINK_SUPPORT       = YES
+
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_PRIV_VIRTUAL   = YES
+EXTRACT_PACKAGE        = YES
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = YES
+EXTRACT_LOCAL_METHODS  = YES
+HIDE_UNDOC_MEMBERS     = NO
+HIDE_UNDOC_CLASSES     = NO
+
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = YES
+STRIP_CODE_COMMENTS    = NO
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION    = YES
+
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+HTML_DYNAMIC_SECTIONS  = YES
+GENERATE_TREEVIEW      = YES
+FULL_SIDEBAR           = YES
+DISABLE_INDEX          = NO
+SEARCHENGINE           = YES
+SERVER_BASED_SEARCH    = NO
+
+GENERATE_LATEX         = NO
+GENERATE_XML           = NO
+GENERATE_MAN           = NO
+GENERATE_RTF           = NO
+
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = NO
+WARN_IF_DOC_ERROR      = YES
+WARN_NO_PARAMDOC       = NO
+
+QUIET                  = NO
+JAVADOC_AUTOBRIEF      = YES
+QT_AUTOBRIEF           = YES
+MULTILINE_CPP_IS_BRIEF = NO
+
+BUILTIN_STL_SUPPORT    = YES
+CPP_CLI_SUPPORT        = NO
+EXTRACT_ANON_NSPACES   = YES
+
+# Keep Graphviz disabled by default so documentation generation works on
+# minimal CloudLab or macOS installs.  Set HAVE_DOT=YES locally if Graphviz is
+# available and call/caller graphs are desired.
+HAVE_DOT               = NO
+CALL_GRAPH             = NO
+CALLER_GRAPH           = NO

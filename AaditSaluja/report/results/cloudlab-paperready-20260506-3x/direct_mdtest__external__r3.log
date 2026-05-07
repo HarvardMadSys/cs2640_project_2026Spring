@@ -1,0 +1,31 @@
+-- started at 05/06/2026 19:14:50 --
+
+mdtest-4.1.0+dev was launched with 8 total task(s) on 1 node(s)
+Command line used: /users/aadits/bench-tools/bin/mdtest '-d' '/mnt/cephfs/cs2640-bench/direct_mdtest__external__r3' '-n' '375' '-F' '-L' '-P' '-C' '-T' '-E' '-r' '-w' '1024' '-e' '1024' '--random-seed' '9103'
+Nodemap: 11111111
+Path                : /mnt/cephfs/cs2640-bench/direct_mdtest__external__r3
+FS                  : 93.9 GiB   Used FS: 0.0%   Inodes: 0.0 Mi   Used Inodes: 200.0%
+random seed: 9103
+8 tasks, 3000 files
+
+SUMMARY rate (in ops/sec): (of 1 iterations)
+   Operation                     Max            Min           Mean        Std Dev
+   ---------                     ---            ---           ----        -------
+   File creation                 150.705        150.705        150.705          0.000
+   File stat                    6574.464       6574.464       6574.464          0.000
+   File read                    3937.782       3937.782       3937.782          0.000
+   File removal                 1856.418       1856.418       1856.418          0.000
+   Tree creation                 684.449        684.449        684.449          0.000
+   Tree removal                    0.519          0.519          0.519          0.000
+
+SUMMARY time (in ms/op): (of 1 iterations)
+   Operation                     Max            Min           Mean        Std Dev
+   ---------                     ---            ---           ----        -------
+   File creation                  19.906         19.906         19.906          0.000
+   File stat                       0.456          0.456          0.456          0.000
+   File read                       0.762          0.762          0.762          0.000
+   File removal                    1.616          1.616          1.616          0.000
+   Tree creation                   0.001          0.001          0.001          0.000
+   Tree removal                    1.928          1.928          1.928          0.000
+-- finished at 05/06/2026 19:15:16 --
+

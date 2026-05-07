@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="430" viewBox="0 0 920 430">
+<rect width="100%" height="100%" fill="white"/>
+<text x="460.0" y="26" text-anchor="middle" font-family="Arial" font-size="20" font-weight="700">Packing speedup vs native</text>
+<line x1="82" y1="338" x2="898" y2="338" stroke="#333"/>
+<line x1="82" y1="48" x2="82" y2="338" stroke="#333"/>
+<line x1="77" y1="338.0" x2="898" y2="338.0" stroke="#ddd"/>
+<text x="73" y="342.0" text-anchor="end" font-family="Arial" font-size="11" fill="#333">0.0</text>
+<line x1="77" y1="280.0" x2="898" y2="280.0" stroke="#ddd"/>
+<text x="73" y="284.0" text-anchor="end" font-family="Arial" font-size="11" fill="#333">6.0</text>
+<line x1="77" y1="222.0" x2="898" y2="222.0" stroke="#ddd"/>
+<text x="73" y="226.0" text-anchor="end" font-family="Arial" font-size="11" fill="#333">12</text>
+<line x1="77" y1="164.0" x2="898" y2="164.0" stroke="#ddd"/>
+<text x="73" y="168.0" text-anchor="end" font-family="Arial" font-size="11" fill="#333">18</text>
+<line x1="77" y1="106.0" x2="898" y2="106.0" stroke="#ddd"/>
+<text x="73" y="110.0" text-anchor="end" font-family="Arial" font-size="11" fill="#333">24</text>
+<line x1="77" y1="48.0" x2="898" y2="48.0" stroke="#ddd"/>
+<text x="73" y="52.0" text-anchor="end" font-family="Arial" font-size="11" fill="#333">30</text>
+<text transform="translate(18 193.0) rotate(-90)" text-anchor="middle" font-family="Arial" font-size="13">Speedup (x)</text>
+<rect x="127.1" y="85.8" width="34.0" height="252.2" fill="#f58518"/>
+<text x="144.1" y="81.8" text-anchor="middle" font-family="Arial" font-size="10" fill="#333">25.9</text>
+<rect x="166.1" y="97.9" width="34.0" height="240.1" fill="#54a24b"/>
+<text x="183.1" y="93.9" text-anchor="middle" font-family="Arial" font-size="10" fill="#333">24.7</text>
+<text x="163.6" y="374" text-anchor="middle" font-family="Arial" font-size="12">Recreated mdtest</text>
+<rect x="290.3" y="227.9" width="34.0" height="110.1" fill="#f58518"/>
+<text x="307.3" y="223.9" text-anchor="middle" font-family="Arial" font-size="10" fill="#333">11.3</text>
+<rect x="329.3" y="305.0" width="34.0" height="33.0" fill="#54a24b"/>
+<text x="346.3" y="301.0" text-anchor="middle" font-family="Arial" font-size="10" fill="#333">3.4</text>
+<text x="326.8" y="374" text-anchor="middle" font-family="Arial" font-size="12">Recreated varmail</text>
+<rect x="453.5" y="318.9" width="34.0" height="19.1" fill="#f58518"/>
+<text x="470.5" y="314.9" text-anchor="middle" font-family="Arial" font-size="10" fill="#333">2.0</text>
+<rect x="492.5" y="319.6" width="34.0" height="18.4" fill="#54a24b"/>
+<text x="509.5" y="315.6" text-anchor="middle" font-family="Arial" font-size="10" fill="#333">1.9</text>
+<text x="490.0" y="374" text-anchor="middle" font-family="Arial" font-size="12">YCSB Zipfian</text>
+<rect x="616.7" y="315.8" width="34.0" height="22.2" fill="#f58518"/>
+<text x="633.7" y="311.8" text-anchor="middle" font-family="Arial" font-size="10" fill="#333">2.3</text>
+<rect x="655.7" y="314.8" width="34.0" height="23.2" fill="#54a24b"/>
+<text x="672.7" y="310.8" text-anchor="middle" font-family="Arial" font-size="10" fill="#333">2.4</text>
+<text x="653.2" y="374" text-anchor="middle" font-family="Arial" font-size="12">YCSB hotspot</text>
+<rect x="779.9" y="313.3" width="34.0" height="24.7" fill="#f58518"/>
+<text x="796.9" y="309.3" text-anchor="middle" font-family="Arial" font-size="10" fill="#333">2.5</text>
+<rect x="818.9" y="305.3" width="34.0" height="32.7" fill="#54a24b"/>
+<text x="835.9" y="301.3" text-anchor="middle" font-family="Arial" font-size="10" fill="#333">3.4</text>
+<text x="816.4" y="374" text-anchor="middle" font-family="Arial" font-size="12">Hot/cold 90/10</text>
+<rect x="82" y="395" width="12" height="12" fill="#f58518"/>
+<text x="100" y="406" font-family="Arial" font-size="12">oracle</text>
+<rect x="187" y="395" width="12" height="12" fill="#54a24b"/>
+<text x="205" y="406" font-family="Arial" font-size="12">predictor</text>
+</svg>

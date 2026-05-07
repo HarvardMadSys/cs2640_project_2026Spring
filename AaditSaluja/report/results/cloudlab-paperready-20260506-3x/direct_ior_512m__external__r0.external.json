@@ -1,0 +1,26 @@
+{
+  "elapsed_seconds": 17.978866,
+  "ended_unix": 1778105379.5237222,
+  "job_kind": "external_ior",
+  "log": "results/cloudlab-paperready-20260506-3x/direct_ior_512m__external__r0.log",
+  "metrics": {
+    "ops_per_sec": 22745.89
+  },
+  "phase_metrics": [
+    {
+      "operation": "write",
+      "ops_per_sec": 10357.94
+    },
+    {
+      "operation": "read",
+      "ops_per_sec": 35133.84
+    }
+  ],
+  "repeat": 0,
+  "result_kind": "external",
+  "seed": 9100,
+  "started_unix": 1778105361.5448558,
+  "variant": "external",
+  "workload": "ior_512m",
+  "workload_id": "direct_ior_512m"
+}

@@ -1,0 +1,4 @@
+phase,operation,count,total_seconds,ops_per_sec,latency_mean_ms,latency_p50_ms,latency_p95_ms,latency_p99_ms,run_id,backend,workers,policy,storage
+sprite_lfs_smallfile,create,5000,39.498526,126.587,44.360575,23.113216,153.584749,254.477484,20260429-081709-913734db,posix,8,prepin_hotset,native
+sprite_lfs_smallfile,stat,5000,10.691993,467.64,16.39814,15.054537,31.571151,45.720905,20260429-081709-913734db,posix,8,prepin_hotset,native
+sprite_lfs_smallfile,read,5000,15.373277,325.24,23.631561,22.018246,44.164682,59.036194,20260429-081709-913734db,posix,8,prepin_hotset,native

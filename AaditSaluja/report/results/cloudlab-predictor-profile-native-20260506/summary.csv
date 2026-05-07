@@ -1,0 +1,4 @@
+scenario,variant,runs,mean_ops_per_sec,stdev_ops_per_sec,relative_to_oracle,mean_namespace_entries,mean_promotions,mean_promoted_hot,mean_promoted_cold,promotion_failure_runs,layout_failure_runs
+cold70_access20,native,2,360.22936,15.630296,,4565.0,0.0,0.0,0.0,0,0
+cold90_access10,native,2,410.459624,10.684923,,4565.0,0.0,0.0,0.0,0,0
+cold90_access20,native,2,383.041963,0.599638,,4565.0,0.0,0.0,0.0,0,0

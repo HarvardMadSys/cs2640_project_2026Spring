@@ -1,0 +1,13 @@
+scenario,variant,runs,mean_ops_per_sec,stdev_ops_per_sec,relative_to_oracle,mean_namespace_entries,mean_promotions,mean_promoted_hot,mean_promoted_cold,promotion_failure_runs,layout_failure_runs
+cold70_access20,oracle,2,530.774033,385.182619,1.0,2409.0,0.0,0.0,0.0,0,0
+cold70_access20,pred_read1,2,1403.325437,193.623346,2.643923,1436.5,1367.5,844.5,523.0,0,0
+cold70_access20,pred_statread2,2,1603.108822,1065.120296,3.020323,1862.5,1793.5,907.5,886.0,0,0
+cold70_access20,pred_statread4,2,2608.793918,656.252903,4.915075,1085.5,1023.5,909.0,114.5,0,0
+cold90_access10,oracle,2,588.732006,114.813847,1.0,1809.0,0.0,0.0,0.0,0,0
+cold90_access10,pred_read1,2,5714.545061,95.611972,9.70653,660.5,593.0,304.5,288.5,0,0
+cold90_access10,pred_statread2,2,4932.439238,622.049669,8.378072,660.5,594.0,307.0,287.0,0,0
+cold90_access10,pred_statread4,2,5291.777487,6.751493,8.988432,331.0,315.5,309.0,6.5,0,0
+cold90_access20,oracle,2,790.951422,120.278132,1.0,1809.0,0.0,0.0,0.0,0,0
+cold90_access20,pred_read1,2,5492.505916,4658.429073,6.944176,919.0,850.0,303.5,546.5,0,0
+cold90_access20,pred_statread2,2,2861.803677,1437.731097,3.618179,1218.0,1149.0,308.5,840.5,0,0
+cold90_access20,pred_statread4,2,5259.361901,440.76618,6.649412,432.5,383.5,309.5,74.0,0,0

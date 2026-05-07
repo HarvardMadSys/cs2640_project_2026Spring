@@ -1,0 +1,7 @@
+phase,operation,count,total_seconds,ops_per_sec,latency_mean_ms,latency_p50_ms,latency_p95_ms,latency_p99_ms,run_id,backend,workers,policy,storage
+oracle_hotcold_mix,bulk_create,512,0.116312,4401.968,1.778033,1.757625,2.093253,2.339668,20260504-122945-88fad4d9,simulated-ceph,8,none,native
+oracle_hotcold_mix,oracle_hot_stat,2048,0.087598,23379.663,0.33758,0.330979,0.392314,0.43855,20260504-122945-88fad4d9,simulated-ceph,8,none,native
+oracle_hotcold_mix,oracle_hot_read,512,0.023712,21591.987,0.354278,0.304188,0.580471,0.747958,20260504-122945-88fad4d9,simulated-ceph,8,none,native
+oracle_hotcold_mix,oracle_hot_churn_create,256,0.063093,4057.532,1.915321,1.861667,2.378802,3.865913,20260504-122945-88fad4d9,simulated-ceph,8,none,native
+oracle_hotcold_mix,oracle_hot_churn_delete,256,0.017172,14907.664,0.505804,0.426271,0.728521,2.925186,20260504-122945-88fad4d9,simulated-ceph,8,none,native
+oracle_hotcold_mix,cleanup_delete,512,0.029238,17511.558,0.433046,0.407854,0.638302,0.725803,20260504-122945-88fad4d9,simulated-ceph,8,none,native

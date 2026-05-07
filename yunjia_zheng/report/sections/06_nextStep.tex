@@ -1,0 +1,58 @@
+\section{Conclusion and Next Steps}
+
+The study leaves us with three observations that together frame the
+design space for a multi-tenant vector store.
+
+\mypar{Search is per segment in parallel.} Vectors are arranged
+into sealed segments, and every query fans out to all of them,
+scans each local index, and merges the partial results into a
+global top-$k$. Per-query cost scales with both the number of
+segments and the size of each segment's index, so any sharing
+strategy must either reduce the number of segments a query
+consults or amortize per-segment cost across tenants.
+
+\mypar{Same data does not imply same segments.} Identical
+logical data loaded into two collections produces different
+segment cuts in stock Milvus, because flush jitter and background
+compaction shuffle vectors across segment boundaries during
+ingestion. Disabling both sources of non-determinism collapses
+the per-segment overlap matrix to a diagonal, but the index and
+data files within each segment still diverge across loads.
+Vector-level overlap is therefore necessary but not sufficient
+for sharing storage; a layout that makes segments byte-comparable
+across collections by construction is required before sharing
+can be exploited end to end.
+
+\mypar{Sharing a collection has a real cost.} Co-locating
+tenants in a single collection through a shared partition
+removes the storage duplication of the fully replicated layout,
+but query throughput under concurrent traffic collapses by an
+order of magnitude relative to the solo case. The bottleneck is
+not CPU but the page cache: the combined working set overflows
+RAM and queries refault pages that concurrent queries have just
+evicted, so the system enters a thrashing regime in which adding
+threads reduces throughput. A workable shared layout must
+therefore be paired with a memory allocation strategy that
+bounds cross-tenant interference rather than relying on the
+operating system page cache.
+
+\mypar{Next steps.} These observations point to three follow-up
+directions:
+\begin{enumerate*}[label=(\arabic*)]
+    \item \textbf{Make the search path content aware,} so that a
+    query is routed only to the segments that hold its candidate
+    top-$k$ neighbors rather than fanned out to every segment,
+    and quantify how much per-segment HNSW~\cite{malkov2018hnsw}
+    work could additionally be reused across tenants whose
+    queries hit the same segments;
+    \item \textbf{align segments by construction,} replacing
+    implicit ingestion-time alignment with an explicit
+    content-addressed segment layout, so that two collections
+    with overlapping data share the same segment files rather
+    than two independently flushed copies;
+    \item \textbf{bound cross-tenant memory contention,}
+    developing a memory allocation policy for shared-partition
+    collections that reserves working-set budget per tenant or
+    per partition, and extending the evaluation beyond two
+    tenants.
+\end{enumerate*}

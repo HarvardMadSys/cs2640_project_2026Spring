@@ -1,0 +1,103 @@
+@article{dong2021rocksdb,
+  title = {RocksDB: Evolution of Development Priorities in a Key-value Store Serving Large-scale Applications},
+  author = {Dong, Siying and Kryczka, Andrew and Jin, Yanqin and Stumm, Michael},
+  journal = {ACM Transactions on Storage},
+  volume = {17},
+  number = {4},
+  year = {2021}
+}
+
+@inproceedings{bjorling2021zns,
+  title = {ZNS: Avoiding the Block Interface Tax for Flash-based SSDs},
+  author = {Bj{\o}rling, Matias and others},
+  booktitle = {USENIX Annual Technical Conference},
+  year = {2021}
+}
+
+@misc{zenfsdocs,
+  title = {RocksDB with ZenFS},
+  author = {{Zoned Storage}},
+  howpublished = {\url{https://zonedstorage.io/docs/applications/zenfs}},
+  note = {Accessed 2026}
+}
+
+@inproceedings{cooper2010ycsb,
+  title = {Benchmarking Cloud Serving Systems with YCSB},
+  author = {Cooper, Brian F. and Silberstein, Adam and Tam, Erwin and Ramakrishnan, Raghu and Sears, Russell},
+  booktitle = {Proceedings of the 1st ACM Symposium on Cloud Computing},
+  pages = {143--154},
+  year = {2010}
+}
+
+@Article{app112411842,
+AUTHOR = {Oh, Gijun and Yang, Junseok and Ahn, Sungyong},
+TITLE = {Efficient Key-Value Data Placement for ZNS SSD},
+JOURNAL = {Applied Sciences},
+VOLUME = {11},
+YEAR = {2021},
+NUMBER = {24},
+ARTICLE-NUMBER = {11842},
+URL = {https://www.mdpi.com/2076-3417/11/24/11842},
+ISSN = {2076-3417},
+ABSTRACT = {Log-structured merge-tree (LSM-Tree)-based key–value stores are attracting attention for their high I/O (Input/Output) performance due to their sequential write characteristics. However, excessive writes caused by compaction shorten the lifespan of the Solid-state Drive (SSD). Therefore, there are several studies aimed at reducing garbage collection overhead by using Zoned Namespace ZNS; SSD in which the host can determine data placement. However, the existing studies have limitations in terms of performance improvement because the lifetime and hotness of key–value data are not considered. Therefore, in this paper, we propose a technique to minimize the space efficiency and garbage collection overhead of SSDs by arranging them according to the characteristics of key–value data. The proposed method was implemented by modifying ZenFS of RocksDB and, according to the result of the performance evaluation, the space efficiency could be improved by up to 75%.},
+DOI = {10.3390/app112411842}
+}
+
+@article{dong2021rocksdb,
+  title = {RocksDB: Evolution of Development Priorities in a Key-value Store Serving Large-scale Applications},
+  author = {Dong, Siying and Kryczka, Andrew and Jin, Yanqin and Stumm, Michael},
+  journal = {ACM Transactions on Storage},
+  volume = {17},
+  number = {4},
+  pages = {1--32},
+  year = {2021},
+  doi = {10.1145/3483840}
+}
+
+@inproceedings{cao2020rocksdbworkloads,
+  title = {Characterizing, Modeling, and Benchmarking RocksDB Key-Value Workloads at Facebook},
+  author = {Cao, Zhichao and Dong, Siying and Vemuri, Sagar and Du, David H. C.},
+  booktitle = {18th USENIX Conference on File and Storage Technologies (FAST 20)},
+  pages = {209--223},
+  year = {2020}
+}
+
+@inproceedings{yao2020matrixkv,
+  title = {MatrixKV: Reducing Write Stalls and Write Amplification in LSM-tree Based KV Stores with Matrix Container in NVM},
+  author = {Yao, Ting and Wan, Jiguang and Huang, Ping and He, Xiang and Gui, Qing and Wu, Fei and Xie, Changsheng},
+  booktitle = {2020 USENIX Annual Technical Conference (USENIX ATC 20)},
+  pages = {17--31},
+  year = {2020}
+}
+
+@inproceedings{raju2017pebblesdb,
+  title = {PebblesDB: Building Key-Value Stores using Fragmented Log-Structured Merge Trees},
+  author = {Raju, Pandian and Kadekodi, Rohan and Chidambaram, Vijay and Abraham, Ittai},
+  booktitle = {Proceedings of the 26th Symposium on Operating Systems Principles (SOSP)},
+  pages = {497--514},
+  year = {2017}
+}
+
+@inproceedings{balmau2019silk,
+  title = {{SILK}: Preventing Latency Spikes in Log-Structured Merge Key-Value Stores},
+  author = {Balmau, Oana and Dinu, Florin and Zwaenepoel, Willy and Gupta, Karan and Chandhiramoorthi, Ravishankar and Didona, Diego},
+  booktitle = {2019 USENIX Annual Technical Conference (USENIX ATC 19)},
+  pages = {753--766},
+  year = {2019}
+}
+
+@inproceedings{lee2022caza,
+  title = {Compaction-Aware Zone Allocation for LSM based Key-Value Store on ZNS SSDs},
+  author = {Lee, Hee-Rock and Lee, Chang-Gyu and Lee, Seungjin and Kim, Youngjae},
+  booktitle = {Proceedings of the 14th ACM Workshop on Hot Topics in Storage and File Systems (HotStorage '22)},
+  year = {2022},
+  doi = {10.1145/3538643.3539743}
+}
+
+@inproceedings{jung2022lifetime,
+  title = {Lifetime-Leveling LSM-Tree Compaction for ZNS SSD},
+  author = {Jung, Jeeyoon and Shin, Dongkun},
+  booktitle = {Proceedings of the 14th ACM Workshop on Hot Topics in Storage and File Systems (HotStorage '22)},
+  year = {2022},
+  doi = {10.1145/3538643.3539741}
+}

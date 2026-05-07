@@ -1,0 +1,10 @@
+case,workload,storage,ops_per_sec,seconds,promotions,hot_promotions,cold_promotions,predicted_hot_dirs,native_writes,packed_writes
+filebench_native,filebench_varmail_like,native,767.113,2.304746,,,,,,
+filebench_predictor,filebench_varmail_like,predictive_cold_segments,1761.485,1.003699,3,0,3,3,11,696
+hotcold_native,oracle_hotcold_mix,native,728.792,4.458065,,,,,,
+hotcold_oracle,oracle_hotcold_mix,oracle_cold_segments,4929.305,0.659119,,,,,237,450
+hotcold_predictor,oracle_hotcold_mix,predictive_cold_segments,2263.333,1.435493,54,53,1,5,241,500
+hotdirs_native,hotdirs_zipf,native,2356.671,0.636491,,,,,,
+hotdirs_predictor,hotdirs_zipf,predictive_cold_segments,9786.156,0.153278,0,0,0,0,0,500
+mdtest_native,mdtest_tree,native,2433.196,0.821964,,,,,,
+mdtest_predictor,mdtest_tree,predictive_cold_segments,6499.983,0.307693,0,0,0,0,0,500

@@ -1,0 +1,45 @@
+# node3
+node3.ceph.cs2640.emulab.net
+Wed Apr 29 11:59:25 MDT 2026
+
+## containers
+CONTAINER ID  IMAGE                                COMMAND     CREATED       STATUS           PORTS       NAMES
+312d3a369917  quay.io/ceph/daemon:latest-nautilus  osd         10 hours ago  Up 10 hours ago              cs2640-ceph-osd
+f573ec95f57b  quay.io/ceph/daemon:latest-nautilus  mds         10 hours ago  Up 10 hours ago              cs2640-ceph-mds
+
+## storage
+NAME    MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
+sda       8:0    0 136.7G  0 disk 
+├─sda1    8:1    0   256M  0 part /boot/efi
+├─sda2    8:2    0     1M  0 part 
+├─sda3    8:3    0    64G  0 part /var/lib/containers/storage/overlay
+│                                 /
+└─sda99 259:0    0     8G  0 part [SWAP]
+sdb       8:16   0 136.7G  0 disk /opt/cs2640-ceph/lib/osd
+sr0      11:0    1  1024M  0 rom  
+
+## fstab
+# /etc/fstab: static file system information.
+#
+# Use 'blkid' to print the universally unique identifier for a
+# device; this may be used with UUID= as a more robust way to name devices
+# that works even if disks are added and removed. See fstab(5).
+#
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+# / was on /dev/sda3 during curtin installation
+/dev/disk/by-uuid/571337a8-0ea6-44bd-9cfc-6cb9719427c1 / ext3 defaults 0 1
+# /boot/efi was on /dev/sda1 during curtin installation
+/dev/disk/by-partlabel/EFI\x20System /boot/efi vfat defaults 0 1
+# the following swap devices added by /etc/systemd/system-generators/systemd-fstab-generator
+UUID=af74061e-4097-417d-aa0a-ed7997194d31		swap	swap	defaults	0	0
+UUID=ede8c373-c6d8-4226-adba-065e9fe20186 /opt/cs2640-ceph/lib/osd xfs defaults,nofail 0 2
+
+## ceph artifacts
+ceph.bootstrap-mds.keyring 107 bytes
+ceph.bootstrap-mgr.keyring 107 bytes
+ceph.bootstrap-osd.keyring 107 bytes
+ceph.client.admin.keyring 151 bytes
+ceph.conf 455 bytes
+ceph.mon.keyring 549 bytes
+fsid 37 bytes
+monmap 340 bytes

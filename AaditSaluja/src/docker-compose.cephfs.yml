@@ -1,0 +1,78 @@
+services:
+  mon:
+    image: quay.io/ceph/daemon:latest-nautilus
+    platform: linux/amd64
+    container_name: cs2640-ceph-mon
+    command: mon
+    environment:
+      MON_IP: 172.28.0.10
+      CEPH_PUBLIC_NETWORK: 172.28.0.0/16
+    volumes:
+      - ./src/runtime/ceph/etc:/etc/ceph
+      - ./src/runtime/ceph/lib:/var/lib/ceph
+    networks:
+      ceph:
+        ipv4_address: 172.28.0.10
+
+  mgr:
+    image: quay.io/ceph/daemon:latest-nautilus
+    platform: linux/amd64
+    container_name: cs2640-ceph-mgr
+    command: mgr
+    depends_on:
+      - mon
+    volumes:
+      - ./src/runtime/ceph/etc:/etc/ceph
+      - ./src/runtime/ceph/lib:/var/lib/ceph
+    networks:
+      ceph:
+        ipv4_address: 172.28.0.11
+
+  osd:
+    image: quay.io/ceph/daemon:latest-nautilus
+    platform: linux/amd64
+    container_name: cs2640-ceph-osd
+    command: osd
+    depends_on:
+      - mgr
+    privileged: true
+    pid: host
+    environment:
+      OSD_TYPE: directory
+      OSD_DIRECTORY: /var/lib/ceph/osd
+      OSD_FORCE_ZAP: "1"
+    volumes:
+      - ./src/runtime/ceph/etc:/etc/ceph
+      - ./src/runtime/ceph/lib:/var/lib/ceph
+      - /dev:/dev
+    networks:
+      ceph:
+        ipv4_address: 172.28.0.12
+
+  mds:
+    image: quay.io/ceph/daemon:latest-nautilus
+    platform: linux/amd64
+    container_name: cs2640-ceph-mds
+    command: mds
+    depends_on:
+      - osd
+    environment:
+      CEPHFS_CREATE: "1"
+      CEPHFS_NAME: cephfs
+      CEPHFS_DATA_POOL_PG: "8"
+      CEPHFS_METADATA_POOL_PG: "8"
+      MDS_NAME: mds-local
+    volumes:
+      - ./src/runtime/ceph/etc:/etc/ceph
+      - ./src/runtime/ceph/lib:/var/lib/ceph
+    networks:
+      ceph:
+        ipv4_address: 172.28.0.13
+
+networks:
+  ceph:
+    name: cs2640-ceph-net
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

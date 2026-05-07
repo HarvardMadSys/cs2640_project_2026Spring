@@ -1,0 +1,38 @@
+\documentclass[tikz,border=4pt]{standalone}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\begin{document}
+\begin{tikzpicture}
+\begin{axis}[
+  title={Direct upstream benchmark throughput},
+  width=7.2in,
+  height=3.7in,
+  ybar,
+  bar width=7pt,
+  enlarge x limits=0.10,
+  ylabel={Mean ops/s (log scale)},
+  ymin=201.389,
+  ymax=54899.5,
+  ymode=log,
+  xtick={0,1,2,3,4,5},
+  xticklabels={mdtest 3k,mdtest 10k,Filebench fileserver,Filebench varmail,IOR 16 MiB,IOR 512 MiB},
+  x tick label style={rotate=30,anchor=east,font=\scriptsize},
+  ymajorgrids=true,
+  grid style={draw=gray!20},
+  legend style={at={(0.5,-0.30)},anchor=north,legend columns=2,font=\scriptsize,draw=none},
+  error bars/y dir=both,
+  error bars/y explicit,
+]
+\addplot+[fill=blue!65!black,draw=black!55,bar shift=0.0pt]
+coordinates {
+  (0,2252.49) +- (0,180.698)
+  (1,2046.26) +- (0,80.5155)
+  (2,458.575) +- (0,58.7304)
+  (3,343.904) +- (0,34.0745)
+  (4,29284.5) +- (0,1215.17)
+  (5,23389.3) +- (0,587.984)
+};
+\addlegendentry{Upstream benchmark}
+\end{axis}
+\end{tikzpicture}
+\end{document}

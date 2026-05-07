@@ -1,0 +1,7 @@
+=== CourtListener Trace Collection Summary ===
+  docket  : 200=5000 404= 609 403=   0 429=   0 other=   3 total=5612 success= 89.1% [PASS]
+  opinion : 200=5000 404=1993 403=   0 429=   0 other=   2 total=6995 success= 71.5% [PASS]
+  cluster : 200=5000 404= 836 403=   0 429=   0 other=   3 total=5839 success= 85.6% [PASS]
+  court   : 200=5000 404=   0 403=   0 429=   0 other=   1 total=5001 success=100.0% [PASS]
+
+Target rows: 20000   Achieved: 20000   Runtime: 8h 56m

@@ -1,0 +1,105 @@
+\usepackage{hyperref}      % (don’t load twice)
+\usepackage{xurl}          % allow breaks at many characters
+
+\usepackage[dvipsnames]{xcolor}
+\definecolor{DarkLink}{HTML}{0A58CA}
+
+% hyperref is already loaded by the class
+\hypersetup{
+  colorlinks=true,
+  linkcolor=DarkLink,
+  citecolor=DarkLink,
+  urlcolor=DarkLink,
+  breaklinks=true
+}
+
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{bm}
+\usepackage{xcolor}
+\usepackage{color}
+\usepackage{xspace}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{svg}
+\usepackage{booktabs}
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+\usepackage{enumitem}
+\usepackage{todonotes}
+
+
+\usepackage[normalem]{ulem}
+% \usepackage[normalem]{ulem} % strikethrough
+% \usepackage{sidecap}
+\usepackage{multirow}
+\usepackage[font=small,labelfont=bf]{caption}
+
+\usepackage{siunitx}        % new, for nicer aligning of numbers in table
+\usepackage{etoolbox}       % new, for making command \bfseries robust
+\usepackage{booktabs}
+\usepackage{cleveref}
+\usepackage{bbm}         % for mathbbm
+
+
+\renewcommand{\sectionautorefname}{Section}
+\renewcommand{\subsectionautorefname}{Subsection}
+\renewcommand{\subsubsectionautorefname}{Subsection}
+\renewcommand{\chapterautorefname}{Chapter}
+\renewcommand{\figureautorefname}{Figure}
+\renewcommand{\tableautorefname}{Table}
+\renewcommand{\equationautorefname}{Equation}
+\renewcommand{\algorithmautorefname}{Algorithm}
+
+
+% % Spacing
+\usepackage{titlesec}
+\titlespacing\section{0pt}{6pt}{2pt}
+\titlespacing\subsection{0pt}{4pt}{2pt}
+\titlespacing\subsubsection{0pt}{4pt}{2pt}
+\titlespacing\paragraph{0pt}{4pt}{4pt}
+
+% Make all lists tighter
+\setlist{nosep}                    % = noitemsep + topsep=0pt
+\setlist[itemize]{leftmargin=*}    % no extra left indent (align with text)
+% \setlist{topsep=0pt, leftmargin=*}
+% Optional fine-tuning:
+% \setlist{itemsep=0.2ex, topsep=0.5ex, parsep=0pt, partopsep=0pt}
+
+\def\Snospace~{\S{}}
+\renewcommand*\sectionautorefname{\Snospace}
+% \renewcommand\figurename{Fig.}
+\renewcommand*\figureautorefname{Figure}
+\renewcommand*\subsectionautorefname{\Snospace}
+\renewcommand*\subsubsectionautorefname{\Snospace}
+% \newcommand{\ie}{\emph{i.e.},\xspace}
+% \newcommand{\eg}{\emph{e.g.},\xspace}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+\definecolor{darkgreen}{rgb}{0.0, 0.5, 0.0}
+
+\newcommand{\sysname}{\textit{Adaptive-Marginal-Hits}\xspace}
+\newcommand{\deploymentname}{\textit{CompanyX}\xspace}
+\newcommand{\ta}{\textsc{Tail-Age\xspace}}
+\newcommand{\erate}{\textsc{Eviction-Rate\xspace}}
+\newcommand{\hps}{\textsc{Hits-Per-Slab\xspace}}
+\newcommand{\mh}{\textsc{Marginal-Hits\xspace}}
+
+
+\newcommand{\jason}[1]{{\color{orange}{jason: #1}}}
+\newcommand{\jadd}[1]{\color{orange}{#1}}
+\newcommand{\jrem}[1]{\sout{#1}}
+\newcommand{\yazhuo}[1]{{\color{magenta}{yazhuo: #1}}}
+\newcommand{\hongshu}[1]{{\color{teal}{hongshu:#1}}}
+\newcommand{\yunjia}[1]{{\color{darkgreen}{yunjia:#1}}}
+\newcommand{\fixme}[1]{{\color{red}{FIXME:#1}}}
+\newcommand{\ana}[1]{{\color{blue}{ana: #1}}}
+\newcommand{\pranav}[1]{{\color{purple}{pranav: #1}}}
+\newcommand{\william}[1]{{\color{teal}{william: #1}}}
+
+\newcommand{\mypar}[1]{\textbf{{#1}}}
+
+% \renewcommand{\jason}[1]{}
+% \renewcommand{\jadd}[1]{}
+% \renewcommand{\jrem}[1]{}
+% \renewcommand{\yunjia}[1]{}
+% \renewcommand{\fixme}[1]{}

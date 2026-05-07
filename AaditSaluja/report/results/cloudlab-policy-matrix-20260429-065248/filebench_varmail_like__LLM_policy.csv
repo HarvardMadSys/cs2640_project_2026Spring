@@ -1,0 +1,4 @@
+phase,operation,count,total_seconds,ops_per_sec,latency_mean_ms,latency_p50_ms,latency_p95_ms,latency_p99_ms,run_id,backend,workers,policy,storage
+filebench_varmail_like,initial_create,600,3.015551,198.969,5.016887,4.768356,5.963909,7.295777,20260429-071520-9cad4360,posix,4,LLM_policy,native
+filebench_varmail_like,mixed_mail_ops,2400,62.800916,38.216,26.155235,4.58337,117.670751,200.569356,20260429-071520-9cad4360,posix,4,LLM_policy,native
+filebench_varmail_like,cleanup_delete,1246,56.727124,21.965,45.517902,5.987287,148.736488,213.915392,20260429-071520-9cad4360,posix,4,LLM_policy,native

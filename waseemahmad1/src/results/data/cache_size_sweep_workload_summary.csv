@@ -1,0 +1,2 @@
+workload,n_seeds,total_accesses_mean,unique_blocks_mean,unique_blocks_std,reuse_ratio_mean,reuse_ratio_std,avg_accesses_per_unique_block_mean
+long_context,15,4000.0,1083.9333333333334,2.1201976547572388,0.7290166666666665,0.0005300494136893073,3.6902770434496266

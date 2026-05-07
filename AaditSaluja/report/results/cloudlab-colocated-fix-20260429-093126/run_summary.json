@@ -1,0 +1,29 @@
+{
+  "label": "20260429-093126",
+  "runs": [
+    {
+      "case": "default",
+      "returncode": 0,
+      "seconds": 23.716,
+      "json": "/users/aadits/FinalProj/results/cloudlab-colocated-fix-20260429-093126/default.json"
+    },
+    {
+      "case": "prepin_hot_rank0",
+      "returncode": 0,
+      "seconds": 62.8,
+      "json": "/users/aadits/FinalProj/results/cloudlab-colocated-fix-20260429-093126/prepin_hot_rank0.json"
+    },
+    {
+      "case": "colocate_rank0",
+      "returncode": 0,
+      "seconds": 74.439,
+      "json": "/users/aadits/FinalProj/results/cloudlab-colocated-fix-20260429-093126/colocate_rank0.json"
+    },
+    {
+      "case": "colocate_rank1",
+      "returncode": 0,
+      "seconds": 57.424,
+      "json": "/users/aadits/FinalProj/results/cloudlab-colocated-fix-20260429-093126/colocate_rank1.json"
+    }
+  ]
+}

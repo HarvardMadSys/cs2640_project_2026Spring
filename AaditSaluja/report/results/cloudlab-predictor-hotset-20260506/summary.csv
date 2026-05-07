@@ -1,0 +1,5 @@
+case,workload,storage,ops_per_sec,seconds,promotions,hot_promotions,cold_promotions,predicted_hot_dirs,native_writes,packed_writes
+hotset_e16_d3,oracle_hotcold_mix,predictive_cold_segments,179.45,28.977501,81,81,0,4,381,800
+hotset_e4_d2,oracle_hotcold_mix,predictive_cold_segments,2159.785,2.407648,90,82,8,10,390,800
+hotset_e8_d2,oracle_hotcold_mix,predictive_cold_segments,2309.622,2.251451,84,84,0,4,384,800
+hotset_e8_d3,oracle_hotcold_mix,predictive_cold_segments,2666.638,1.950021,81,81,0,4,381,800

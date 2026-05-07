@@ -1,0 +1,4 @@
+phase,operation,count,total_seconds,ops_per_sec,latency_mean_ms,latency_p50_ms,latency_p95_ms,latency_p99_ms,run_id,backend,workers,policy,storage
+hotdirs_zipf,skewed_create,1800,10.058415,178.955,21.503823,15.719643,27.855427,210.630365,20260429-070046-63d792ff,posix,4,static,native
+hotdirs_zipf,skewed_stat,1800,5.391106,333.883,11.806198,8.851743,15.658258,100.565597,20260429-070046-63d792ff,posix,4,static,native
+hotdirs_zipf,skewed_delete,1800,114.73327,15.689,252.149751,246.48096,508.533528,602.395461,20260429-070046-63d792ff,posix,4,static,native

@@ -1,0 +1,80 @@
+# Build artifacts
+build/
+cache_sim
+*.o
+*.d
+*.slo
+*.lo
+*.obj
+*.gch
+*.pch
+*.ilk
+*.pdb
+*.so
+*.dylib
+*.dll
+*.lai
+*.la
+*.a
+*.lib
+*.exe
+*.out
+*.app
+*.dwo
+*.mod
+*.smod
+
+# Trace data (large files, collected per-user)
+# NOTE: use traces/* (not traces/) so specific files can be re-included below per D-15
+traces/*
+
+# Simulation outputs (regenerable)
+# NOTE: use results/** (not results/) so specific files can be re-included below per D-15
+results/**
+
+# Phase 3 (D-15): committed trace + collection report
+!traces/court_trace.csv
+!traces/court_pilot.csv
+# Phase 6 (D-19): committed ~5K-request demo trace slice
+!traces/demo_trace.csv
+!results/court/
+!results/court/collection_report.txt
+!results/court/pilot_report.txt
+
+# Python venv
+.venv/
+.venv13/
+
+# Python bytecode caches
+__pycache__/
+*.pyc
+
+# LaTeX build artifacts
+*.aux
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+progress.log
+texput.log
+
+# docs/ — local-only, backed up outside repo
+docs/
+
+# Secrets
+.env
+
+# OS files
+.DS_Store
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+v7.tex
+
+# Local working docs
+/PROCESS.md
+/progress.tex
+/progress.pdf

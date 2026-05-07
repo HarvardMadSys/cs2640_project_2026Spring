@@ -1,0 +1,228 @@
+{
+  "args": {
+    "backend": "posix",
+    "branching": 32,
+    "conffile": "/etc/ceph/ceph.conf",
+    "csv": "/users/aadits/FinalProj/results/cloudlab-sharded-storage-20260429-083822/sprite_lfs_smallfile__sharded_hash8.csv",
+    "depth": 1,
+    "dirs": 64,
+    "file_count": 5000,
+    "file_size": 1024,
+    "hot_min_interval": 32,
+    "hot_threshold": 64,
+    "hot_window": 128,
+    "keep_data": true,
+    "no_ceph_stats": false,
+    "ops": 1000,
+    "output": "/users/aadits/FinalProj/results/cloudlab-sharded-storage-20260429-083822/sprite_lfs_smallfile__sharded_hash8.json",
+    "pin_ranks": [
+      0,
+      1
+    ],
+    "policy": "none",
+    "policy_file": null,
+    "policy_opt": [],
+    "root": "/mnt/cephfs/cs2640-bench/sharded-storage-20260429-083822",
+    "seed": 1,
+    "segment_size": 67108864,
+    "storage": "sharded_segments",
+    "storage_file": null,
+    "storage_opt": [
+      "shard_mode=hash",
+      "shard_count=8"
+    ],
+    "suite": "custom",
+    "workers": 8,
+    "workload": "sprite_lfs_smallfile"
+  },
+  "backend": "posix",
+  "ceph_stats": {
+    "after": {
+      "available": true,
+      "df": {
+        "pools": [
+          {
+            "id": 1,
+            "name": "cephfs_data",
+            "stats": {
+              "bytes_used": 13866958848,
+              "kb_used": 13541952,
+              "max_avail": 95957286912,
+              "objects": 70089,
+              "percent_used": 0.04595682770013809,
+              "stored": 88754936
+            }
+          },
+          {
+            "id": 2,
+            "name": "cephfs_metadata",
+            "stats": {
+              "bytes_used": 1049886720,
+              "kb_used": 1025280,
+              "max_avail": 95957286912,
+              "objects": 330,
+              "percent_used": 0.0036338099744170904,
+              "stored": 349015328
+            }
+          }
+        ],
+        "stats": {
+          "num_osds": 3,
+          "num_per_pool_osds": 3,
+          "total_avail_bytes": 303977988096,
+          "total_bytes": 322122547200,
+          "total_used_bytes": 14923333632,
+          "total_used_raw_bytes": 18144559104,
+          "total_used_raw_ratio": 0.056328125298023224
+        },
+        "stats_by_class": {
+          "hdd": {
+            "total_avail_bytes": 303977988096,
+            "total_bytes": 322122547200,
+            "total_used_bytes": 14923333632,
+            "total_used_raw_bytes": 18144559104,
+            "total_used_raw_ratio": 0.056328125298023224
+          }
+        }
+      },
+      "fs_status": {
+        "error": "Expecting value: line 2 column 1 (char 1)"
+      }
+    },
+    "before": {
+      "available": true,
+      "df": {
+        "pools": [
+          {
+            "id": 1,
+            "name": "cephfs_data",
+            "stats": {
+              "bytes_used": 13844545536,
+              "kb_used": 13520064,
+              "max_avail": 95963119616,
+              "objects": 70073,
+              "percent_used": 0.04588329419493675,
+              "stored": 81667392
+            }
+          },
+          {
+            "id": 2,
+            "name": "cephfs_metadata",
+            "stats": {
+              "bytes_used": 1054801920,
+              "kb_used": 1030080,
+              "max_avail": 95963119616,
+              "objects": 242,
+              "percent_used": 0.0036505390889942646,
+              "stored": 350666720
+            }
+          }
+        ],
+        "stats": {
+          "num_osds": 3,
+          "num_per_pool_osds": 3,
+          "total_avail_bytes": 303995486208,
+          "total_bytes": 322122547200,
+          "total_used_bytes": 14905835520,
+          "total_used_raw_bytes": 18127060992,
+          "total_used_raw_ratio": 0.05627380311489105
+        },
+        "stats_by_class": {
+          "hdd": {
+            "total_avail_bytes": 303995486208,
+            "total_bytes": 322122547200,
+            "total_used_bytes": 14905835520,
+            "total_used_raw_bytes": 18127060992,
+            "total_used_raw_ratio": 0.05627380311489105
+          }
+        }
+      },
+      "fs_status": {
+        "error": "Expecting value: line 2 column 1 (char 1)"
+      }
+    },
+    "delta": {
+      "cephfs_data": {
+        "bytes_used": 22413312,
+        "objects": 16,
+        "stored": 7087544
+      },
+      "cephfs_metadata": {
+        "bytes_used": -4915200,
+        "objects": 88,
+        "stored": -1651392
+      }
+    }
+  },
+  "elapsed_seconds": 130.452688,
+  "ended_unix": 1777473914.764017,
+  "host": "node0.ceph.cs2640.emulab.net",
+  "policy_events": [],
+  "results": [
+    {
+      "backend": "posix",
+      "count": 5000,
+      "latency_mean_ms": 152.162286,
+      "latency_p50_ms": 73.172584,
+      "latency_p95_ms": 476.330966,
+      "latency_p99_ms": 1340.635539,
+      "operation": "create",
+      "ops_per_sec": 43.631,
+      "phase": "sprite_lfs_smallfile",
+      "policy": "none",
+      "run_id": "20260429-084302-ea048c3d",
+      "storage": "sharded_segments",
+      "total_seconds": 114.598105,
+      "workers": 8
+    },
+    {
+      "backend": "posix",
+      "count": 5000,
+      "latency_mean_ms": 0.00559,
+      "latency_p50_ms": 0.004676,
+      "latency_p95_ms": 0.005153,
+      "latency_p99_ms": 0.00674,
+      "operation": "stat",
+      "ops_per_sec": 154940.064,
+      "phase": "sprite_lfs_smallfile",
+      "policy": "none",
+      "run_id": "20260429-084302-ea048c3d",
+      "storage": "sharded_segments",
+      "total_seconds": 0.032271,
+      "workers": 8
+    },
+    {
+      "backend": "posix",
+      "count": 5000,
+      "latency_mean_ms": 25.020849,
+      "latency_p50_ms": 23.069988,
+      "latency_p95_ms": 46.29944,
+      "latency_p99_ms": 63.846177,
+      "operation": "read",
+      "ops_per_sec": 316.579,
+      "phase": "sprite_lfs_smallfile",
+      "policy": "none",
+      "run_id": "20260429-084302-ea048c3d",
+      "storage": "sharded_segments",
+      "total_seconds": 15.79384,
+      "workers": 8
+    }
+  ],
+  "root": "/mnt/cephfs/cs2640-bench/sharded-storage-20260429-083822/20260429-084302-ea048c3d",
+  "run_id": "20260429-084302-ea048c3d",
+  "started_unix": 1777473784.3113291,
+  "storage_metrics": {
+    "configured_shard_count": 8,
+    "index_log_bytes": 1967544,
+    "live_bytes": 5120000,
+    "live_records": 5000,
+    "logical_records": 5000,
+    "max_records_per_shard": 667,
+    "min_records_per_shard": 608,
+    "segment_size": 67108864,
+    "segments_created": 8,
+    "shard_mode": "hash",
+    "shards_created": 8,
+    "tombstones": 0
+  }
+}

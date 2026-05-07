@@ -1,0 +1,22 @@
+{
+  "phase": "4",
+  "phase_name": "SHARDS Large-Scale Validation & Ablations",
+  "timestamp": "2026-04-20T00:00:00Z",
+  "areas_completed": ["SHARDS sampling strategy", "Doorkeeper API + integration"],
+  "areas_remaining": ["Ablation CLI + parameterization", "1M trace + output layout"],
+  "decisions": {
+    "SHARDS sampling strategy": [
+      {"question": "Rate-floor handling for 0.01% on 1M trace (below 200-sample PITFALLS M4 gate)", "answer": "Keep 0.01% with flagged caveat (n_samples column; writeup/figure flag 'below paper-recommended 200-sample floor')", "options_presented": ["Keep 0.01% flagged", "Drop 0.01%", "Upsize to 2M"]},
+      {"question": "Self-convergence MAE metric shape", "answer": "10% as reference; three rows MAE(r vs 10%) for r in {0.01%, 0.1%, 1%}", "options_presented": ["10% as reference", "Adjacent pairs", "Full matrix"]},
+      {"question": "Parallel 50K exact-oracle regime (PITFALLS M4 two-regime mitigation)", "answer": "Yes \u2014 run SHARDS + --shards-exact on 50K sub-slice; report 'oracle MAE at 50K' alongside 'self-convergence MAE at 1M'", "options_presented": ["Yes at 50K", "No 1M-only", "Defer to writeup"]}
+    ]
+  },
+  "deferred_ideas": [],
+  "canonical_refs": [
+    ".planning/REQUIREMENTS.md \u00a7SHARDS large-scale validation",
+    ".planning/ROADMAP.md \u00a7Phase 4",
+    ".planning/research/PITFALLS.md \u00a7M4",
+    ".planning/research/STACK.md \u00a7W-TinyLFU / Doorkeeper",
+    ".planning/research/ARCHITECTURE.md"
+  ]
+}

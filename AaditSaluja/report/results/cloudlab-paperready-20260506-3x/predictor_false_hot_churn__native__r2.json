@@ -1,0 +1,323 @@
+{
+  "args": {
+    "backend": "posix",
+    "branching": 8,
+    "conffile": "/etc/ceph/ceph.conf",
+    "csv": "results/cloudlab-paperready-20260506-3x/predictor_false_hot_churn__native__r2.csv",
+    "depth": 2,
+    "dirs": 64,
+    "file_count": 3000,
+    "file_size": 4096,
+    "hot_min_interval": 32,
+    "hot_threshold": 64,
+    "hot_window": 128,
+    "keep_data": false,
+    "no_ceph_stats": false,
+    "ops": 9000,
+    "oracle_cold_access_fraction": 0.1,
+    "oracle_cold_fraction": 0.9,
+    "output": "results/cloudlab-paperready-20260506-3x/predictor_false_hot_churn__native__r2.json",
+    "pin_ranks": [],
+    "policy": "none",
+    "policy_file": null,
+    "policy_opt": [],
+    "root": "/mnt/cephfs/cs2640-bench",
+    "seed": 9102,
+    "segment_size": 67108864,
+    "sim_data_mib_per_sec": 300.0,
+    "sim_file_create_us": 1200.0,
+    "sim_file_read_us": 180.0,
+    "sim_file_write_us": 250.0,
+    "sim_mds_ranks": 1,
+    "sim_metadata_us": 700.0,
+    "sim_object_read_us": 160.0,
+    "sim_object_remove_us": 160.0,
+    "sim_object_write_us": 180.0,
+    "sim_osd_ranks": 1,
+    "sim_stat_us": 250.0,
+    "sim_xattr_us": 800.0,
+    "storage": "native",
+    "storage_file": null,
+    "storage_opt": [],
+    "suite": "custom",
+    "workers": 8,
+    "workload": "predictor_false_hot_churn",
+    "ycsb_distribution": "zipfian",
+    "ycsb_hot_fraction": 0.2,
+    "ycsb_hot_op_fraction": 0.8,
+    "ycsb_update_fraction": 0.2,
+    "ycsb_zipf_alpha": 0.99
+  },
+  "backend": "posix",
+  "ceph_stats": {
+    "after": {
+      "available": true,
+      "df": {
+        "pools": [
+          {
+            "id": 1,
+            "name": "cephfs_data",
+            "stats": {
+              "bytes_used": 550699008,
+              "kb_used": 537792,
+              "max_avail": 100597235712,
+              "objects": 2762,
+              "percent_used": 0.0018214414594694972,
+              "stored": 13020969
+            }
+          },
+          {
+            "id": 2,
+            "name": "cephfs_metadata",
+            "stats": {
+              "bytes_used": 335740928,
+              "kb_used": 327872,
+              "max_avail": 100597235712,
+              "objects": 420,
+              "percent_used": 0.0011112559586763382,
+              "stored": 110973896
+            }
+          }
+        ],
+        "stats": {
+          "num_osds": 3,
+          "num_per_pool_osds": 3,
+          "total_avail_bytes": 317979951104,
+          "total_bytes": 322122547200,
+          "total_used_bytes": 921370624,
+          "total_used_raw_bytes": 4142596096,
+          "total_used_raw_ratio": 0.012860311195254326
+        },
+        "stats_by_class": {
+          "hdd": {
+            "total_avail_bytes": 317979951104,
+            "total_bytes": 322122547200,
+            "total_used_bytes": 921370624,
+            "total_used_raw_bytes": 4142596096,
+            "total_used_raw_ratio": 0.012860311195254326
+          }
+        }
+      },
+      "fs_status": {
+        "error": "Expecting value: line 2 column 1 (char 1)"
+      }
+    },
+    "before": {
+      "available": true,
+      "df": {
+        "pools": [
+          {
+            "id": 1,
+            "name": "cephfs_data",
+            "stats": {
+              "bytes_used": 394199040,
+              "kb_used": 384960,
+              "max_avail": 100708646912,
+              "objects": 2006,
+              "percent_used": 0.0013030505506321788,
+              "stored": 9760553
+            }
+          },
+          {
+            "id": 2,
+            "name": "cephfs_metadata",
+            "stats": {
+              "bytes_used": 250085376,
+              "kb_used": 244224,
+              "max_avail": 100708646912,
+              "objects": 413,
+              "percent_used": 0.0008270674734376371,
+              "stored": 82508824
+            }
+          }
+        ],
+        "stats": {
+          "num_osds": 3,
+          "num_per_pool_osds": 3,
+          "total_avail_bytes": 318243864576,
+          "total_bytes": 322122547200,
+          "total_used_bytes": 657457152,
+          "total_used_raw_bytes": 3878682624,
+          "total_used_raw_ratio": 0.012041015550494194
+        },
+        "stats_by_class": {
+          "hdd": {
+            "total_avail_bytes": 318243864576,
+            "total_bytes": 322122547200,
+            "total_used_bytes": 657457152,
+            "total_used_raw_bytes": 3878682624,
+            "total_used_raw_ratio": 0.012041015550494194
+          }
+        }
+      },
+      "fs_status": {
+        "error": "Expecting value: line 2 column 1 (char 1)"
+      }
+    },
+    "delta": {
+      "cephfs_data": {
+        "bytes_used": 156499968,
+        "objects": 756,
+        "stored": 3260416
+      },
+      "cephfs_metadata": {
+        "bytes_used": 85655552,
+        "objects": 7,
+        "stored": 28465072
+      }
+    }
+  },
+  "derived_metrics": {
+    "ceph_delta_cephfs_data_bytes_used": 156499968,
+    "ceph_delta_cephfs_data_bytes_used_per_logical_create": 13041.664,
+    "ceph_delta_cephfs_data_objects": 756,
+    "ceph_delta_cephfs_data_objects_per_logical_create": 0.063,
+    "ceph_delta_cephfs_data_stored": 3260416,
+    "ceph_delta_cephfs_data_stored_per_logical_create": 271.701333,
+    "ceph_delta_cephfs_metadata_bytes_used": 85655552,
+    "ceph_delta_cephfs_metadata_bytes_used_per_logical_create": 7137.962667,
+    "ceph_delta_cephfs_metadata_objects": 7,
+    "ceph_delta_cephfs_metadata_objects_per_logical_create": 0.000583,
+    "ceph_delta_cephfs_metadata_stored": 28465072,
+    "ceph_delta_cephfs_metadata_stored_per_logical_create": 2372.089333,
+    "index_bytes": 0,
+    "index_bytes_per_packed_record": 0.0,
+    "index_files_estimate": 0,
+    "logical_create_operations": 12000,
+    "logical_creates_per_physical_file": 1.0,
+    "logical_delete_operations": 12000,
+    "materialized_directories_estimate": 65,
+    "namespace_entries_per_logical_create": 1.005417,
+    "packed_create_fraction": 0.0,
+    "packed_records": 0,
+    "physical_files_created_estimate": 12000,
+    "physical_namespace_entries_estimate": 12065,
+    "rados_objects_created": 0,
+    "segments_created": 0
+  },
+  "elapsed_seconds": 165.161272,
+  "ended_unix": 1778116464.1497934,
+  "host": "node0.aadit.cs2640-pg0.cloudlab.umass.edu",
+  "measured_operations": 24480,
+  "measured_ops_per_sec": 150.011057,
+  "measured_seconds": 163.187971,
+  "policy_events": [],
+  "results": [
+    {
+      "backend": "posix",
+      "count": 3000,
+      "dirs": 64,
+      "file_count": 3000,
+      "file_size": 4096,
+      "latency_mean_ms": 69.583384,
+      "latency_p50_ms": 2.578608,
+      "latency_p95_ms": 6.592938,
+      "latency_p99_ms": 269.724587,
+      "operation": "false_hot_probe_create",
+      "ops": 9000,
+      "ops_per_sec": 93.63,
+      "oracle_cold_access_fraction": 0.1,
+      "oracle_cold_fraction": 0.9,
+      "phase": "predictor_false_hot_churn",
+      "policy": "none",
+      "run_id": "20260506-191138-b3d6ff30",
+      "seed": 9102,
+      "storage": "native",
+      "total_seconds": 32.041066,
+      "workers": 8,
+      "ycsb_distribution": "zipfian",
+      "ycsb_hot_fraction": 0.2,
+      "ycsb_hot_op_fraction": 0.8,
+      "ycsb_update_fraction": 0.2,
+      "ycsb_zipf_alpha": 0.99
+    },
+    {
+      "backend": "posix",
+      "count": 480,
+      "dirs": 64,
+      "file_count": 3000,
+      "file_size": 4096,
+      "latency_mean_ms": 2.1434,
+      "latency_p50_ms": 1.68092,
+      "latency_p95_ms": 3.290985,
+      "latency_p99_ms": 14.867875,
+      "operation": "false_hot_probe_read",
+      "ops": 9000,
+      "ops_per_sec": 3235.372,
+      "oracle_cold_access_fraction": 0.1,
+      "oracle_cold_fraction": 0.9,
+      "phase": "predictor_false_hot_churn",
+      "policy": "none",
+      "run_id": "20260506-191138-b3d6ff30",
+      "seed": 9102,
+      "storage": "native",
+      "total_seconds": 0.14836,
+      "workers": 8,
+      "ycsb_distribution": "zipfian",
+      "ycsb_hot_fraction": 0.2,
+      "ycsb_hot_op_fraction": 0.8,
+      "ycsb_update_fraction": 0.2,
+      "ycsb_zipf_alpha": 0.99
+    },
+    {
+      "backend": "posix",
+      "count": 9000,
+      "dirs": 64,
+      "file_count": 3000,
+      "file_size": 4096,
+      "latency_mean_ms": 70.40896,
+      "latency_p50_ms": 17.306826,
+      "latency_p95_ms": 277.096473,
+      "latency_p99_ms": 338.783636,
+      "operation": "false_hot_churn_create",
+      "ops": 9000,
+      "ops_per_sec": 102.512,
+      "oracle_cold_access_fraction": 0.1,
+      "oracle_cold_fraction": 0.9,
+      "phase": "predictor_false_hot_churn",
+      "policy": "none",
+      "run_id": "20260506-191138-b3d6ff30",
+      "seed": 9102,
+      "storage": "native",
+      "total_seconds": 87.794458,
+      "workers": 8,
+      "ycsb_distribution": "zipfian",
+      "ycsb_hot_fraction": 0.2,
+      "ycsb_hot_op_fraction": 0.8,
+      "ycsb_update_fraction": 0.2,
+      "ycsb_zipf_alpha": 0.99
+    },
+    {
+      "backend": "posix",
+      "count": 12000,
+      "dirs": 64,
+      "file_count": 3000,
+      "file_size": 4096,
+      "latency_mean_ms": 26.521656,
+      "latency_p50_ms": 15.069693,
+      "latency_p95_ms": 110.136211,
+      "latency_p99_ms": 154.115863,
+      "operation": "cleanup_delete",
+      "ops": 9000,
+      "ops_per_sec": 277.751,
+      "oracle_cold_access_fraction": 0.1,
+      "oracle_cold_fraction": 0.9,
+      "phase": "predictor_false_hot_churn",
+      "policy": "none",
+      "run_id": "20260506-191138-b3d6ff30",
+      "seed": 9102,
+      "storage": "native",
+      "total_seconds": 43.204088,
+      "workers": 8,
+      "ycsb_distribution": "zipfian",
+      "ycsb_hot_fraction": 0.2,
+      "ycsb_hot_op_fraction": 0.8,
+      "ycsb_update_fraction": 0.2,
+      "ycsb_zipf_alpha": 0.99
+    }
+  ],
+  "root": "/mnt/cephfs/cs2640-bench/20260506-191138-b3d6ff30",
+  "run_id": "20260506-191138-b3d6ff30",
+  "started_unix": 1778116298.9885216,
+  "storage_metrics": {}
+}

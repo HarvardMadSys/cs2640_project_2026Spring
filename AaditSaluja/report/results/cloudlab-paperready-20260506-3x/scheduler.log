@@ -1,0 +1,120 @@
+Output directory: results/cloudlab-paperready-20260506-3x
+Total jobs: 63
+Randomized job order: results/cloudlab-paperready-20260506-3x/jobs_shuffled.tsv
+Started: 2026-05-06T15:55:16-06:00
+START direct_mdtest_10k__external__r0 2026-05-06T15:55:16-06:00
+DONE direct_mdtest_10k__external__r0
+START direct_ior__external__r1 2026-05-06T15:57:05-06:00
+DONE direct_ior__external__r1
+START ycsb_hotspot_file_skew__native__r0 2026-05-06T15:57:15-06:00
+DONE ycsb_hotspot_file_skew__native__r0
+START direct_ior__external__r0 2026-05-06T15:58:21-06:00
+DONE direct_ior__external__r0
+START recreated_mdtest_tree__predictor__r1 2026-05-06T15:58:31-06:00
+DONE recreated_mdtest_tree__predictor__r1
+START direct_mdtest_10k__external__r2 2026-05-06T15:58:42-06:00
+DONE direct_mdtest_10k__external__r2
+SKIP ycsb_zipfian_file_skew__predictor__r0
+SKIP direct_mdtest__external__r1
+START ycsb_hotspot_file_skew__predictor__r1 2026-05-06T16:00:33-06:00
+DONE ycsb_hotspot_file_skew__predictor__r1
+START ycsb_zipfian_file_skew__predictor__r1 2026-05-06T16:01:08-06:00
+DONE ycsb_zipfian_file_skew__predictor__r1
+SKIP direct_ior__external__r2
+SKIP ycsb_hotspot_file_skew__oracle__r0
+START recreated_filebench_varmail_like__predictor__r1 2026-05-06T16:02:08-06:00
+DONE recreated_filebench_varmail_like__predictor__r1
+START direct_filebench_varmail__external__r2 2026-05-06T16:03:02-06:00
+DONE direct_filebench_varmail__external__r2
+START hotcold_cold90_access10__predictor__r1 2026-05-06T16:04:34-06:00
+DONE hotcold_cold90_access10__predictor__r1
+START ycsb_hotspot_file_skew__oracle__r2 2026-05-06T16:05:00-06:00
+DONE ycsb_hotspot_file_skew__oracle__r2
+START direct_filebench_varmail__external__r1 2026-05-06T16:05:43-06:00
+DONE direct_filebench_varmail__external__r1
+SKIP recreated_mdtest_tree__predictor__r2
+START ycsb_zipfian_file_skew__native__r1 2026-05-06T16:07:22-06:00
+DONE ycsb_zipfian_file_skew__native__r1
+SKIP recreated_filebench_varmail_like__predictor__r2
+START recreated_mdtest_tree__native__r0 2026-05-06T16:08:39-06:00
+DONE recreated_mdtest_tree__native__r0
+START direct_ior_512m__external__r0 2026-05-06T16:09:19-06:00
+DONE direct_ior_512m__external__r0
+START direct_ior_512m__external__r2 2026-05-06T16:09:44-06:00
+DONE direct_ior_512m__external__r2
+START direct_filebench_fileserver__external__r2 2026-05-06T16:10:10-06:00
+DONE direct_filebench_fileserver__external__r2
+START direct_mdtest_10k__external__r1 2026-05-06T16:11:51-06:00
+DONE direct_mdtest_10k__external__r1
+START recreated_mdtest_tree__native__r2 2026-05-06T16:13:25-06:00
+DONE recreated_mdtest_tree__native__r2
+START recreated_filebench_varmail_like__native__r2 2026-05-06T16:14:04-06:00
+DONE recreated_filebench_varmail_like__native__r2
+START direct_filebench_varmail__external__r0 2026-05-06T16:16:50-06:00
+DONE direct_filebench_varmail__external__r0
+START direct_mdtest__external__r0 2026-05-06T16:18:19-06:00
+DONE direct_mdtest__external__r0
+SKIP ycsb_zipfian_file_skew__native__r2
+SKIP recreated_filebench_varmail_like__predictor__r0
+START hotcold_cold90_access10__oracle__r0 2026-05-06T16:19:02-06:00
+DONE hotcold_cold90_access10__oracle__r0
+START direct_ior_512m__external__r1 2026-05-06T16:19:30-06:00
+DONE direct_ior_512m__external__r1
+START hotcold_cold90_access10__predictor__r0 2026-05-06T16:19:56-06:00
+DONE hotcold_cold90_access10__predictor__r0
+SKIP recreated_filebench_varmail_like__native__r0
+START recreated_mdtest_tree__oracle__r2 2026-05-06T16:20:34-06:00
+DONE recreated_mdtest_tree__oracle__r2
+START hotcold_cold90_access10__native__r2 2026-05-06T16:20:44-06:00
+DONE hotcold_cold90_access10__native__r2
+START recreated_mdtest_tree__oracle__r0 2026-05-06T16:22:00-06:00
+DONE recreated_mdtest_tree__oracle__r0
+START recreated_mdtest_tree__oracle__r1 2026-05-06T16:22:10-06:00
+DONE recreated_mdtest_tree__oracle__r1
+START ycsb_zipfian_file_skew__native__r0 2026-05-06T16:22:21-06:00
+DONE ycsb_zipfian_file_skew__native__r0
+SKIP ycsb_hotspot_file_skew__native__r1
+START hotcold_cold90_access10__native__r1 2026-05-06T16:23:32-06:00
+DONE hotcold_cold90_access10__native__r1
+START ycsb_zipfian_file_skew__predictor__r2 2026-05-06T16:24:51-06:00
+DONE ycsb_zipfian_file_skew__predictor__r2
+START ycsb_hotspot_file_skew__native__r2 2026-05-06T16:25:34-06:00
+DONE ycsb_hotspot_file_skew__native__r2
+START recreated_filebench_varmail_like__oracle__r1 2026-05-06T16:26:45-06:00
+DONE recreated_filebench_varmail_like__oracle__r1
+START ycsb_zipfian_file_skew__oracle__r1 2026-05-06T16:27:08-06:00
+DONE ycsb_zipfian_file_skew__oracle__r1
+SKIP recreated_mdtest_tree__native__r1
+START ycsb_zipfian_file_skew__oracle__r2 2026-05-06T16:28:02-06:00
+DONE ycsb_zipfian_file_skew__oracle__r2
+START ycsb_hotspot_file_skew__predictor__r0 2026-05-06T16:28:43-06:00
+DONE ycsb_hotspot_file_skew__predictor__r0
+START ycsb_zipfian_file_skew__oracle__r0 2026-05-06T16:29:13-06:00
+DONE ycsb_zipfian_file_skew__oracle__r0
+SKIP direct_filebench_fileserver__external__r1
+START recreated_filebench_varmail_like__oracle__r0 2026-05-06T16:30:00-06:00
+DONE recreated_filebench_varmail_like__oracle__r0
+START recreated_filebench_varmail_like__oracle__r2 2026-05-06T16:30:24-06:00
+DONE recreated_filebench_varmail_like__oracle__r2
+START direct_mdtest__external__r2 2026-05-06T16:30:49-06:00
+DONE direct_mdtest__external__r2
+START hotcold_cold90_access10__native__r0 2026-05-06T16:31:18-06:00
+DONE hotcold_cold90_access10__native__r0
+START ycsb_hotspot_file_skew__oracle__r1 2026-05-06T16:32:22-06:00
+DONE ycsb_hotspot_file_skew__oracle__r1
+START ycsb_hotspot_file_skew__predictor__r2 2026-05-06T16:33:02-06:00
+DONE ycsb_hotspot_file_skew__predictor__r2
+START hotcold_cold90_access10__predictor__r2 2026-05-06T16:33:44-06:00
+DONE hotcold_cold90_access10__predictor__r2
+START hotcold_cold90_access10__oracle__r1 2026-05-06T16:34:11-06:00
+DONE hotcold_cold90_access10__oracle__r1
+START hotcold_cold90_access10__oracle__r2 2026-05-06T16:34:49-06:00
+DONE hotcold_cold90_access10__oracle__r2
+START direct_filebench_fileserver__external__r0 2026-05-06T16:35:28-06:00
+DONE direct_filebench_fileserver__external__r0
+START recreated_mdtest_tree__predictor__r0 2026-05-06T16:37:09-06:00
+DONE recreated_mdtest_tree__predictor__r0
+START recreated_filebench_varmail_like__native__r1 2026-05-06T16:37:20-06:00
+DONE recreated_filebench_varmail_like__native__r1
+Finished: 2026-05-06T16:40:21-06:00
+Summary: results/cloudlab-paperready-20260506-3x/summary.md

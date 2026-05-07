@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="680" viewBox="0 0 820 680">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="92" y="38" font-family="Arial" font-size="24" font-weight="700" fill="#222">Oracle workload: overall measured throughput</text>
+<line x1="92" x2="730" y1="560.0" y2="560.0" stroke="#e6e6e6"/>
+<text x="80" y="565.0" font-family="Arial" font-size="13" text-anchor="end" fill="#555">0</text>
+<line x1="92" x2="730" y1="442.5" y2="442.5" stroke="#e6e6e6"/>
+<text x="80" y="447.5" font-family="Arial" font-size="13" text-anchor="end" fill="#555">55</text>
+<line x1="92" x2="730" y1="325.0" y2="325.0" stroke="#e6e6e6"/>
+<text x="80" y="330.0" font-family="Arial" font-size="13" text-anchor="end" fill="#555">110</text>
+<line x1="92" x2="730" y1="207.5" y2="207.5" stroke="#e6e6e6"/>
+<text x="80" y="212.5" font-family="Arial" font-size="13" text-anchor="end" fill="#555">165</text>
+<line x1="92" x2="730" y1="90.0" y2="90.0" stroke="#e6e6e6"/>
+<text x="80" y="95.0" font-family="Arial" font-size="13" text-anchor="end" fill="#555">220</text>
+<line x1="92" x2="92" y1="90" y2="560" stroke="#333"/>
+<line x1="92" x2="730" y1="560" y2="560" stroke="#333"/>
+<text x="26" y="325.0" transform="rotate(-90 26 325.0)" font-family="Arial" font-size="15" fill="#333" text-anchor="middle">Measured ops/sec</text>
+<rect x="137" y="141.1" width="115" height="418.9" rx="8" fill="#2f6fbb"/>
+<text x="194.5" y="133.1" font-family="Arial" font-size="16" font-weight="700" text-anchor="middle" fill="#222">196.1</text>
+<text x="194.5" y="586" font-family="Arial" font-size="15" text-anchor="middle" fill="#222">Native</text>
+<rect x="317" y="132.1" width="115" height="427.9" rx="8" fill="#3aa675"/>
+<text x="374.5" y="124.1" font-family="Arial" font-size="16" font-weight="700" text-anchor="middle" fill="#222">200.3</text>
+<text x="374.5" y="586" font-family="Arial" font-size="15" text-anchor="middle" fill="#222">Hybrid cold-pack</text>
+<rect x="497" y="190.6" width="115" height="369.4" rx="8" fill="#d97b29"/>
+<text x="554.5" y="182.6" font-family="Arial" font-size="16" font-weight="700" text-anchor="middle" fill="#222">172.9</text>
+<text x="554.5" y="586" font-family="Arial" font-size="15" text-anchor="middle" fill="#222">Hybrid + prepin</text>
+</svg>
