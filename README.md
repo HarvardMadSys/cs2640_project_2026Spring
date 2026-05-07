@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # cs2640_project_2026Spring
 
 ## Projects
