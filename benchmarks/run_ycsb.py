@@ -50,7 +50,7 @@ LINE_RE = re.compile(r"(load|run)\s+threads=\d+\s+ops=\d+\s+([\d.]+)\s+Mops/s")
 
 STORE_STYLE = {
     "sas":       {"color": "#1F4E79", "label": "SAS"},
-    "lightning": {"color": "#D98E04", "label": "Lightning"},
+    "lightning": {"color": "#B85450", "label": "Lightning"},
 }
 
 PHASE_LABELS = {"load": "Load", "run": "Run"}
@@ -184,9 +184,8 @@ def plot_threads(threads: int, stores: list[str], workloads: list[str],
         ax.set_xticklabels(labels)
         ax.set_xlabel("Workload")
         ax.set_ylabel("Throughput (M ops/s)")
-        ax.set_title(f"YCSB at {threads} thread{'s' if threads != 1 else ''} "
-                     f"({PHASE_LABELS[phase]})")
-        ax.legend(loc="best")
+        ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0),
+                  ncol=len(stores), frameon=False)
         fig.tight_layout()
         out = out_base.with_name(f"{out_base.stem}_{phase}.png")
         out.parent.mkdir(parents=True, exist_ok=True)
