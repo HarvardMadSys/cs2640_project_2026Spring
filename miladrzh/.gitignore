@@ -1,0 +1,5 @@
+data/
+swe_data/
+__pycache__/
+*.pyc
+config.py
