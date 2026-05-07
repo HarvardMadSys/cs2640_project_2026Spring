@@ -8,7 +8,7 @@
 #include <thread>
 
 #include "arch_workload.h"
-#include "hybrid.h"
+#include "hp_store.h"
 
 namespace {
 
@@ -27,7 +27,7 @@ std::array<std::atomic<int64_t>, sas::bench::ARCH_MAX_WORKERS> g_tlb_counters{};
 } // namespace
 
 extern "C" void entry(int idx) {
-    auto* store = sas::g_store.get();
+    auto* store = sas::hp::g_store.get();
 
     if (idx == 0) {
         g_cfg = sas::bench::load_config();

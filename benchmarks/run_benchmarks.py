@@ -30,8 +30,14 @@ from cycler import cycler
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BUILD_BENCH_DIR = REPO_ROOT / "build" / "benchmarks"
-HOST_BIN = REPO_ROOT / "build" / "host"
+BUILD_DIR = REPO_ROOT / "build"
+HOST_BIN = BUILD_DIR / "host"
 RESULTS_DIR = REPO_ROOT / "results"
+
+
+def host_bin_for(target: str) -> Path:
+    name = TARGETS.get(target, {}).get("host_bin")
+    return BUILD_DIR / name if name else HOST_BIN
 
 DEFAULTS = {
     "num_threads": 16,
@@ -54,7 +60,8 @@ LOG_X_AXES = {"num_keys"}
 SCENARIO_SUFFIXES = ("fill",)
 
 TARGETS: dict[str, dict] = {
-    "bench_sas":   {"pattern": "host_n_copies"},
+    "bench_sas":   {"pattern": "host_n_copies",
+                    "host_bin": "host_hp"},
     "compare_shm": {"pattern": "n_parallel",
                     "shm_path": "/dev/shm/sas_compare_shm"},
 }
@@ -162,7 +169,7 @@ def exec_single(target: str, cfg: dict) -> dict:
 
 def exec_plugin_single(target: str, cfg: dict) -> dict:
     config_text = "\n".join(f"{k}={v}" for k, v in cfg.items()) + "\n"
-    r = subprocess.run([str(HOST_BIN), str(target_path(target))],
+    r = subprocess.run([str(host_bin_for(target)), str(target_path(target))],
                        input=config_text, stdout=subprocess.PIPE,
                        stderr=subprocess.DEVNULL, text=True, check=True)
     return json.loads(r.stdout) if r.stdout.strip() else {"benchmarks": []}
@@ -171,7 +178,7 @@ def exec_plugin_single(target: str, cfg: dict) -> dict:
 def exec_host_n_copies(target: str, cfg: dict) -> dict:
     n = cfg["num_threads"]
     config_text = "\n".join(f"{k}={v}" for k, v in cfg.items()) + "\n"
-    cmd = [str(HOST_BIN)] + [str(target_path(target))] * n
+    cmd = [str(host_bin_for(target))] + [str(target_path(target))] * n
     r = subprocess.run(cmd, input=config_text, stdout=subprocess.PIPE,
                        stderr=subprocess.DEVNULL, text=True, check=True)
     return json.loads(r.stdout) if r.stdout.strip() else {"benchmarks": []}

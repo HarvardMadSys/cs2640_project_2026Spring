@@ -17,7 +17,7 @@
 
 #include "arch_workload.h"
 #include "hazard.h"
-#include "hybrid.h"
+#include "hp_store.h"
 
 namespace {
 
@@ -39,7 +39,7 @@ struct shared_state {
     std::atomic<int64_t> warmup_until_ns{0};
     std::atomic<int64_t> measure_until_ns{0};
     sas::hazard_domain* domain_ptr{nullptr};
-    sas::hybrid_store* store_ptr{nullptr};
+    sas::hp::object_store* store_ptr{nullptr};
     sas::bench::steady_workload* work_ptr{nullptr};
     std::atomic<int64_t> ops[sas::bench::ARCH_MAX_WORKERS]{};
     std::atomic<int64_t> tlb_misses[sas::bench::ARCH_MAX_WORKERS]{};
@@ -72,7 +72,7 @@ bool register_slice(int slice_idx) {
 } // namespace
 
 std::unique_ptr<sas::hazard_domain> sas::g_domain;
-std::unique_ptr<sas::hybrid_store> sas::g_store;
+std::unique_ptr<sas::hp::object_store> sas::hp::g_store;
 
 int main() {
     auto cfg = sas::bench::load_config();
@@ -118,15 +118,15 @@ int main() {
             return 1;
         }
         sas::g_domain = std::make_unique<sas::hazard_domain>();
-        sas::g_store = std::make_unique<sas::hybrid_store>();
+        sas::hp::g_store = std::make_unique<sas::hp::object_store>();
 
         auto* work = new sas::bench::steady_workload(
             cfg, [](std::string_view k, int* v) {
-                sas::g_store->put(k, v, nullptr);
+                sas::hp::g_store->put(k, v, nullptr);
             });
 
         shared->domain_ptr = sas::g_domain.get();
-        shared->store_ptr = sas::g_store.get();
+        shared->store_ptr = sas::hp::g_store.get();
         shared->work_ptr = work;
         my_idx = 0;
         shared->setup_done.store(true, std::memory_order_release);
@@ -141,7 +141,7 @@ int main() {
         }
 
         sas::g_domain.reset(shared->domain_ptr);
-        sas::g_store.reset(shared->store_ptr);
+        sas::hp::g_store.reset(shared->store_ptr);
     }
 
     int arrived =
@@ -195,7 +195,7 @@ int main() {
         shm_unlink(SHM_NAME);
     }
 
-    sas::g_store.release();
+    sas::hp::g_store.release();
     sas::g_domain.release();
     return 0;
 }
