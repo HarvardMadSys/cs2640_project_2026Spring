@@ -5,9 +5,9 @@
       "name": "shm/real_time/threads:16",
       "run_type": "iteration",
       "iterations": 1,
-      "items_per_second": 6882304,
-      "page_walks_per_op": 0.00019276974687546495,
-      "peak_rss_mb": 3.73046875
+      "items_per_second": 59689574.4,
+      "page_walks_per_op": 1.819915807608774e-05,
+      "peak_rss_mb": 3.75390625
     }
   ]
 }

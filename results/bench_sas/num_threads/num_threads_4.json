@@ -5,9 +5,9 @@
       "name": "sas/real_time/threads:4",
       "run_type": "iteration",
       "iterations": 1,
-      "items_per_second": 9439641.6,
-      "page_walks_per_op": 0.3992733262245889,
-      "peak_rss_mb": 652.4140625
+      "items_per_second": 8031641.6,
+      "page_walks_per_op": 0.2355857113942933,
+      "peak_rss_mb": 854.953125
     }
   ]
 }
