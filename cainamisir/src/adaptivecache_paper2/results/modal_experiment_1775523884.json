@@ -1,0 +1,402 @@
+{
+  "policies": [
+    "none",
+    "fifo",
+    "kv_adaptive"
+  ],
+  "n_steps": 10,
+  "budget": 4096,
+  "results": {
+    "none": {
+      "policy": "none",
+      "budget_tokens": 4096,
+      "n_steps": 10,
+      "total_prompt_tokens": 5891,
+      "total_cached_tokens": 0,
+      "mean_hit_rate": 0.0,
+      "steps": [
+        {
+          "step": 1,
+          "policy": "none",
+          "prompt_tokens": 176,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 1.1927111148834229,
+          "messages_sent": 3,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 2,
+          "policy": "none",
+          "prompt_tokens": 274,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.9418659210205078,
+          "messages_sent": 5,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 3,
+          "policy": "none",
+          "prompt_tokens": 366,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.9797160625457764,
+          "messages_sent": 7,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 4,
+          "policy": "none",
+          "prompt_tokens": 455,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.9614815711975098,
+          "messages_sent": 9,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 5,
+          "policy": "none",
+          "prompt_tokens": 545,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.9493505954742432,
+          "messages_sent": 11,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 6,
+          "policy": "none",
+          "prompt_tokens": 636,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.946448564529419,
+          "messages_sent": 13,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 7,
+          "policy": "none",
+          "prompt_tokens": 728,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.9449248313903809,
+          "messages_sent": 15,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 8,
+          "policy": "none",
+          "prompt_tokens": 815,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.9753406047821045,
+          "messages_sent": 17,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 9,
+          "policy": "none",
+          "prompt_tokens": 902,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.954521894454956,
+          "messages_sent": 19,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 10,
+          "policy": "none",
+          "prompt_tokens": 994,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.9607882499694824,
+          "messages_sent": 21,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        }
+      ]
+    },
+    "fifo": {
+      "policy": "fifo",
+      "budget_tokens": 4096,
+      "n_steps": 10,
+      "total_prompt_tokens": 5891,
+      "total_cached_tokens": 0,
+      "mean_hit_rate": 0.0,
+      "steps": [
+        {
+          "step": 1,
+          "policy": "fifo",
+          "prompt_tokens": 176,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 1.1878125667572021,
+          "messages_sent": 3,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 2,
+          "policy": "fifo",
+          "prompt_tokens": 274,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.9592058658599854,
+          "messages_sent": 5,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 3,
+          "policy": "fifo",
+          "prompt_tokens": 366,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.9556701183319092,
+          "messages_sent": 7,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 4,
+          "policy": "fifo",
+          "prompt_tokens": 455,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.97072434425354,
+          "messages_sent": 9,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 5,
+          "policy": "fifo",
+          "prompt_tokens": 545,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.9857943058013916,
+          "messages_sent": 11,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 6,
+          "policy": "fifo",
+          "prompt_tokens": 636,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.9646027088165283,
+          "messages_sent": 13,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 7,
+          "policy": "fifo",
+          "prompt_tokens": 728,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.950676441192627,
+          "messages_sent": 15,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 8,
+          "policy": "fifo",
+          "prompt_tokens": 815,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.9505293369293213,
+          "messages_sent": 17,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 9,
+          "policy": "fifo",
+          "prompt_tokens": 902,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.958599328994751,
+          "messages_sent": 19,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 10,
+          "policy": "fifo",
+          "prompt_tokens": 994,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.9752969741821289,
+          "messages_sent": 21,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        }
+      ]
+    },
+    "kv_adaptive": {
+      "policy": "kv_adaptive",
+      "budget_tokens": 4096,
+      "n_steps": 10,
+      "total_prompt_tokens": 5891,
+      "total_cached_tokens": 0,
+      "mean_hit_rate": 0.0,
+      "steps": [
+        {
+          "step": 1,
+          "policy": "kv_adaptive",
+          "prompt_tokens": 176,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 1.197610855102539,
+          "messages_sent": 3,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 2,
+          "policy": "kv_adaptive",
+          "prompt_tokens": 274,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.9780113697052002,
+          "messages_sent": 5,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 3,
+          "policy": "kv_adaptive",
+          "prompt_tokens": 366,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.9997522830963135,
+          "messages_sent": 7,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 4,
+          "policy": "kv_adaptive",
+          "prompt_tokens": 455,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.9909605979919434,
+          "messages_sent": 9,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 5,
+          "policy": "kv_adaptive",
+          "prompt_tokens": 545,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.9640970230102539,
+          "messages_sent": 11,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 6,
+          "policy": "kv_adaptive",
+          "prompt_tokens": 636,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.9667301177978516,
+          "messages_sent": 13,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 7,
+          "policy": "kv_adaptive",
+          "prompt_tokens": 728,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.9819881916046143,
+          "messages_sent": 15,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 8,
+          "policy": "kv_adaptive",
+          "prompt_tokens": 815,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.9672417640686035,
+          "messages_sent": 17,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 9,
+          "policy": "kv_adaptive",
+          "prompt_tokens": 902,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.9551446437835693,
+          "messages_sent": 19,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 10,
+          "policy": "kv_adaptive",
+          "prompt_tokens": 994,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 64,
+          "latency_s": 0.9540951251983643,
+          "messages_sent": 21,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        }
+      ]
+    }
+  },
+  "timestamp": 1775523884.120699
+}

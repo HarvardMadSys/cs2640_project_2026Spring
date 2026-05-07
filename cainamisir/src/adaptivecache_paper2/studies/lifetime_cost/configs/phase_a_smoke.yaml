@@ -1,0 +1,44 @@
+# Phase A smoke test — single GPU, single model, end-to-end pipeline shakedown.
+#
+# Goal: confirm that
+#   1. Qwen3-30B-A3B loads on an 80 GB A100 via HFLocalModel
+#   2. The agent loop drives it through a longdoc task to completion
+#   3. Compaction fires and produces a measurable cliff
+#   4. Trajectories serialize correctly for analysis
+#
+# Run on a 80 GB A100 (gpu_requeue). Two tasks × three policies = 6 cells.
+# Lorem corpus + 8K target keeps each task small enough to land in <30 min.
+
+models:
+  - hf:Qwen/Qwen3-30B-A3B-Instruct-2507
+
+model_kwargs:
+  hf:Qwen/Qwen3-30B-A3B-Instruct-2507:
+    max_new_tokens: 512
+    temperature: 0.0
+    enable_thinking: false
+    dtype: bfloat16
+    attn_implementation: sdpa
+
+policies:
+  - name: none
+  - name: position_aware
+    kwargs: { keep_first_turns: 3, keep_recent_turns: 3, trigger_ratio: 0.85, big_tool_obs_threshold_tokens: 800 }
+  - name: prefix_preserving
+    kwargs: { keep_first_turns: 3, keep_recent_turns: 3, trigger_ratio: 0.85 }
+
+benchmarks:
+  - name: longdoc
+    kwargs:
+      n_tasks: 2
+      target_doc_tokens: 8000
+      n_needles: 3
+      chunk_chars: 1500
+      corpus: lorem
+
+# Tight budget so compaction actually fires.
+budget_tokens: 12000
+hard_budget_tokens: 24000
+max_tasks: null
+n_workers: 1
+out_dir: studies/lifetime_cost/out/phase_a_smoke

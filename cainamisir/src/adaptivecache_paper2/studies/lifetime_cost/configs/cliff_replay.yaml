@@ -1,0 +1,15 @@
+# Cheap first experiment: cliff detection from existing trajectory logs.
+# No model calls. No GPU. Run in seconds.
+#
+# Run with:
+#   python -m studies.lifetime_cost.scripts.run_replay --config studies/lifetime_cost/configs/cliff_replay.yaml
+
+results_dirs:
+  - results                                  # our existing SWE-bench logs
+  # add more as new trace dumps land:
+  # - studies/lifetime_cost/external_traces/applied_compute
+  # - studies/lifetime_cost/external_traces/hermes
+
+block_chars: 1024
+out_dir: studies/lifetime_cost/out/cliff
+plot_top_n: 12                               # how many trajectories to show in the cliff plot

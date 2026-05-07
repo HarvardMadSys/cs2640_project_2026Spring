@@ -1,0 +1,92 @@
+# Per-model price sheet ($ per million tokens).
+# All policies are evaluated under each price column; the *ranking* of policies
+# should be invariant across columns — that's the falsifiable model-agnostic claim.
+#
+# Sources: provider pricing pages as of 2026-04. Self-hosted entries use
+# amortized GPU $/hour ÷ tokens-per-hour benchmark; see studies/lifetime_cost/METHODS.md.
+
+models:
+
+  anthropic/claude-sonnet-4-6:
+    input_uncached: 3.00
+    input_cached:   0.30      # 5m TTL pricing
+    output:        15.00
+    cache_write:    3.75      # 5m TTL write cost
+    tokenizer:    "anthropic" # uses anthropic SDK count_tokens
+
+  anthropic/claude-haiku-4-5:
+    input_uncached: 1.00
+    input_cached:   0.10
+    output:         5.00
+    cache_write:    1.25
+    tokenizer:    "anthropic"
+
+  anthropic/claude-opus-4-7:
+    input_uncached: 15.00
+    input_cached:   1.50
+    output:        75.00
+    cache_write:   18.75
+    tokenizer:    "anthropic"
+
+  openai/gpt-4.1:
+    input_uncached: 2.00
+    input_cached:   0.50
+    output:         8.00
+    cache_write:    0.0       # OpenAI doesn't bill cache writes separately
+    tokenizer:    "tiktoken:o200k_base"
+
+  openai/gpt-4.1-mini:
+    input_uncached: 0.40
+    input_cached:   0.10
+    output:         1.60
+    cache_write:    0.0
+    tokenizer:    "tiktoken:o200k_base"
+
+  qwen/qwen3-30b-a3b:                      # self-hosted on Modal A100-80GB
+    input_uncached: 0.10
+    input_cached:   0.01                    # near-free; LMCache CPU lookup
+    output:         0.30
+    cache_write:    0.0
+    tokenizer:    "hf:Qwen/Qwen3-30B-A3B"
+
+  hf:Qwen/Qwen3-30B-A3B-Instruct-2507:     # cluster-local (same weights, version-pinned)
+    input_uncached: 0.10
+    input_cached:   0.01
+    output:         0.30
+    cache_write:    0.0
+    tokenizer:    "hf:Qwen/Qwen3-30B-A3B-Instruct-2507"
+
+  Qwen/Qwen3-30B-A3B-Instruct-2507:        # adapter strips hf: prefix when recording trajectory.model
+    input_uncached: 0.10
+    input_cached:   0.01
+    output:         0.30
+    cache_write:    0.0
+    tokenizer:    "hf:Qwen/Qwen3-30B-A3B-Instruct-2507"
+
+  Qwen/Qwen3-14B-Instruct-2507:            # A6000 local (bf16, ~28 GB weights)
+    input_uncached: 0.06
+    input_cached:   0.006
+    output:         0.18
+    cache_write:    0.0
+    tokenizer:    "hf:Qwen/Qwen3-14B-Instruct-2507"
+
+  hf:Qwen/Qwen3-14B-Instruct-2507:
+    input_uncached: 0.06
+    input_cached:   0.006
+    output:         0.18
+    cache_write:    0.0
+    tokenizer:    "hf:Qwen/Qwen3-14B-Instruct-2507"
+
+  qwen/qwen3-8b:
+    input_uncached: 0.05
+    input_cached:   0.005
+    output:         0.15
+    cache_write:    0.0
+    tokenizer:    "hf:Qwen/Qwen3-8B"
+
+  meta/llama-3.3-70b-together:             # Together.ai serverless
+    input_uncached: 0.88
+    input_cached:   0.088                   # estimated; Together publishes prefix-cache discount
+    output:         0.88
+    cache_write:    0.0
+    tokenizer:    "hf:meta-llama/Llama-3.3-70B-Instruct"

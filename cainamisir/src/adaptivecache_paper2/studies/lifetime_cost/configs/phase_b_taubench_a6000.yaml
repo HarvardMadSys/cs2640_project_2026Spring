@@ -1,0 +1,39 @@
+# Phase B (τ-bench) — A6000 (90 GB) variant.
+#
+# Same matrix as phase_b_taubench.yaml. Vlad's A6000 has 90 GB VRAM, so
+# we use Qwen3-30B-A3B-Instruct-2507 at bf16 (~60 GB weights, ~30 GB
+# headroom for KV cache + activations) — exact same model as cluster
+# Phase A. This makes the τ-bench results directly comparable to the
+# longdoc Phase A baselines.
+
+models:
+  - hf:Qwen/Qwen3-30B-A3B-Instruct-2507
+
+model_kwargs:
+  hf:Qwen/Qwen3-30B-A3B-Instruct-2507:
+    max_new_tokens: 512
+    temperature: 0.0
+    enable_thinking: false
+    dtype: bfloat16
+    attn_implementation: sdpa
+
+policies:
+  - name: none
+  - name: position_aware
+    kwargs: { keep_first_turns: 3, keep_recent_turns: 3, trigger_ratio: 0.85, big_tool_obs_threshold_tokens: 600 }
+  - name: prefix_preserving
+    kwargs: { keep_first_turns: 3, keep_recent_turns: 3, trigger_ratio: 0.85 }
+
+benchmarks:
+  - name: taubench
+    kwargs:
+      domain: airline
+      max_tasks: 3
+      user_model: claude-haiku-4-5
+      user_provider: anthropic
+
+budget_tokens: 8000
+hard_budget_tokens: 16000
+max_tasks: null
+n_workers: 1
+out_dir: studies/lifetime_cost/out/phase_b_taubench_a6000

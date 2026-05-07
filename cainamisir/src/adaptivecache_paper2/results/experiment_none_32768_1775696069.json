@@ -1,0 +1,89 @@
+{
+  "policy": "none",
+  "budget": 32768,
+  "model_name": "Qwen/Qwen2.5-7B-Instruct",
+  "instances": [
+    "astropy__astropy-12907"
+  ],
+  "resolved": 0,
+  "total": 1,
+  "resolve_rate": 0.0,
+  "elapsed_seconds": 96.65575981140137,
+  "results": [
+    {
+      "instance_id": "astropy__astropy-12907",
+      "policy": "none",
+      "budget": 32768,
+      "model_name": "openai/Qwen/Qwen2.5-7B-Instruct",
+      "resolved": false,
+      "steps": 0,
+      "cache_stats": {
+        "total_steps": 4,
+        "total_prompt_tokens": 9039,
+        "total_cached_tokens": 0,
+        "mean_hit_rate": 0.0,
+        "cache_trace": [
+          {
+            "step": 1,
+            "policy": "none",
+            "original_messages": 2,
+            "sent_messages": 2,
+            "messages_evicted": 0,
+            "prompt_tokens": 1472,
+            "completion_tokens": 20,
+            "cache_read_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_hit_rate": 0.0,
+            "cost": 0.0,
+            "timestamp": 1775696046.9237595
+          },
+          {
+            "step": 2,
+            "policy": "none",
+            "original_messages": 4,
+            "sent_messages": 4,
+            "messages_evicted": 0,
+            "prompt_tokens": 1545,
+            "completion_tokens": 129,
+            "cache_read_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_hit_rate": 0.0,
+            "cost": 0.0,
+            "timestamp": 1775696049.4815197
+          },
+          {
+            "step": 3,
+            "policy": "none",
+            "original_messages": 6,
+            "sent_messages": 6,
+            "messages_evicted": 0,
+            "prompt_tokens": 1753,
+            "completion_tokens": 146,
+            "cache_read_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_hit_rate": 0.0,
+            "cost": 0.0,
+            "timestamp": 1775696053.5046372
+          },
+          {
+            "step": 4,
+            "policy": "none",
+            "original_messages": 8,
+            "sent_messages": 8,
+            "messages_evicted": 0,
+            "prompt_tokens": 4269,
+            "completion_tokens": 137,
+            "cache_read_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_hit_rate": 0.0,
+            "cost": 0.0,
+            "timestamp": 1775696055.5994532
+          }
+        ]
+      },
+      "error": null,
+      "timestamp": 1775695975.614811
+    }
+  ],
+  "timestamp": 1775696069.703101
+}

@@ -1,0 +1,27 @@
+{
+  "n_trajectories": 20,
+  "n_with_eviction_events": 15,
+  "n_total_eviction_events": 210,
+  "median_cliff_overall": 10.109766637856525,
+  "p90_cliff_overall": 41.7037037037037,
+  "by_policy": {
+    "adaptive": {
+      "n_events": 52,
+      "median_cliff": 4.00904372115439,
+      "mean_cliff": 4.9709692745477945,
+      "p90_cliff": 7.843828715365239
+    },
+    "fifo": {
+      "n_events": 54,
+      "median_cliff": 31.72186066111059,
+      "mean_cliff": 31.939228311122267,
+      "p90_cliff": 46.265306122448976
+    },
+    "summarize": {
+      "n_events": 39,
+      "median_cliff": 8.389802631578947,
+      "mean_cliff": 14.650005876994436,
+      "p90_cliff": 32.696296296296296
+    }
+  }
+}

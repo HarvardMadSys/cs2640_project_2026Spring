@@ -1,0 +1,407 @@
+{
+  "policies": [
+    "none",
+    "fifo",
+    "kv_adaptive"
+  ],
+  "n_steps": 10,
+  "budget": 4096,
+  "results": {
+    "none": {
+      "policy": "none",
+      "budget_tokens": 4096,
+      "n_steps": 10,
+      "total_prompt_tokens": 25025,
+      "total_cached_tokens": 0,
+      "mean_hit_rate": 0.0,
+      "steps": [
+        {
+          "step": 1,
+          "policy": "none",
+          "prompt_tokens": 176,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 399,
+          "latency_s": 4.873493671417236,
+          "messages_sent": 3,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 2,
+          "policy": "none",
+          "prompt_tokens": 608,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.123106002807617,
+          "messages_sent": 5,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 3,
+          "policy": "none",
+          "prompt_tokens": 1148,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.182152986526489,
+          "messages_sent": 7,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 4,
+          "policy": "none",
+          "prompt_tokens": 1685,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.264858961105347,
+          "messages_sent": 9,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 5,
+          "policy": "none",
+          "prompt_tokens": 2223,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.211933851242065,
+          "messages_sent": 11,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 6,
+          "policy": "none",
+          "prompt_tokens": 2762,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.281885862350464,
+          "messages_sent": 13,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 7,
+          "policy": "none",
+          "prompt_tokens": 3302,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.241076707839966,
+          "messages_sent": 15,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 8,
+          "policy": "none",
+          "prompt_tokens": 3837,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.342553615570068,
+          "messages_sent": 17,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 9,
+          "policy": "none",
+          "prompt_tokens": 4372,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.293228387832642,
+          "messages_sent": 19,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 10,
+          "policy": "none",
+          "prompt_tokens": 4912,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.394386291503906,
+          "messages_sent": 21,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        }
+      ]
+    },
+    "fifo": {
+      "policy": "fifo",
+      "budget_tokens": 4096,
+      "n_steps": 10,
+      "total_prompt_tokens": 23613,
+      "total_cached_tokens": 0,
+      "mean_hit_rate": 0.0,
+      "steps": [
+        {
+          "step": 1,
+          "policy": "fifo",
+          "prompt_tokens": 176,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 399,
+          "latency_s": 4.909945487976074,
+          "messages_sent": 3,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 2,
+          "policy": "fifo",
+          "prompt_tokens": 608,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.0809595584869385,
+          "messages_sent": 5,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 3,
+          "policy": "fifo",
+          "prompt_tokens": 1148,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.24345064163208,
+          "messages_sent": 7,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 4,
+          "policy": "fifo",
+          "prompt_tokens": 1685,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.0931923389434814,
+          "messages_sent": 9,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 5,
+          "policy": "fifo",
+          "prompt_tokens": 2223,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.30355167388916,
+          "messages_sent": 11,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 6,
+          "policy": "fifo",
+          "prompt_tokens": 2762,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.00835394859314,
+          "messages_sent": 13,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 7,
+          "policy": "fifo",
+          "prompt_tokens": 3302,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.34016227722168,
+          "messages_sent": 15,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 8,
+          "policy": "fifo",
+          "prompt_tokens": 3837,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.1660544872283936,
+          "messages_sent": 17,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 9,
+          "policy": "fifo",
+          "prompt_tokens": 3939,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.54093599319458,
+          "messages_sent": 17,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 10,
+          "policy": "fifo",
+          "prompt_tokens": 3933,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.253174781799316,
+          "messages_sent": 17,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        }
+      ]
+    },
+    "kv_adaptive": {
+      "policy": "kv_adaptive",
+      "budget_tokens": 4096,
+      "n_steps": 10,
+      "total_prompt_tokens": 24411,
+      "total_cached_tokens": 0,
+      "mean_hit_rate": 0.0,
+      "steps": [
+        {
+          "step": 1,
+          "policy": "kv_adaptive",
+          "prompt_tokens": 176,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.389659404754639,
+          "messages_sent": 3,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 2,
+          "policy": "kv_adaptive",
+          "prompt_tokens": 722,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 5.91006064414978,
+          "messages_sent": 5,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 3,
+          "policy": "kv_adaptive",
+          "prompt_tokens": 1262,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.248545169830322,
+          "messages_sent": 7,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 4,
+          "policy": "kv_adaptive",
+          "prompt_tokens": 1799,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.274319887161255,
+          "messages_sent": 9,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 5,
+          "policy": "kv_adaptive",
+          "prompt_tokens": 2337,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.3038763999938965,
+          "messages_sent": 11,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 6,
+          "policy": "kv_adaptive",
+          "prompt_tokens": 2876,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.082201957702637,
+          "messages_sent": 13,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 7,
+          "policy": "kv_adaptive",
+          "prompt_tokens": 3416,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.270993709564209,
+          "messages_sent": 15,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 8,
+          "policy": "kv_adaptive",
+          "prompt_tokens": 3951,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.405507564544678,
+          "messages_sent": 17,
+          "messages_evicted": 0,
+          "evicted_positions": []
+        },
+        {
+          "step": 9,
+          "policy": "kv_adaptive",
+          "prompt_tokens": 3939,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.546719551086426,
+          "messages_sent": 17,
+          "messages_evicted": 1,
+          "evicted_positions": [
+            "Step 1: Define the data struct"
+          ]
+        },
+        {
+          "step": 10,
+          "policy": "kv_adaptive",
+          "prompt_tokens": 3933,
+          "cached_tokens": 0,
+          "hit_rate": 0.0,
+          "completion_tokens": 512,
+          "latency_s": 6.260884761810303,
+          "messages_sent": 17,
+          "messages_evicted": 2,
+          "evicted_positions": [
+            "Step 1: Define the data struct",
+            "Step 2: Implement the basic LR"
+          ]
+        }
+      ]
+    }
+  },
+  "timestamp": 1775523580.137816
+}

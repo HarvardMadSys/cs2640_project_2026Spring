@@ -1,0 +1,26 @@
+{
+  "policy": "none",
+  "budget": 32768,
+  "model_name": "Qwen/Qwen2.5-7B-Instruct",
+  "instances": [
+    "astropy__astropy-12907"
+  ],
+  "resolved": 0,
+  "total": 1,
+  "resolve_rate": 0.0,
+  "elapsed_seconds": 1104.7834732532501,
+  "results": [
+    {
+      "instance_id": "astropy__astropy-12907",
+      "policy": "none",
+      "budget": 32768,
+      "model_name": "openai/Qwen/Qwen2.5-7B-Instruct",
+      "resolved": false,
+      "steps": 0,
+      "cache_stats": {},
+      "error": null,
+      "timestamp": 1775693773.1679428
+    }
+  ],
+  "timestamp": 1775694875.1821702
+}

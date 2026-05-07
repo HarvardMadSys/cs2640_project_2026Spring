@@ -1,0 +1,74 @@
+{
+  "policy": "fifo",
+  "budget": 32000,
+  "model_name": "Qwen/Qwen2.5-7B-Instruct",
+  "instances": [
+    "astropy__astropy-12907",
+    "astropy__astropy-14182",
+    "astropy__astropy-14365",
+    "astropy__astropy-14995",
+    "astropy__astropy-6938"
+  ],
+  "resolved": 0,
+  "total": 5,
+  "resolve_rate": 0.0,
+  "elapsed_seconds": 166.2901999950409,
+  "results": [
+    {
+      "instance_id": "astropy__astropy-12907",
+      "policy": "fifo",
+      "budget": 32000,
+      "model_name": "openai/Qwen/Qwen3-8B",
+      "resolved": false,
+      "steps": 0,
+      "cache_stats": {},
+      "error": null,
+      "timestamp": 1775702836.1429682
+    },
+    {
+      "instance_id": "astropy__astropy-14182",
+      "policy": "fifo",
+      "budget": 32000,
+      "model_name": "openai/Qwen/Qwen3-8B",
+      "resolved": false,
+      "steps": 0,
+      "cache_stats": {},
+      "error": null,
+      "timestamp": 1775702836.6362581
+    },
+    {
+      "instance_id": "astropy__astropy-14365",
+      "policy": "fifo",
+      "budget": 32000,
+      "model_name": "openai/Qwen/Qwen3-8B",
+      "resolved": false,
+      "steps": 0,
+      "cache_stats": {},
+      "error": null,
+      "timestamp": 1775702836.938022
+    },
+    {
+      "instance_id": "astropy__astropy-14995",
+      "policy": "fifo",
+      "budget": 32000,
+      "model_name": "openai/Qwen/Qwen3-8B",
+      "resolved": false,
+      "steps": 0,
+      "cache_stats": {},
+      "error": null,
+      "timestamp": 1775702836.9687412
+    },
+    {
+      "instance_id": "astropy__astropy-6938",
+      "policy": "fifo",
+      "budget": 32000,
+      "model_name": "openai/Qwen/Qwen3-8B",
+      "resolved": false,
+      "steps": 0,
+      "cache_stats": {},
+      "error": null,
+      "timestamp": 1775702837.0712912
+    }
+  ],
+  "timestamp": 1775702999.7595038
+}
