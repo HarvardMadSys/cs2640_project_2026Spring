@@ -21,6 +21,8 @@ YCSB_WORKLOAD ?= workloada
 YCSB_THREADS ?= 1
 YCSB_RECORDS ?= 10000
 YCSB_OPS ?= 1000000
+YCSB_PROCID ?= 0
+YCSB_NPROCS ?= 1
 YCSB_CLASSES = $(BUILD_DIR)/benchmarks/ycsb/classes
 YCSB_CORE_JAR = $(firstword $(wildcard $(YCSB_HOME)/lib/core-*.jar))
 
@@ -69,7 +71,9 @@ ycsb-bench: ycsb
 	    -threads $(YCSB_THREADS) \
 	    -p dbclass=$(YCSB_DB_CLASS) \
 	    -p recordcount=$(YCSB_RECORDS) \
-	    -p operationcount=$(YCSB_OPS)
+	    -p operationcount=$(YCSB_OPS) \
+	    -p procid=$(YCSB_PROCID) \
+	    -p nprocs=$(YCSB_NPROCS)
 
 lightning-daemon-start:
 	@test -x $(LIGHTNING_DAEMON) || \

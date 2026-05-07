@@ -36,6 +36,12 @@ public final class YcsbDriver {
 
         long records = Long.parseLong(props.getProperty("recordcount", "1000"));
         long ops = Long.parseLong(props.getProperty("operationcount", "1000"));
+        int procid = Integer.parseInt(props.getProperty("procid", "0"));
+        int nprocs = Integer.parseInt(props.getProperty("nprocs", "1"));
+        long perProcRecords = records / nprocs;
+        long perProcOps = ops / nprocs;
+        long loadStart = procid * perProcRecords;
+
         String workloadClass = props.getProperty(
             "workload", "site.ycsb.workloads.CoreWorkload");
         String dbClassName = props.getProperty(
@@ -43,14 +49,29 @@ public final class YcsbDriver {
         Constructor<? extends DB> dbCtor =
             Class.forName(dbClassName).asSubclass(DB.class).getDeclaredConstructor();
 
-        Workload workload = (Workload) Class.forName(workloadClass)
+        Properties loadProps = new Properties();
+        loadProps.putAll(props);
+        loadProps.setProperty("insertstart", String.valueOf(loadStart));
+        loadProps.setProperty("insertcount", String.valueOf(perProcRecords));
+        Workload loadWorkload = (Workload) Class.forName(workloadClass)
             .getDeclaredConstructor().newInstance();
-        workload.init(props);
+        loadWorkload.init(loadProps);
 
-        runPhase("load", threads, props, workload, dbCtor, records, true);
-        runPhase("run",  threads, props, workload, dbCtor, ops,     false);
+        Properties runProps = new Properties();
+        runProps.putAll(props);
+        runProps.setProperty("insertstart", "0");
+        runProps.setProperty("insertcount", String.valueOf(records));
+        Workload runWorkload = (Workload) Class.forName(workloadClass)
+            .getDeclaredConstructor().newInstance();
+        runWorkload.init(runProps);
 
-        workload.cleanup();
+        runPhase("load", threads, loadProps, loadWorkload, dbCtor,
+                 perProcRecords, true);
+        runPhase("run",  threads, runProps,  runWorkload,  dbCtor,
+                 perProcOps,    false);
+
+        loadWorkload.cleanup();
+        runWorkload.cleanup();
     }
 
     private static void runPhase(String name, int threads, Properties props,

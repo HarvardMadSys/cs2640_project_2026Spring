@@ -96,13 +96,38 @@ def run_lightning(workload: str, threads: int) -> dict[str, float]:
     )
     time.sleep(2)
     try:
-        out = make_invoke({
+        base_env = {
             **DEFAULTS,
             "YCSB_STORE":    "lightning",
             "YCSB_WORKLOAD": workload,
-            "YCSB_THREADS":  str(threads),
-        }, "ycsb-bench")
-        return parse_output(out)
+            "YCSB_THREADS":  "1",
+            "YCSB_NPROCS":   str(threads),
+        }
+        procs = []
+        for i in range(threads):
+            env = {**base_env, "YCSB_PROCID": str(i)}
+            cmd = ["make", "ycsb-bench"] + [f"{k}={v}" for k, v in env.items()]
+            if i == 0:
+                print(f"[run × {threads}]", " ".join(cmd), file=sys.stderr)
+            p = subprocess.Popen(cmd, cwd=REPO_ROOT,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE, text=True)
+            procs.append(p)
+        totals: dict[str, float] = {}
+        failed = False
+        for i, p in enumerate(procs):
+            stdout, stderr = p.communicate()
+            if p.returncode != 0:
+                sys.stderr.write(f"[procid={i} stdout]\n{stdout}")
+                sys.stderr.write(f"[procid={i} stderr]\n{stderr}")
+                failed = True
+                continue
+            phase = parse_output(stdout)
+            for k, v in phase.items():
+                totals[k] = totals.get(k, 0.0) + v
+        if failed:
+            raise RuntimeError("ycsb-bench failed in one or more lightning procs")
+        return totals
     finally:
         daemon.terminate()
         try:
