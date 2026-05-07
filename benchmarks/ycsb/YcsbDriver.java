@@ -44,8 +44,10 @@ public final class YcsbDriver {
         int nprocs = Integer.parseInt(props.getProperty("nprocs", "1"));
         long perProcRecords = records / nprocs;
         long perProcOps = ops / nprocs;
-        long blockSize = perProcRecords + perProcOps;
-        long loadStart = (long) procid * blockSize;
+
+        props.setProperty("insertstart", "0");
+        props.setProperty("insertcount", String.valueOf(perProcRecords));
+        props.setProperty("recordcount", String.valueOf(perProcRecords));
 
         String workloadClass = props.getProperty(
             "workload", "site.ycsb.workloads.CoreWorkload");
@@ -54,34 +56,15 @@ public final class YcsbDriver {
         Constructor<? extends DB> dbCtor =
             Class.forName(dbClassName).asSubclass(DB.class).getDeclaredConstructor();
 
-        Properties loadProps = new Properties();
-        loadProps.putAll(props);
-        loadProps.setProperty("insertstart", String.valueOf(loadStart));
-        loadProps.setProperty("insertcount", String.valueOf(perProcRecords));
-        Workload loadWorkload = (Workload) Class.forName(workloadClass)
+        Workload workload = (Workload) Class.forName(workloadClass)
             .getDeclaredConstructor().newInstance();
-        loadWorkload.init(loadProps);
+        workload.init(props);
 
-        Properties runProps = new Properties();
-        runProps.putAll(props);
-        runProps.setProperty("insertstart", String.valueOf(loadStart));
-        runProps.setProperty("insertcount", String.valueOf(perProcRecords));
-        runProps.setProperty("recordcount",
-            String.valueOf(loadStart + perProcRecords));
-        Workload runWorkload = (Workload) Class.forName(workloadClass)
-            .getDeclaredConstructor().newInstance();
-        runWorkload.init(runProps);
-
-        runPhase("load", threads, loadProps, loadWorkload, dbCtor,
-                 perProcRecords, true);
-
+        runPhase("load", threads, props, workload, dbCtor, perProcRecords, true);
         loadBarrier(procid, nprocs);
+        runPhase("run", threads, props, workload, dbCtor, perProcOps, false);
 
-        runPhase("run", threads, runProps, runWorkload, dbCtor,
-                 perProcOps, false);
-
-        loadWorkload.cleanup();
-        runWorkload.cleanup();
+        workload.cleanup();
     }
 
     private static void loadBarrier(int procid, int nprocs) throws Exception {

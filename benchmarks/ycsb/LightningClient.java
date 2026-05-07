@@ -21,6 +21,7 @@ public class LightningClient extends DB {
 
     private JlightningClient client;
     private long pendingId = -1;
+    private long idPrefix;
 
     private String[] fieldsBuf;
     private Object[] valsBuf;
@@ -40,6 +41,9 @@ public class LightningClient extends DB {
             }
         }
         client = sharedClient;
+        int procid = Integer.parseInt(
+            getProperties().getProperty("procid", "0"));
+        idPrefix = (long) procid << 48;
     }
 
     @Override
@@ -54,7 +58,7 @@ public class LightningClient extends DB {
         }
     }
 
-    private static long keyToId(String key) {
+    private long keyToId(String key) {
         int start = (key.length() > 4
                      && key.charAt(0) == 'u' && key.charAt(1) == 's'
                      && key.charAt(2) == 'e' && key.charAt(3) == 'r') ? 4 : 0;
@@ -62,7 +66,7 @@ public class LightningClient extends DB {
         for (int i = start; i < key.length(); i++) {
             n = n * 10 + (key.charAt(i) - '0');
         }
-        return n;
+        return idPrefix | n;
     }
 
     @Override
