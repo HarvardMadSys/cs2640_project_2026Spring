@@ -1,6 +1,6 @@
 {
   "context": {
-    "date": "2026-05-06T03:59:45-06:00",
+    "date": "2026-05-06T19:00:52-06:00",
     "host_name": "node0.wolfiejk-304669.cs2640-pg0.utah.cloudlab.us",
     "executable": "bench",
     "num_cpus": 48,
@@ -33,9 +33,9 @@
       }
     ],
     "load_avg": [
-      18.9922,
-      19.9536,
-      17.2246
+      20.4341,
+      24.272,
+      17.1201
     ],
     "library_version": "v1.9.1",
     "library_build_type": "release",
@@ -43,26 +43,45 @@
   },
   "benchmarks": [
     {
-      "name": "end_to_end/real_time/threads:16",
+      "name": "end_to_end_fill/iterations:1/real_time/threads:16",
       "family_index": 0,
+      "per_family_instance_index": 0,
+      "run_name": "end_to_end_fill/iterations:1/real_time/threads:16",
+      "run_type": "iteration",
+      "repetitions": 1,
+      "repetition_index": 0,
+      "threads": 16,
+      "iterations": 16,
+      "real_time": 11662065.56445104,
+      "cpu_time": 11200962.3125,
+      "time_unit": "ns",
+      "items_per_second": 351224.23016430775,
+      "peak_rss_mb": 19.6796875,
+      "wr_p50": 200.37592534311582,
+      "wr_p99": 3718.0468575719938,
+      "wr_p999": 279930.53491661884
+    },
+    {
+      "name": "end_to_end/real_time/threads:16",
+      "family_index": 1,
       "per_family_instance_index": 0,
       "run_name": "end_to_end/real_time/threads:16",
       "run_type": "iteration",
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 16,
-      "iterations": 36197136,
-      "real_time": 387.9372184304189,
-      "cpu_time": 387.93485722185324,
+      "iterations": 30067152,
+      "real_time": 481.3612459199563,
+      "cpu_time": 481.36003399989477,
       "time_unit": "ns",
-      "items_per_second": 2577736.6864823303,
-      "peak_rss_mb": 358.75,
-      "rd_p50": 2885.4150520663293,
-      "rd_p99": 7534.139302617637,
-      "rd_p999": 10900.456863361691,
-      "wr_p50": 961.8050173554434,
-      "wr_p99": 211774.57974401905,
-      "wr_p999": 219469.01988286249
+      "items_per_second": 2077441.8557290467,
+      "peak_rss_mb": 20.35546875,
+      "rd_p50": 180.33833280880432,
+      "rd_p99": 932.105866997887,
+      "rd_p999": 1584.043252667811,
+      "wr_p50": 70.13157387009053,
+      "wr_p99": 1052.3314222037568,
+      "wr_p999": 11512.670353419204
     }
   ]
 }

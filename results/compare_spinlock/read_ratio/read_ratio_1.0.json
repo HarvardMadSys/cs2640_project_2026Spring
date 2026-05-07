@@ -1,6 +1,6 @@
 {
   "context": {
-    "date": "2026-05-06T05:22:15-06:00",
+    "date": "2026-05-06T20:56:37-06:00",
     "host_name": "node0.wolfiejk-304669.cs2640-pg0.utah.cloudlab.us",
     "executable": "bench",
     "num_cpus": 48,
@@ -33,9 +33,9 @@
       }
     ],
     "load_avg": [
-      15.604,
-      14.6602,
-      13.8154
+      14.3691,
+      11.1636,
+      10.8765
     ],
     "library_version": "v1.9.1",
     "library_build_type": "release",
@@ -43,23 +43,42 @@
   },
   "benchmarks": [
     {
-      "name": "spinlock/real_time/threads:16",
+      "name": "spinlock_fill/iterations:1/real_time/threads:16",
       "family_index": 0,
+      "per_family_instance_index": 0,
+      "run_name": "spinlock_fill/iterations:1/real_time/threads:16",
+      "run_type": "iteration",
+      "repetitions": 1,
+      "repetition_index": 0,
+      "threads": 16,
+      "iterations": 16,
+      "real_time": 8679484087.689161,
+      "cpu_time": 8679379923.312502,
+      "time_unit": "ns",
+      "items_per_second": 30202.716814910782,
+      "peak_rss_mb": 503.05078125,
+      "wr_p50": 2415.6040457633126,
+      "wr_p99": 1086014.5734613878,
+      "wr_p999": 2655679.8789893435
+    },
+    {
+      "name": "spinlock/real_time/threads:16",
+      "family_index": 1,
       "per_family_instance_index": 0,
       "run_name": "spinlock/real_time/threads:16",
       "run_type": "iteration",
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 16,
-      "iterations": 525968,
-      "real_time": 25933.897124881612,
-      "cpu_time": 25933.4334275089,
+      "iterations": 599616,
+      "real_time": 24090.71306468261,
+      "cpu_time": 24090.38371557797,
       "time_unit": "ns",
-      "items_per_second": 38559.573024625584,
-      "peak_rss_mb": 8653.25,
-      "rd_p50": 40733.607118633576,
-      "rd_p99": 8606046.516170157,
-      "rd_p999": 16778278.685268708,
+      "items_per_second": 41509.771724690734,
+      "peak_rss_mb": 506.7734375,
+      "rd_p50": 2345.472451485485,
+      "rd_p99": 696163.059670131,
+      "rd_p999": 1256757.8116444012,
       "wr_p50": 0.0,
       "wr_p99": 0.0,
       "wr_p999": 0.0
