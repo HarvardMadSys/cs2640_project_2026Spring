@@ -19,6 +19,10 @@ public class LightningClient extends DB {
     private JlightningClient client;
     private long pendingId = -1;
 
+    private String[] fieldsBuf;
+    private Object[] valsBuf;
+    private byte[][] valBytesBuf;
+
     @Override
     public void init() throws DBException {
         String socket = getProperties().getProperty(
@@ -41,8 +45,14 @@ public class LightningClient extends DB {
     }
 
     private static long keyToId(String key) {
-        String numStr = key.startsWith("user") ? key.substring(4) : key;
-        return Long.parseUnsignedLong(numStr);
+        int start = (key.length() > 4
+                     && key.charAt(0) == 'u' && key.charAt(1) == 's'
+                     && key.charAt(2) == 'e' && key.charAt(3) == 'r') ? 4 : 0;
+        long n = 0;
+        for (int i = start; i < key.length(); i++) {
+            n = n * 10 + (key.charAt(i) - '0');
+        }
+        return n;
     }
 
     @Override
@@ -70,10 +80,8 @@ public class LightningClient extends DB {
     public Status insert(String table, String key,
                          Map<String, ByteIterator> values) {
         drainPending();
-        String[] fields = new String[values.size()];
-        Object[] vals = new Object[values.size()];
-        materialize(values, fields, vals);
-        client.multiput(keyToId(key), fields, vals);
+        materialize(values);
+        client.multiput(keyToId(key), fieldsBuf, valsBuf);
         return Status.OK;
     }
 
@@ -81,10 +89,8 @@ public class LightningClient extends DB {
     public Status update(String table, String key,
                          Map<String, ByteIterator> values) {
         drainPending();
-        String[] fields = new String[values.size()];
-        Object[] vals = new Object[values.size()];
-        materialize(values, fields, vals);
-        client.multiupdate(keyToId(key), fields, vals);
+        materialize(values);
+        client.multiupdate(keyToId(key), fieldsBuf, valsBuf);
         return Status.OK;
     }
 
@@ -95,12 +101,28 @@ public class LightningClient extends DB {
         return Status.OK;
     }
 
-    private static void materialize(Map<String, ByteIterator> values,
-                                    String[] fields, Object[] vals) {
+    private void materialize(Map<String, ByteIterator> values) {
+        int n = values.size();
+        if (fieldsBuf == null || fieldsBuf.length != n) {
+            fieldsBuf = new String[n];
+            valsBuf = new Object[n];
+            valBytesBuf = new byte[n][];
+        }
         int i = 0;
         for (Map.Entry<String, ByteIterator> e : values.entrySet()) {
-            fields[i] = e.getKey();
-            vals[i] = e.getValue().toArray();
+            fieldsBuf[i] = e.getKey();
+            ByteIterator it = e.getValue();
+            int len = (int) it.bytesLeft();
+            byte[] buf = valBytesBuf[i];
+            if (buf == null || buf.length != len) {
+                buf = new byte[len];
+                valBytesBuf[i] = buf;
+            }
+            int k = 0;
+            while (it.hasNext()) {
+                buf[k++] = it.nextByte();
+            }
+            valsBuf[i] = buf;
             i++;
         }
     }
