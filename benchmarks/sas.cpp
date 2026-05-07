@@ -8,7 +8,11 @@
 #include <thread>
 
 #include "arch_workload.h"
-#include "hp_store.h"
+#include "hybrid.h"
+
+namespace sas::host_driver {
+extern std::unique_ptr<sas::bench::hybrid_store> g_store;
+}
 
 namespace {
 
@@ -27,15 +31,15 @@ std::array<std::atomic<int64_t>, sas::bench::ARCH_MAX_WORKERS> g_tlb_counters{};
 } // namespace
 
 extern "C" void entry(int idx) {
+    auto* store = sas::host_driver::g_store.get();
+
     if (idx == 0) {
         g_cfg = sas::bench::load_config();
         std::println(std::cerr, "Loaded config: {}", g_cfg);
 
-        sas::g_store = std::make_unique<sas::object_store>();
-
         g_work = std::make_unique<sas::bench::steady_workload>(
-            g_cfg, [](std::string_view k, int* v) {
-                sas::g_store->put(k, v, nullptr);
+            g_cfg, [store](std::string_view k, int* v) {
+                store->put(k, v, nullptr);
             });
         g_setup_done.store(true, std::memory_order_release);
     } else {
@@ -67,7 +71,7 @@ extern "C" void entry(int idx) {
         std::chrono::steady_clock::duration(
             g_measure_until_ns.load(std::memory_order_relaxed)));
 
-    sas::bench::arch_worker_loop(idx, g_cfg, *g_work, sas::g_store.get(),
+    sas::bench::arch_worker_loop(idx, g_cfg, *g_work, store,
                                  g_op_counters.data(), g_tlb_counters.data(),
                                  warmup_until, measure_until);
 

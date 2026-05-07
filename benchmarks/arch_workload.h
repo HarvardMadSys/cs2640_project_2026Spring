@@ -12,7 +12,7 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
-#include "hp_store.h"
+#include "handle.h"
 #include "memory.h"
 #include "workload.h"
 
@@ -85,7 +85,7 @@ inline constexpr uint64_t DTLB_PAGE_WALK_CONFIG = 0x046ULL | (0x02ULL << 8);
 
 inline void
 arch_worker_loop(int idx, const bench_config& cfg, const steady_workload& work,
-                 sas::object_store* store, std::atomic<int64_t>* op_counters,
+                 auto* store, std::atomic<int64_t>* op_counters,
                  std::atomic<int64_t>* tlb_counters,
                  std::chrono::steady_clock::time_point warmup_until,
                  std::chrono::steady_clock::time_point measure_until) {
