@@ -136,7 +136,16 @@ def transform_messages(
         elif last_only_masking and i != last_tool_idx:
             body = wrap_tool_message_inlined(obs=obs, memento=memento)
         else:
-            body = wrap_tool_message_for_masking(obs=obs, memento=memento)
+            # always_wrap=True keeps `<tool_response>...</tool_response>`
+            # markers from the start. When the eager-at-suffix policy then
+            # memento's the obs the very next turn, the rendering only
+            # APPENDS `<|fim_prefix|>memento<|fim_middle|>` — chain hash
+            # up through `</tool_response>` is identical, so the next
+            # request's prefix-cache walk hits everything before the
+            # appendix.
+            body = wrap_tool_message_for_masking(
+                obs=obs, memento=memento, always_wrap=True
+            )
         out.append({"role": "user", "content": body})
     return out
 

@@ -46,6 +46,79 @@ def get_num_free_blocks_or_neg1() -> int:
         return -1
 
 
+# Phase 9 heartbeat: a background thread prints ENGINE_STATS every N
+# seconds so we can detect engine hangs vs slow but live runs. Enabled
+# when PAPER2_HEARTBEAT_SEC env var is set to a positive integer.
+_HEARTBEAT_THREAD_STARTED = False
+
+
+def _start_heartbeat_thread() -> None:
+    global _HEARTBEAT_THREAD_STARTED
+    if _HEARTBEAT_THREAD_STARTED:
+        return
+    raw = os.environ.get("PAPER2_HEARTBEAT_SEC", "0") or "0"
+    try:
+        interval = int(raw)
+    except Exception:
+        interval = 0
+    print(f"[heartbeat-init pid={os.getpid()}] PAPER2_HEARTBEAT_SEC={raw!r} "
+          f"→ interval={interval}",
+          flush=True)
+    if interval <= 0:
+        return
+    _HEARTBEAT_THREAD_STARTED = True
+    import threading
+    import time as _time
+
+    def _heartbeat():
+        last_seen = dict(ENGINE_STATS)
+        path = os.environ.get("PAPER2_GPU_MEM_TRACE_PATH")
+        while True:
+            _time.sleep(interval)
+            now = dict(ENGINE_STATS)
+            delta = {
+                k: now[k] - last_seen.get(k, 0)
+                for k in now
+                if now[k] != last_seen.get(k, 0)
+            }
+            # GPU mem snapshot to log + jsonl trace
+            alloc_gb = 0.0
+            reserved_gb = 0.0
+            try:
+                import torch as _torch
+                if _torch.cuda.is_available():
+                    alloc_gb = _torch.cuda.memory_allocated() / 1e9
+                    reserved_gb = _torch.cuda.memory_reserved() / 1e9
+            except Exception:
+                pass
+            n_free = get_num_free_blocks_or_neg1()
+            print(f"[heartbeat pid={os.getpid()}] stats={now} "
+                  f"gpu_alloc={alloc_gb:.2f}GB reserved={reserved_gb:.2f}GB "
+                  f"free_blocks={n_free} "
+                  f"delta_last_{interval}s={delta or '(no change)'}",
+                  flush=True)
+            if path:
+                try:
+                    import json as _json
+                    rec = {
+                        "t": _time.time(),
+                        "label": "heartbeat",
+                        "pid": os.getpid(),
+                        "alloc_bytes": int(alloc_gb * 1e9),
+                        "reserved_bytes": int(reserved_gb * 1e9),
+                        "num_free_blocks": n_free,
+                        "engine_stats": now,
+                    }
+                    with open(path, "a") as f:
+                        f.write(_json.dumps(rec) + "\n")
+                except Exception:
+                    pass
+            last_seen = now
+
+    t = threading.Thread(target=_heartbeat, daemon=True, name="paper2-heartbeat")
+    t.start()
+
+
 # Process-global engine-side counters. Incremented by the worker at the
 # call sites listed in the comment. Dumped to disk via atexit so we can
 # verify (post-bake) that v4 plumbing actually fired in the worker

@@ -780,7 +780,7 @@ index 8078b47..881e86d 100644
          
          # NOTE: Return LOGICAL positions, not adjusted positions!
 diff --git a/vllm/vllm/v1/core/block_pool.py b/vllm/vllm/v1/core/block_pool.py
-index cc42bad..dc55c6c 100644
+index cc42bad..7f043cd 100644
 --- a/vllm/vllm/v1/core/block_pool.py
 +++ b/vllm/vllm/v1/core/block_pool.py
 @@ -255,7 +255,15 @@ class BlockPool:
@@ -800,6 +800,31 @@ index cc42bad..dc55c6c 100644
              block_hash = new_block_hashes[i]
  
              # Update and added the full block to the cache.
+@@ -525,6 +533,24 @@ class BlockPool:
+             dst_block_idx = dst_slot // block_size
+             dst_offset = dst_slot % block_size
+ 
++            if src_block_idx >= len(blocks) or dst_block_idx >= len(blocks):
++                # Diag for Phase 9 splice/compact interaction.
++                max_src_slot = max(s for s, _ in copy_operations)
++                max_dst_slot = max(d for _, d in copy_operations)
++                print(f"[v9-copy-oob] req={request_id} "
++                      f"src_slot={src_slot} dst_slot={dst_slot} "
++                      f"src_block_idx={src_block_idx} dst_block_idx={dst_block_idx} "
++                      f"len_blocks={len(blocks)} block_size={block_size} "
++                      f"n_ops={len(copy_operations)} "
++                      f"max_src_slot={max_src_slot} max_dst_slot={max_dst_slot} "
++                      f"first_op={copy_operations[0]} last_op={copy_operations[-1]}",
++                      flush=True)
++                raise IndexError(
++                    f"copy_kv_slots: src_block_idx={src_block_idx} or "
++                    f"dst_block_idx={dst_block_idx} >= len(blocks)={len(blocks)} "
++                    f"(req={request_id} src_slot={src_slot} dst_slot={dst_slot})"
++                )
++
+             src_block = blocks[src_block_idx]
+             dst_block = blocks[dst_block_idx]
+ 
 diff --git a/vllm/vllm/v1/core/kv_cache_coordinator.py b/vllm/vllm/v1/core/kv_cache_coordinator.py
 index d8acac0..4c0ff07 100644
 --- a/vllm/vllm/v1/core/kv_cache_coordinator.py
@@ -946,7 +971,7 @@ index db7a4d2..c703037 100644
      # block masking compactions. These requests will do prefill only,
      # allowing compaction to run before the first decode token.
 diff --git a/vllm/vllm/v1/core/sched/scheduler.py b/vllm/vllm/v1/core/sched/scheduler.py
-index 6b0d8fe..466773b 100644
+index 6b0d8fe..3752f4d 100644
 --- a/vllm/vllm/v1/core/sched/scheduler.py
 +++ b/vllm/vllm/v1/core/sched/scheduler.py
 @@ -88,6 +88,16 @@ class Scheduler(SchedulerInterface):
@@ -1019,7 +1044,7 @@ index 6b0d8fe..466773b 100644
          self.use_pp = self.parallel_config.pipeline_parallel_size > 1
          self.use_v2_model_runner = envs.VLLM_USE_V2_MODEL_RUNNER
  
-@@ -677,6 +722,41 @@ class Scheduler(SchedulerInterface):
+@@ -677,6 +722,79 @@ class Scheduler(SchedulerInterface):
                  token_budget -= num_new_tokens
                  request.status = RequestStatus.RUNNING
                  request.num_computed_tokens = num_computed_tokens
@@ -1048,9 +1073,47 @@ index 6b0d8fe..466773b 100644
 +                        else:
 +                            mid, rotate_delta = mid_rec, 0
 +                        try:
++                            # Capture pre-bump num_computed so we can shrink
++                            # num_scheduled_tokens by exactly the bump delta.
++                            before_nc = request.num_computed_tokens
 +                            ok, msg = self.queue_kv_restore(
 +                                request.request_id, mid, rotate_delta=rotate_delta,
 +                            )
++                            after_nc = request.num_computed_tokens
++                            bump_delta = after_nc - before_nc
++                            # Phase 9 critical fix: allocate_slots already ran
++                            # with the PRE-BUMP num_computed and extended the
++                            # block_table to cover [pre_nc, pre_nc + scheduled).
++                            # Our bump claims `bump_delta` of those positions
++                            # are already computed (covered by the splice).
++                            # Forward should process FEWER tokens so it stops
++                            # at the same end-slot the block_table covers —
++                            # otherwise it walks off the end of block_table,
++                            # silently writes K/V to null slots, and the
++                            # next compaction's active_physical references
++                            # slots past block_table → IndexError in
++                            # copy_kv_slots.
++                            if (bump_delta > 0
++                                    and request.request_id in num_scheduled_tokens):
++                                old_sched = num_scheduled_tokens[request.request_id]
++                                new_sched = old_sched - bump_delta
++                                if new_sched < 1:
++                                    # Bump claims more than the chunk; clamp
++                                    # to 1 so vLLM still has work to schedule.
++                                    # This shouldn't happen for normal-sized
++                                    # obs (~700 tokens) vs typical chunk
++                                    # (16K+) but be defensive.
++                                    new_sched = 1
++                                    print(f"[v9-sched-clamp] req={request.request_id} "
++                                          f"bump_delta={bump_delta} > "
++                                          f"old_sched={old_sched} — clamping to 1",
++                                          flush=True)
++                                num_scheduled_tokens[request.request_id] = new_sched
++                                token_budget += (old_sched - new_sched)
++                                print(f"[v9-sched-shrink] req={request.request_id} "
++                                      f"bump_delta={bump_delta} "
++                                      f"sched: {old_sched} → {new_sched}",
++                                      flush=True)
 +                            print(f"[v3c-splice-on-schedule] req={request.request_id} "
 +                                  f"mid={mid} delta={rotate_delta} ok={ok} msg={msg}",
 +                                  flush=True)
@@ -1061,7 +1124,7 @@ index 6b0d8fe..466773b 100644
                  # Count the number of prefix cached tokens.
                  if request.num_cached_tokens < 0:
                      request.num_cached_tokens = num_computed_tokens
-@@ -773,6 +853,52 @@ class Scheduler(SchedulerInterface):
+@@ -773,6 +891,52 @@ class Scheduler(SchedulerInterface):
          )
          self.pending_block_table_truncations.clear()
  
@@ -1114,7 +1177,7 @@ index 6b0d8fe..466773b 100644
          # Block masking: Detect requests with pending compactions that are
          # about to transition from prefill to decode. These should skip
          # sampling so compaction can run before the first decode token.
-@@ -816,7 +942,11 @@ class Scheduler(SchedulerInterface):
+@@ -816,7 +980,11 @@ class Scheduler(SchedulerInterface):
              finished_req_ids=self.finished_req_ids,
              free_encoder_mm_hashes=self.encoder_cache_manager.get_freed_mm_hashes(),
              kv_copy_operations=kv_copy_operations,
@@ -1126,7 +1189,7 @@ index 6b0d8fe..466773b 100644
              skip_sampling_req_ids=skip_sampling_req_ids,
          )
  
-@@ -1252,6 +1382,7 @@ class Scheduler(SchedulerInterface):
+@@ -1252,6 +1420,7 @@ class Scheduler(SchedulerInterface):
                          self.block_masking_config.keep_last_n_blocks,
                          mask_delimiters=self.block_masking_config.mask_delimiters,
                          restart_mode=self.block_masking_config.restart_mode,
@@ -1134,7 +1197,7 @@ index 6b0d8fe..466773b 100644
                      )
                      while compaction:
                          start, end = compaction
-@@ -1259,6 +1390,8 @@ class Scheduler(SchedulerInterface):
+@@ -1259,6 +1428,8 @@ class Scheduler(SchedulerInterface):
                              request.request_id,
                              start,
                              end,
@@ -1143,7 +1206,7 @@ index 6b0d8fe..466773b 100644
                          )
                          if (self.block_masking_config is not None and
                              self.block_masking_config.debug):
-@@ -1285,6 +1418,7 @@ class Scheduler(SchedulerInterface):
+@@ -1285,6 +1456,7 @@ class Scheduler(SchedulerInterface):
                              self.block_masking_config.keep_last_n_blocks,
                              mask_delimiters=self.block_masking_config.mask_delimiters,
                              restart_mode=self.block_masking_config.restart_mode,
@@ -1151,7 +1214,7 @@ index 6b0d8fe..466773b 100644
                          )
                      # Reset the flag after deferred compaction completes
                      state.deferred_compaction_scheduled = False
-@@ -1469,6 +1603,8 @@ class Scheduler(SchedulerInterface):
+@@ -1469,6 +1641,8 @@ class Scheduler(SchedulerInterface):
                          request.request_id,
                          start,
                          end,
@@ -1160,7 +1223,7 @@ index 6b0d8fe..466773b 100644
                      )
                      if (self.block_masking_config is not None and
                          self.block_masking_config.debug):
-@@ -1486,6 +1622,7 @@ class Scheduler(SchedulerInterface):
+@@ -1486,6 +1660,7 @@ class Scheduler(SchedulerInterface):
                          self.block_masking_config.keep_last_n_blocks,
                          mask_delimiters=self.block_masking_config.mask_delimiters,
                          restart_mode=self.block_masking_config.restart_mode,
@@ -1168,7 +1231,7 @@ index 6b0d8fe..466773b 100644
                      )
          
          for num_new, output_token_id in enumerate(new_token_ids, 1):
-@@ -1510,6 +1647,8 @@ class Scheduler(SchedulerInterface):
+@@ -1510,6 +1685,8 @@ class Scheduler(SchedulerInterface):
                          request.request_id,
                          start,
                          end,
@@ -1177,7 +1240,7 @@ index 6b0d8fe..466773b 100644
                      )
                      if (self.block_masking_config is not None and
                          self.block_masking_config.debug):
-@@ -1598,7 +1737,7 @@ class Scheduler(SchedulerInterface):
+@@ -1598,7 +1775,7 @@ class Scheduler(SchedulerInterface):
      def add_request(self, request: Request) -> None:
          self.waiting.add_request(request)
          self.requests[request.request_id] = request
@@ -1186,7 +1249,7 @@ index 6b0d8fe..466773b 100644
          # Initialize block masking state if enabled
          if self.block_masking_processor is not None:
              request.block_masking_state = self.block_masking_processor.create_state()
-@@ -1608,6 +1747,28 @@ class Scheduler(SchedulerInterface):
+@@ -1608,6 +1785,28 @@ class Scheduler(SchedulerInterface):
                      request.block_masking_state,
                      request.prompt_token_ids,
                  )
@@ -1215,7 +1278,7 @@ index 6b0d8fe..466773b 100644
          
          if self.log_stats:
              request.record_event(EngineCoreEventType.QUEUED)
-@@ -1759,11 +1920,453 @@ class Scheduler(SchedulerInterface):
+@@ -1759,11 +1958,489 @@ class Scheduler(SchedulerInterface):
                  merged.append((start, end))
          return merged
  
@@ -1418,6 +1481,8 @@ index 6b0d8fe..466773b 100644
 +        group_ids = list(range(max(1, len(kv_groups)))) if kv_groups else [0]
 +
 +        n_inserts = 0
++        n_already = 0
++        n_checked = 0
 +        # Iterate every per-group block table; insert each block in the
 +        # affected range (obs region + suffix) under the recall chain hash.
 +        for mgr in self.kv_cache_manager.coordinator.single_type_managers:
@@ -1437,21 +1502,27 @@ index 6b0d8fe..466773b 100644
 +                chain_hash = chain_hashes[blk_idx]
 +                gid = mgr.kv_cache_group_id
 +                key = make_block_hash_with_group_id(chain_hash, gid)
++                n_checked += 1
 +                # Don't double-insert if already present.
 +                if block_pool.cached_block_hash_to_block.get_one_block(key) is not None:
++                    n_already += 1
 +                    continue
 +                block_pool.cached_block_hash_to_block.insert(key, blk)
 +                n_inserts += 1
-+        if n_inserts:
-+            try:
-+                from vllm.v1.core.block_masking.memento_store import bump as _bump
++        try:
++            from vllm.v1.core.block_masking.memento_store import bump as _bump
++            if n_inserts:
 +                _bump("dual_key_inserts", n_inserts)
-+            except Exception:
-+                pass
-+            print(f"[v8-dual-key-on-recall] request_id={request_id} "
-+                  f"inserted {n_inserts} blocks under recall chain hashes "
-+                  f"(insert_idx={insert_block_idx}, n_obs={n_obs_blocks})",
-+                  flush=True)
++        except Exception:
++            pass
++        # Always log so we can tell whether the path fired and whether
++        # the cache already had the recall-chain keys (n_already) or not
++        # (n_inserts > 0).
++        print(f"[v8-dual-key-on-recall] request_id={request_id} "
++              f"checked={n_checked} already_cached={n_already} "
++              f"inserted={n_inserts} "
++              f"(insert_idx={insert_block_idx}, n_obs={n_obs_blocks})",
++              flush=True)
 +
 +    def queue_kv_restore(
 +        self,
@@ -1511,23 +1582,40 @@ index 6b0d8fe..466773b 100644
 +        # Phase 9 corrects this via an in-place K rotation (see below).
 +        block_size = m.block_size if m.block_size > 0 else 16
 +        insert_block_idx = m.logical_range[0] // block_size
++        end_block_idx = insert_block_idx + n_blocks
 +        spliced_into = []
 +        suffix_block_ids_pre_splice: list[int] = []
 +        for mgr in self.kv_cache_manager.coordinator.single_type_managers:
 +            req_blocks = mgr.req_to_blocks.get(request_id)
 +            if req_blocks is None:
 +                continue
-+            # Insert the new blocks at insert_block_idx, shifting the existing
-+            # suffix blocks right by n_blocks. Phase 9: capture the suffix's
-+            # block IDs BEFORE we splice — those are the blocks whose K
-+            # vectors need re-rotation by rotate_delta.
-+            if 0 <= insert_block_idx <= len(req_blocks):
++            # REPLACE the n_blocks vLLM allocated for the obs's logical span
++            # with our captured blocks. INSERT (slice [a:a]) was a bug: it
++            # extended the block_table by n_blocks, leaving vLLM with both
++            # the fresh-blank obs blocks AND ours — vLLM's prefix walk then
++            # derived num_computed from the now-too-long block_table and
++            # overshot num_prompt by n_obs_blocks*block_size on the next
++            # cycle (→ assert total_num_scheduled_tokens > 0).
++            if 0 <= insert_block_idx and end_block_idx <= len(req_blocks):
 +                if not suffix_block_ids_pre_splice:
-+                    # Same suffix block IDs across kv_cache groups; capture once.
++                    # Suffix is what comes AFTER the obs span; capture once.
 +                    suffix_block_ids_pre_splice = [
-+                        b.block_id for b in req_blocks[insert_block_idx:]
++                        b.block_id for b in req_blocks[end_block_idx:]
 +                    ]
-+                req_blocks[insert_block_idx:insert_block_idx] = blocks
++                old_obs_blocks = list(req_blocks[insert_block_idx:end_block_idx])
++                req_blocks[insert_block_idx:end_block_idx] = blocks
++                # Return the displaced blank blocks to the free pool —
++                # they were freshly allocated by vLLM for this request and
++                # are no longer referenced by anyone (ref_cnt=1 → 0).
++                if old_obs_blocks:
++                    try:
++                        self.kv_cache_manager.block_pool.free_blocks(
++                            old_obs_blocks
++                        )
++                    except Exception as e:
++                        print(f"[v9-splice-free-warn] req={request_id} "
++                              f"failed to free {len(old_obs_blocks)} displaced "
++                              f"blocks: {e}", flush=True)
 +                spliced_into.append(mgr.kv_cache_group_id)
 +
 +        # Update num_computed_tokens to reflect that the obs's positions
@@ -1598,24 +1686,35 @@ index 6b0d8fe..466773b 100644
 +            except Exception as e:
 +                print(f"[v9-rotate-err] {type(e).__name__}: {e}", flush=True)
 +
-+            # Phase 8 dual-key INSERT: after splice + (upcoming) rotation,
-+            # the suffix blocks' K is at the recall-prompt RoPE phase. We
-+            # insert them into cached_block_hash_to_block under the recall-
-+            # prompt's chain hash so future requests' prefix-cache walk
-+            # finds them via the new chain. The OLD entries (compacted-
-+            # period chain) STAY — Vlad's directive: never invalidate the
-+            # cache. Future requests matching the old chain still get
-+            # these blocks; their K is now mis-phased but that's a
-+            # correctness trade we accept.
-+            try:
-+                self._dual_key_after_recall_splice(
-+                    request_id=request_id,
-+                    insert_block_idx=insert_block_idx,
-+                    n_obs_blocks=n_blocks,
-+                )
-+            except Exception as e:
-+                print(f"[v8-dual-key-on-recall-err] "
-+                      f"{type(e).__name__}: {e}", flush=True)
++        # Phase 8 dual-key INSERT — fires on EVERY recall, even when
++        # rotate_delta == 0. The recall un-mementos the message
++        # (msg.memento → None) so the prompt rendering at the obs's
++        # position changes from
++        #   <tool_response>obs</tool_response><|fim_prefix|>memento<|fim_middle|>
++        # to
++        #   <tool_response>obs</tool_response>
++        # That is a TOKEN-LEVEL change at the obs's logical position,
++        # which means the chain hash for every block at-or-after this
++        # obs differs from what was cached during the compacted period.
++        # Without this dual-key insert, vLLM's prefix-cache walk at the
++        # next request would miss those entries → suffix re-prefill
++        # cliff at recall time.
++        #
++        # Earlier code gated this on `rotate_delta > 0 and
++        # suffix_block_ids_pre_splice` because the rotation work was
++        # the only reason to populate suffix_block_ids_pre_splice. But
++        # the dual-key insert is independent of rotation — it must fire
++        # whenever the prompt rendering for any obs changed across the
++        # compacted/recall transition.
++        try:
++            self._dual_key_after_recall_splice(
++                request_id=request_id,
++                insert_block_idx=insert_block_idx,
++                n_obs_blocks=n_blocks,
++            )
++        except Exception as e:
++            print(f"[v8-dual-key-on-recall-err] "
++                  f"{type(e).__name__}: {e}", flush=True)
 +
 +        return True, (f"queued restore + spliced: {n_blocks} blocks at "
 +                      f"block_idx={insert_block_idx} → "
@@ -1669,7 +1768,7 @@ index 6b0d8fe..466773b 100644
      ) -> SpanRemovalResult:
          """Mask a span of tokens and compact the KV cache in one step.
  
-@@ -1776,6 +2379,11 @@ class Scheduler(SchedulerInterface):
+@@ -1776,6 +2453,11 @@ class Scheduler(SchedulerInterface):
              request_id: The request ID.
              start_position: Start logical position (inclusive).
              end_position: End logical position (exclusive).
@@ -1681,7 +1780,7 @@ index 6b0d8fe..466773b 100644
  
          Returns:
              SpanRemovalResult with success status, tokens removed, and
-@@ -1808,6 +2416,10 @@ class Scheduler(SchedulerInterface):
+@@ -1808,6 +2490,10 @@ class Scheduler(SchedulerInterface):
              )
  
          if end_position > request.num_computed_tokens:
@@ -1692,7 +1791,7 @@ index 6b0d8fe..466773b 100644
              return SpanRemovalResult(
                  success=False,
                  tokens_removed=0,
-@@ -1839,6 +2451,10 @@ class Scheduler(SchedulerInterface):
+@@ -1839,6 +2525,10 @@ class Scheduler(SchedulerInterface):
              active_logical.extend(range(prev_end, num_computed))
  
          if not active_logical:
@@ -1703,10 +1802,30 @@ index 6b0d8fe..466773b 100644
              return SpanRemovalResult(
                  success=False,
                  tokens_removed=0,
-@@ -1854,20 +2470,121 @@ class Scheduler(SchedulerInterface):
+@@ -1854,20 +2544,141 @@ class Scheduler(SchedulerInterface):
              request.logical_to_physical(p) for p in active_logical
          ]
  
++        # Phase 9 diag: dump block_table state vs computed active_physical.
++        try:
++            req_blocks_lens = []
++            for mgr in self.kv_cache_manager.coordinator.single_type_managers:
++                rb = mgr.req_to_blocks.get(request_id)
++                req_blocks_lens.append(len(rb) if rb is not None else None)
++            print(f"[v9-mask-diag] req={request_id} "
++                  f"new_span=({start_position},{end_position}) "
++                  f"num_computed={num_computed} num_tokens={request.num_tokens} "
++                  f"num_prompt={request.num_prompt_tokens} "
++                  f"compacted_spans={request.compacted_spans} "
++                  f"n_active_logical={len(active_logical)} "
++                  f"n_active_physical={len(active_physical)} "
++                  f"max_active_phys={max(active_physical) if active_physical else -1} "
++                  f"min_active_phys={min(active_physical) if active_physical else -1} "
++                  f"req_blocks_lens={req_blocks_lens}",
++                  flush=True)
++        except Exception as _e:
++            print(f"[v9-mask-diag-err] {type(_e).__name__}: {_e}", flush=True)
++
 +        # Build capture spec if the caller wants this masked obs stashed
 +        # under a memento_id (Paper 2 v3 KV-level recall, Phase 1A).
 +        capture_specs = None
@@ -1830,7 +1949,7 @@ index 6b0d8fe..466773b 100644
          # Now merge the new span into compacted_spans.
          request.compacted_spans = self._merge_spans(
 diff --git a/vllm/vllm/v1/core/single_type_kv_cache_manager.py b/vllm/vllm/v1/core/single_type_kv_cache_manager.py
-index de7ce2e..2be4a7d 100644
+index de7ce2e..57cd9bd 100644
 --- a/vllm/vllm/v1/core/single_type_kv_cache_manager.py
 +++ b/vllm/vllm/v1/core/single_type_kv_cache_manager.py
 @@ -304,7 +304,9 @@ class SingleTypeKVCacheManager(ABC):
@@ -1931,7 +2050,26 @@ index de7ce2e..2be4a7d 100644
  
          # Build copy plan: list of (src_slot, dst_slot) pairs
          # where src_slot is the current physical location of an active token
-@@ -368,11 +435,81 @@ class SingleTypeKVCacheManager(ABC):
+@@ -346,6 +413,18 @@ class SingleTypeKVCacheManager(ABC):
+         # Convert to block-level operations for the worker
+         block_level_ops: list[tuple[int, int, int, int]] = []
+         if copy_operations:
++            max_src = max(s for s, _ in copy_operations)
++            len_blocks = len(blocks)
++            need_blocks = (max_src // self.block_size) + 1
++            if need_blocks > len_blocks:
++                print(f"[v9-compact-diag] req={request_id} "
++                      f"max_src_slot={max_src} need_blocks={need_blocks} "
++                      f"len_blocks={len_blocks} block_size={self.block_size} "
++                      f"n_active={len(active_physical_positions)} "
++                      f"n_copy_ops={len(copy_operations)} "
++                      f"max_active_phys={max(active_physical_positions)} "
++                      f"min_active_phys={min(active_physical_positions)}",
++                      flush=True)
+             block_level_ops = self._get_kv_copy_ops(
+                 request_id, blocks, copy_operations
+             )
+@@ -368,11 +447,81 @@ class SingleTypeKVCacheManager(ABC):
          # Truncate the blocks list
          del blocks[blocks_needed:]
  

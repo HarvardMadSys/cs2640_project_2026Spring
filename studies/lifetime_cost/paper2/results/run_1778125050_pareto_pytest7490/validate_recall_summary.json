@@ -1,0 +1,75 @@
+[
+  {
+    "task_id": "pytest-dev__pytest-7490",
+    "variant": "none",
+    "seed": 0,
+    "label": "memento_none",
+    "steps": 12,
+    "resolved": false,
+    "chat_wall_ms": 18420,
+    "haiku_wall_ms": 0,
+    "total_wall_ms": 19458,
+    "num_compactions": 0,
+    "num_recalls": 0,
+    "reads": {
+      "src/_pytest/nodes.py": 2,
+      "src/_pytest/mark/structures.py": 1
+    }
+  },
+  {
+    "task_id": "pytest-dev__pytest-7490",
+    "variant": "lru-kvrestore",
+    "seed": 0,
+    "label": "memento_lru-kvrestore",
+    "steps": 16,
+    "resolved": false,
+    "chat_wall_ms": 32515,
+    "haiku_wall_ms": 7439,
+    "total_wall_ms": 40654,
+    "num_compactions": 5,
+    "num_recalls": 4,
+    "reads": {
+      "test_foo.py": 2,
+      "src/_pytest/nodes.py": 2,
+      "testing/test_mark.py": 1
+    }
+  },
+  {
+    "task_id": "pytest-dev__pytest-7490",
+    "variant": "none",
+    "seed": 1,
+    "label": "memento_none",
+    "steps": 20,
+    "resolved": false,
+    "chat_wall_ms": 34292,
+    "haiku_wall_ms": 0,
+    "total_wall_ms": 34591,
+    "num_compactions": 0,
+    "num_recalls": 0,
+    "reads": {
+      "src/_pytest/nodes.py": 1,
+      "testing/test_mark.py": 1,
+      "testing/test_skipping.py": 1,
+      "src/_pytest/skipping.py": 11
+    }
+  },
+  {
+    "task_id": "pytest-dev__pytest-7490",
+    "variant": "lru-kvrestore",
+    "seed": 1,
+    "label": "memento_lru-kvrestore",
+    "steps": 14,
+    "resolved": false,
+    "chat_wall_ms": 54794,
+    "haiku_wall_ms": 14249,
+    "total_wall_ms": 69661,
+    "num_compactions": 10,
+    "num_recalls": 8,
+    "reads": {
+      "src/_pytest/nodes.py": 2,
+      "testing/test_mark.py": 1,
+      "testing/test_xfail.py": 1,
+      "testing/test_skipping.py": 1
+    }
+  }
+]

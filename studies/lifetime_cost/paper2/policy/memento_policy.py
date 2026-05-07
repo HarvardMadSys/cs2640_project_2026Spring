@@ -77,11 +77,13 @@ class MementoPolicy(CompactionPolicy):
         writer: Optional[HaikuMementoWriter] = None,
         memento_model: str = "claude-haiku-4-5",
         max_obs_chars: int = 8000,
+        eager_compact_at_suffix: bool = False,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self._min_obs_chars = min_obs_chars
         self._trigger_ratio = trigger_ratio
+        self._eager_compact_at_suffix = eager_compact_at_suffix
         self._target_ratio = target_ratio
         self._compaction_enabled = compaction_enabled
         self._recall_enabled = recall_enabled
@@ -186,43 +188,75 @@ class MementoPolicy(CompactionPolicy):
         # 0. Compaction-disabled (true full-context baseline).
         if not self._compaction_enabled:
             return messages, None
-        # 1. Trigger check — total tokens must exceed trigger threshold.
-        total_tok = self._estimate_tokens(messages, ctx)
-        trigger = int(self._trigger_ratio * ctx.budget)
-        if total_tok < trigger:
-            return messages, None
 
-        # 2. Find tool messages that are big enough and not yet memento'd,
-        #    in OLDEST-FIRST order (we evict the oldest aggressively-bigger
-        #    obs first; recent obs stay visible).
-        # Heuristic: average ~4 chars/token. Skip recent N=2 tool msgs to
-        # leave the agent's most recent context intact.
-        candidates: List[int] = []
-        recent_skip = 2
-        # walk in chronological order; collect indices, then drop the last N
-        all_tool_indices = [i for i, m in enumerate(messages) if m.get("role") == "tool"]
-        keep_recent_set = set(all_tool_indices[-recent_skip:]) if all_tool_indices else set()
-        for i in all_tool_indices:
-            if i in keep_recent_set:
-                continue
-            m = messages[i]
+        # Eager-at-suffix mode: compact the just-arrived tool obs while it
+        # is still the LAST tool message in the prompt. The memento appendix
+        # `<|fim_prefix|>memento<|fim_middle|>` lands at the suffix tail
+        # (no mid-prompt insertion), so the chain hash up to and including
+        # this obs is identical across every subsequent chat — no
+        # prefix-cache cliff at the next step. Skips the trigger / target
+        # ratio gating: every qualifying tool obs gets memento'd as it
+        # arrives. Pairs naturally with `always_wrap=True` in the renderer
+        # so the obs's pre-memento and post-memento renderings differ only
+        # by the appendix bytes (no structural reformatting).
+        total_tok = self._estimate_tokens(messages, ctx)  # used downstream
+        if self._eager_compact_at_suffix:
+            tool_indices = [i for i, m in enumerate(messages)
+                            if m.get("role") == "tool"]
+            if not tool_indices:
+                return messages, None
+            last_idx = tool_indices[-1]
+            m = messages[last_idx]
             if m.get("memento"):
-                continue
-            # Cooldown: don't immediately re-memento something that was just
-            # recalled. Without this, recall+compact thrash within a step pair.
+                return messages, None
             recalled_at = m.get("recalled_step")
-            if (
-                recalled_at is not None
-                and ctx.step - int(recalled_at) < self._recall_cooldown_steps
-            ):
-                continue
+            if (recalled_at is not None
+                    and ctx.step - int(recalled_at) < self._recall_cooldown_steps):
+                return messages, None
             obs = m.get("content", "")
             if not isinstance(obs, str) or len(obs) < self._min_obs_chars:
-                continue
-            candidates.append(i)
+                return messages, None
+            print(f"[policy-compact-eager] step={ctx.step} idx={last_idx} "
+                  f"obs_chars={len(obs)} (suffix-memento, no mid-prompt insertion)",
+                  flush=True)
+            candidates = [last_idx]
+        else:
+            # 1. Trigger check — total tokens must exceed trigger threshold.
+            trigger = int(self._trigger_ratio * ctx.budget)
+            if total_tok < trigger:
+                return messages, None
 
-        if not candidates:
-            return messages, None
+            # 2. Find tool messages that are big enough and not yet memento'd,
+            #    in OLDEST-FIRST order (we evict the oldest aggressively-bigger
+            #    obs first; recent obs stay visible).
+            # Heuristic: average ~4 chars/token. Skip recent N=2 tool msgs to
+            # leave the agent's most recent context intact.
+            candidates: List[int] = []
+            recent_skip = 2
+            # walk in chronological order; collect indices, then drop the last N
+            all_tool_indices = [i for i, m in enumerate(messages) if m.get("role") == "tool"]
+            keep_recent_set = set(all_tool_indices[-recent_skip:]) if all_tool_indices else set()
+            for i in all_tool_indices:
+                if i in keep_recent_set:
+                    continue
+                m = messages[i]
+                if m.get("memento"):
+                    continue
+                # Cooldown: don't immediately re-memento something that was just
+                # recalled. Without this, recall+compact thrash within a step pair.
+                recalled_at = m.get("recalled_step")
+                if (
+                    recalled_at is not None
+                    and ctx.step - int(recalled_at) < self._recall_cooldown_steps
+                ):
+                    continue
+                obs = m.get("content", "")
+                if not isinstance(obs, str) or len(obs) < self._min_obs_chars:
+                    continue
+                candidates.append(i)
+
+            if not candidates:
+                return messages, None
 
         # 3. Generate mementos in oldest-first order, until projected context
         #    falls below target_ratio * budget. Each generated memento

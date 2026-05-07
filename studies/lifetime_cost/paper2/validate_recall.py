@@ -138,6 +138,11 @@ def _build_policy(variant: str) -> MementoPolicy:
     if base == "off":
         return MementoPolicy(min_obs_chars=300, recall_enabled=False)
     if base == "lru":
+        # Eager-at-suffix: only meaningful for kvrestore mode, where
+        # compacting the just-arrived obs (while still last-tool) keeps
+        # the memento appendix at the suffix tail and prevents the
+        # mid-prompt insertion cliff. Other modes don't need it.
+        eager = (mode == "kvrestore")
         return MementoPolicy(
             min_obs_chars=300,
             recall_enabled=True,
@@ -145,6 +150,7 @@ def _build_policy(variant: str) -> MementoPolicy:
             recall_cooldown_steps=RECALL_COOLDOWN,
             recall_strategy="lru",
             recall_mode=mode,
+            eager_compact_at_suffix=eager,
         )
     if base == "embedding":
         return MementoPolicy(
