@@ -4,11 +4,15 @@ import site.ycsb.DB;
 import site.ycsb.Workload;
 import site.ycsb.measurements.Measurements;
 
+import java.io.File;
 import java.io.FileReader;
 import java.lang.reflect.Constructor;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 public final class YcsbDriver {
+
+    private static final String LOAD_BARRIER_PREFIX = "/tmp/ycsb_load_done_";
 
     public static void main(String[] args) throws Exception {
         Properties props = new Properties();
@@ -59,19 +63,49 @@ public final class YcsbDriver {
 
         Properties runProps = new Properties();
         runProps.putAll(props);
-        runProps.setProperty("insertstart", String.valueOf(loadStart));
-        runProps.setProperty("insertcount", String.valueOf(perProcRecords));
+        runProps.setProperty("insertstart", "0");
+        runProps.setProperty("insertcount", String.valueOf(records));
+        runProps.setProperty("recordcount",
+            String.valueOf(records + (long) procid * perProcOps));
         Workload runWorkload = (Workload) Class.forName(workloadClass)
             .getDeclaredConstructor().newInstance();
         runWorkload.init(runProps);
 
         runPhase("load", threads, loadProps, loadWorkload, dbCtor,
                  perProcRecords, true);
-        runPhase("run",  threads, runProps,  runWorkload,  dbCtor,
-                 perProcOps,    false);
+
+        loadBarrier(procid, nprocs);
+
+        runPhase("run", threads, runProps, runWorkload, dbCtor,
+                 perProcOps, false);
 
         loadWorkload.cleanup();
         runWorkload.cleanup();
+    }
+
+    private static void loadBarrier(int procid, int nprocs) throws Exception {
+        if (nprocs <= 1) {
+            return;
+        }
+        new File(LOAD_BARRIER_PREFIX + procid).createNewFile();
+        long deadlineNs = System.nanoTime()
+                          + TimeUnit.MINUTES.toNanos(5);
+        while (true) {
+            int count = 0;
+            for (int i = 0; i < nprocs; i++) {
+                if (new File(LOAD_BARRIER_PREFIX + i).exists()) {
+                    count++;
+                }
+            }
+            if (count == nprocs) {
+                return;
+            }
+            if (System.nanoTime() > deadlineNs) {
+                throw new RuntimeException(
+                    "load barrier timeout: " + count + "/" + nprocs);
+            }
+            Thread.sleep(50);
+        }
     }
 
     private static void runPhase(String name, int threads, Properties props,

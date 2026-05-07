@@ -93,7 +93,8 @@ def run_sas(workload: str, threads: int) -> dict[str, float]:
 
 def run_lightning(workload: str, threads: int) -> dict[str, float]:
     LIGHTNING_SOCKET.unlink(missing_ok=True)
-    subprocess.run("rm -f /dev/shm/*", shell=True, stderr=subprocess.DEVNULL)
+    subprocess.run("rm -f /dev/shm/* /tmp/ycsb_load_done_*",
+                   shell=True, stderr=subprocess.DEVNULL)
     daemon = subprocess.Popen(
         [str(LIGHTNING_BUILD / "store")],
         cwd=str(LIGHTNING_BUILD),
