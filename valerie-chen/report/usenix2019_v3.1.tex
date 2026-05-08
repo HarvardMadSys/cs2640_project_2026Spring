@@ -1,0 +1,305 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Template for USENIX papers.
+%
+% History:
+%
+% - TEMPLATE for Usenix papers, specifically to meet requirements of
+%   USENIX '05. originally a template for producing IEEE-format
+%   articles using LaTeX. written by Matthew Ward, CS Department,
+%   Worcester Polytechnic Institute. adapted by David Beazley for his
+%   excellent SWIG paper in Proceedings, Tcl 96. turned into a
+%   smartass generic template by De Clarke, with thanks to both the
+%   above pioneers. Use at your own risk. Complaints to /dev/null.
+%   Make it two column with no page numbering, default is 10 point.
+%
+% - Munged by Fred Douglis <douglis@research.att.com> 10/97 to
+%   separate the .sty file from the LaTeX source template, so that
+%   people can more easily include the .sty file into an existing
+%   document. Also changed to more closely follow the style guidelines
+%   as represented by the Word sample file.
+%
+% - Note that since 2010, USENIX does not require endnotes. If you
+%   want foot of page notes, don't include the endnotes package in the
+%   usepackage command, below.
+% - This version uses the latex2e styles, not the very ancient 2.09
+%   stuff.
+%
+% - Updated July 2018: Text block size changed from 6.5" to 7"
+%
+% - Updated Dec 2018 for ATC'19:
+%
+%   * Revised text to pass HotCRP's auto-formatting check, with
+%     hotcrp.settings.submission_form.body_font_size=10pt, and
+%     hotcrp.settings.submission_form.line_height=12pt
+%
+%   * Switched from \endnote-s to \footnote-s to match Usenix's policy.
+%
+%   * \section* => \begin{abstract} ... \end{abstract}
+%
+%   * Make template self-contained in terms of bibtex entires, to allow
+%     this file to be compiled. (And changing refs style to 'plain'.)
+%
+%   * Make template self-contained in terms of figures, to
+%     allow this file to be compiled. 
+%
+%   * Added packages for hyperref, embedding fonts, and improving
+%     appearance.
+%   
+%   * Removed outdated text.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[letterpaper,twocolumn,10pt]{article}
+\usepackage{usenix2019_v3}
+
+% to be able to draw some self-contained figs
+\usepackage{tikz}
+\usepackage{amsmath}
+
+% inlined bib file
+\usepackage{filecontents}
+
+%-------------------------------------------------------------------------------
+\begin{filecontents}{\jobname.bib}
+%-------------------------------------------------------------------------------
+@Book{arpachiDusseau18:osbook,
+  author =       {Arpaci-Dusseau, Remzi H. and Arpaci-Dusseau Andrea C.},
+  title =        {Operating Systems: Three Easy Pieces},
+  publisher =    {Arpaci-Dusseau Books, LLC},
+  year =         2015,
+  edition =      {1.00},
+  note =         {\url{http://pages.cs.wisc.edu/~remzi/OSTEP/}}
+}
+@InProceedings{waldspurger02,
+  author =       {Waldspurger, Carl A.},
+  title =        {Memory resource management in {VMware ESX} server},
+  booktitle =    {USENIX Symposium on Operating System Design and
+                  Implementation (OSDI)},
+  year =         2002,
+  pages =        {181--194},
+  note =         {\url{https://www.usenix.org/legacy/event/osdi02/tech/waldspurger/waldspurger.pdf}}
+}
+@misc{macrumors2026activedevices,
+  author    = {Rossignol, Joe},
+  title     = {Apple Now Has 2.5 Billion Active Devices Worldwide},
+  publisher = {MacRumors},
+  year      = {2026},
+  month     = jan,
+  note      = {\url{https://www.macrumors.com/2026/01/29/apple-2-5-billion-active-devices/}}
+}
+@misc{appleFcntl,
+  author       = {{Apple Inc.}},
+  title        = {\texttt{fcntl(2)} {Mac} {OS} {X} {Manual} {Page}},
+  howpublished = {Apple Developer Documentation},
+  note         = {\url{https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man2/fcntl.2.html}}
+}
+\end{filecontents}
+
+%-------------------------------------------------------------------------------
+\begin{document}
+%-------------------------------------------------------------------------------
+
+%don't want date printed
+\date{}
+
+% make title bold and 14 pt font (Latex default is non-bold, 16 pt)
+\title{\Large \bf Measuring the Cost of Persistence Guarantees in iOS Storage\\{\rm CS 2640 Modern Computer Storage, Spring 2026}}
+
+%for single author (just remove % characters)
+\author{
+{\rm Valerie Chen}\\
+Harvard University\\
+% \\
+% {\rm CS 2640, Spring 2026}
+}
+
+
+\maketitle
+
+%-------------------------------------------------------------------------------
+\begin{abstract}
+%-------------------------------------------------------------------------------
+iOS persistence APIs make writes appear instantaneous by buffering in memory and flushing asynchronously, obscur-ing both when data becomes persisted and how much a developer pays to guarantee that durability. We built an iOS benchmarking app comparing three strategies: Core Data, an append-only log over FileManager, and per-event file writes, under default and aggressive (\verb|F_FULLFSYNC|) flush modes across seven payload sizes from 100 bytes to 50 MB. Across these 42 configurations, we discover that flush mode dominates latency. Aggressive flushing slows small Core Data writes ~235x and inflates a 50 MB Core Data write ~85,000x relative to default. Append-only writes pay only a 1.06–2.2x penalty, suggesting the choice of API matters far less than whether the developer ever forces a true flush. These results expose the implicit durability policies of iOS frameworks and the trade-offs they hide from app developers.
+\end{abstract}
+
+
+%-------------------------------------------------------------------------------
+\section{Context and Motivation}
+%-------------------------------------------------------------------------------
+
+All modern operating systems buffer writes, i.e. a successful return from \verb|write()| only guarantees that the kernel has accepted the bytes, not that the storage device has committed them to non-volatile media. This is a deliberate performance optimization, but it leaves a gap between the developer's perception of persistence and actual durability enforced when the application explicitly forces a flush.
+
+On Linux and most server systems, this trade-off is well-documented. iOS is comparatively opaque: APFS is closed source, the app sandbox limits system-wide tracing, and it is standard practice among developers to call high-level frameworks like Core Data or FileManager and trust they do the right thing. As a result, roughly 1.5 billion iOS devices~\cite{macrumors2026activedevices} run code where developers cannot easily determine their persistence guarantees or what enforcing them would cost.
+
+This project asks a narrow version of that question: saving appears to be instant on iOS (in that write functions are synchronous and return immediately), but when is the data actually on disk, and what does it cost to guarantee that? We attempt to answer this through measurement since there isn't immediate clarity from Apple's own documentation, which gives only partial guidance: the \verb|fcntl(2)| man page recommends \verb|fcntl(fd, F_FULLFSYNC)| over plain \verb|fsync| for true durability and notes that its cost might be high (with \verb|F_FULLFSYNC|, "the operation may take a while to complete") ~\cite{appleFcntl}. Three subquestions drive the paper: how does write latency vary across \textbf{storage strategy} (high-level ORM vs. low-level append vs. naive per-event file), across \textbf{flush mode} (framework default vs. explicit aggressive flush), and across \textbf{payload size} (100 B analytics-style records to 50 MB media-style writes)?
+
+It is useful to think of iOS persistence as having four tiers. Data lives in (1) app memory, lost on app exit; (2) the OS page cache after \verb|write()| returns, lost on a kernel panic; (3) the SSD's internal write buffer after fsync returns, lost on power loss; and (4) on flash after \verb|F_FULLFSYNC| returns, durable against power loss. A typical iOS developer thinks on levels 1 and 2.
+
+iOS layers several abstractions over this ladder. \textbf{Core Data} is Apple's object-graph persistence framework that is backed by SQLite and batches writes inside an \verb|NSManagedObjectContext| until the developer calls \verb|.save()|. \textbf{FileManager} wraps POSIX file operations and is the primary way apps interact with APFS (Apple's proprietary file system); it does not flush on its own and requires \verb|FileHandle.synchronize()|, \verb|fsync(fd)|, or \verb|fcntl(fd, F_FULLFSYNC)|. Other tools (UserDefaults, Keychain, raw SQLite, Realm, SwiftData) sit on the same underlying machinery but expose different API surfaces. We benchmark Core Data and two patterns built directly on FileManager because together they cover the spectrum from heavy ORM to bare file I/O, and are the two most common storage methods for the iOS development ecosystem.
+
+%-------------------------------------------------------------------------------
+\section{Experimental Setup and Methods}
+%-------------------------------------------------------------------------------
+
+\subsection{Benchmark App}
+Our SwiftUI iOS app is organized
+around a \texttt{StorageBackend} protocol with three concrete
+implementations:
+\begin{description}
+\item[\texttt{CoreDataBackend}] inserts each write as a \texttt{LogEntry}
+  managed object into a SQLite-backed Core Data store. In default mode it
+  calls \texttt{context.save()} every 100 inserts (a deliberately typical
+  pattern); in aggressive mode it saves on every insert.
+\item[\texttt{AppendLogBackend}] opens a single file once via
+  \texttt{FileHandle} and appends each payload. Default mode relies on the OS to flush whereas aggressive mode calls \verb|fcntl(fd, F_FULLFSYNC)| after every write.
+\item[\texttt{PerFileBackend}] creates a new file per write under the
+  app's \texttt{Documents/bench\_scratch/} directory, modeling the
+  pattern of one-file-per-event logging. Aggressive mode again calls \verb|F_FULLFSYNC| during each write.
+\end{description}
+A \texttt{BenchmarkRunner} reads a configuration (backend $\times$ flush
+mode $\times$ payload size $\times$ trial count), sets up the chosen
+backend, and writes the results in JSON to the app's
+\texttt{Documents/results/} directory for export and analysis. The app also has visualization UI to directly view results in-app.
+
+\subsection{Measurement}
+Each per-write latency is measured with
+\verb|clock_gettime(CLOCK_MONOTONIC_RAW)| which yields nanosecond resolution. The first 10\% of writes in each run are
+discarded as warmup so that lazy file allocation, SQLite first-page
+bring-in, and other one-time effects do not bias steady-state numbers.
+Latencies are stored per-write, sorted, and reduced to p50, p95, and p99
+percentiles. Throughput is reported as MB/s over the post-warmup window.
+We use percentiles instead of means as this is best practice in storage evals; tail latency is where users actually notice degradation (a single 50~ms hitch drops a frame at 60~fps).
+
+\subsection{Coverage}
+Our experimental matrix is 3 backends $\times$ 2 flush modes $\times$ 7
+payload sizes $=$ 42 configurations, with payloads of 100 bytes, 256 bytes, 512  bytes, 1 KB (small / logging-style) and 1 MB, 10 MB, 50 MB (large / media-style). Small workloads use 1000 writes $\times$ 5 trials; large workloads use 20 writes $\times$ 3 trials. Payload bytes are randomly generated. All measurements run on a physical iPhone (17 Pro).
+%-------------------------------------------------------------------------------
+\section{Results}
+%-------------------------------------------------------------------------------
+Across the 42 configurations, the clearest pattern in the data is that
+flush mode affects latency considerably more than the choice of API.
+The magnitude of this effect varies substantially across backends,
+which appears to be driven primarily by the differing default
+behaviors of each framework.
+
+\subsection{Latency}
+Table~\ref{tab:latency} reports median latency at one small (256 bytes)
+and one large (50~MB) payload as representative points. At 256~bytes,
+both default-mode Core Data and the append log complete in
+approximately 1--2~$\mu$s, which is sufficiently fast to suggest that
+the data has not yet been flushed to disk. Under aggressive flushing,
+the same operations take substantially longer: the append log is
+roughly 2$\times$ slower, per-file is roughly 18$\times$ slower, and
+Core Data is roughly 235$\times$ slower. The disproportionate cost
+incurred by Core Data is consistent with the additional bookkeeping
+required to commit on every insert, though the present experiments do
+not isolate this effect directly.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}llrrr@{}}
+\hline
+\textbf{Workload} & \textbf{Strategy} & \textbf{Default} & \textbf{Aggressive} & \textbf{Slow.} \\
+                  &                   & \textbf{p50}     & \textbf{p50}        &                \\
+\hline
+256 bytes  & Core Data  & 1.2~$\mu$s & 282.5~$\mu$s & 235$\times$ \\
+       & Append Log & 1.8~$\mu$s & 4.0~$\mu$s   & 2.22$\times$ \\
+       & Per-File   & 336~$\mu$s & 6.1~ms       & 18$\times$ \\
+\hline
+50~MB  & Core Data  & 2.0~$\mu$s & 170.5~ms     & {\textasciitilde}85k$\times$ \\
+       & Append Log & 70~ms      & 74~ms        & 1.06$\times$ \\
+       & Per-File   & 67~ms      & 74~ms        & 1.10$\times$ \\
+\hline
+\end{tabular}
+\caption{Median per-write latency at representative small (256 bytes) and
+  large (50~MB) payload sizes.}
+\label{tab:latency}
+\end{table}
+
+The 50~MB row is more notable. Default Core Data reports a 2~$\mu$s
+p50, but this likely reflects the fact that the framework does not
+call \texttt{save()} during the observation window: with a batch
+threshold of 100 inserts, a 20-write trial does not trigger one.
+Consequently, the measured operation captures only the in-memory
+insertion, not a write to persistent storage. When \texttt{save()} is
+forced on every write, the same payload takes approximately 170~ms,
+which is consistent with the cost of actually writing 50~MB. The
+append log and per-file backends, by contrast, exhibit only a
+1.06--1.10$\times$ difference between default and aggressive modes at
+this payload size. This is consistent with the interpretation that
+both modes already incur the cost of moving the data through the
+kernel, and the additional flush represents only a small marginal
+overhead.
+
+\subsection{Throughput}
+Table~\ref{tab:throughput} reports throughput at the 50~MB workload.
+The measured values are within approximately 10\% of one another
+across backends and flush modes. This narrow range is consistent with
+the device's hardware bandwidth, rather than the API, becoming the
+limiting factor at this payload size, although the present
+measurements do not directly establish this.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}llrrr@{}}
+\hline
+\textbf{Payload} & \textbf{Strategy} & \textbf{Default} & \textbf{Aggr.} & \textbf{Ratio} \\
+\hline
+50~MB & Core Data  & ---       & 253~MB/s & --- \\
+      & Append Log & 648~MB/s  & 671~MB/s & 0.96$\times$ \\
+      & Per-File   & 697~MB/s  & 648~MB/s & 1.08$\times$ \\
+\hline
+\end{tabular}
+\caption{Sustained throughput at 50~MB writes. The Core Data default
+  value is omitted because the framework did not call \texttt{save()}
+  within the observation window.}
+\label{tab:throughput}
+\end{table}
+
+%-------------------------------------------------------------------------------
+\section{Reflections}
+%-------------------------------------------------------------------------------
+The most notable observation in this data is the gap between default
+and aggressive flush modes, particularly for Core Data. A default p50
+of 2~$\mu$s on a 50~MB write does not represent a fast write to
+storage; rather, it indicates that the framework has deferred the
+write entirely. Examining only the default-mode p50 would yield the
+misleading conclusion that Core Data is dramatically faster than the
+other backends. One implication, then, is that latency alone is not a
+reliable indicator of whether data has actually been persisted.
+
+Several limitations should temper the interpretation of these
+results. The benchmark measures the time required for
+\verb|F_FULLFSYNC| to return, but does not independently verify that
+the data has reached non-volatile storage; doing so would require a
+crash-injection methodology that was outside the scope of this
+project. The device was not held in a controlled state: background
+processes, thermal conditions, and battery level may have introduced
+variability that this study does not quantify. All measurements were
+collected on a single iPhone running a single version of iOS, so the
+results may not generalize to other devices or operating systems. The
+number of trials is also modest, particularly for the large-write
+workloads (3 trials of 20 writes each), and individual values should
+therefore be regarded as indicative rather than precise.
+
+Useful directions for future work include adding SwiftData and Realm
+backends to broaden the comparison, conducting a larger number of
+trials under more controlled device conditions, and implementing a
+crash-injection test to assess whether aggressive flushing achieves
+the durability it is intended to provide, rather than only measuring
+its cost.
+
+%-------------------------------------------------------------------------------
+\bibliographystyle{plain}
+\bibliography{\jobname}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%  LocalWords:  endnotes includegraphics fread ptr nobj noindent
+%%  LocalWords:  pdflatex acks
