@@ -2,6 +2,9 @@
 
 An iOS app that measures the cost of persistence guarantees across three common storage strategies: **Core Data**, an **append-only log**, and **per-event file writes**. Each backend runs under default or aggressive flushing (`F_FULLFSYNC` / explicit `save()`) over small-write (100 byte – 1 KB) and large-write (1 – 50 MB) workloads. Reports per-write latency (p50/p95/p99) and throughput.
 
+## Source Repository
+[Link to iOS source code](https://github.com/valerie-chen/iOS-storage-benchmarking)
+
 ## Requirements
 - macOS for host system
 - Xcode (to build and install)
