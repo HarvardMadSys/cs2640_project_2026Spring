@@ -1,0 +1,288 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Template for USENIX papers.
+%
+% History:
+%
+% - TEMPLATE for Usenix papers, specifically to meet requirements of
+%   USENIX '05. originally a template for producing IEEE-format
+%   articles using LaTeX. written by Matthew Ward, CS Department,
+%   Worcester Polytechnic Institute. adapted by David Beazley for his
+%   excellent SWIG paper in Proceedings, Tcl 96. turned into a
+%   smartass generic template by De Clarke, with thanks to both the
+%   above pioneers. Use at your own risk. Complaints to /dev/null.
+%   Make it two column with no page numbering, default is 10 point.
+%
+% - Munged by Fred Douglis <douglis@research.att.com> 10/97 to
+%   separate the .sty file from the LaTeX source template, so that
+%   people can more easily include the .sty file into an existing
+%   document. Also changed to more closely follow the style guidelines
+%   as represented by the Word sample file.
+%
+% - Note that since 2010, USENIX does not require endnotes. If you
+%   want foot of page notes, don't include the endnotes package in the
+%   usepackage command, below.
+% - This version uses the latex2e styles, not the very ancient 2.09
+%   stuff.
+%
+% - Updated July 2018: Text block size changed from 6.5" to 7"
+%
+% - Updated Dec 2018 for ATC'19:
+%
+%   * Revised text to pass HotCRP's auto-formatting check, with
+%     hotcrp.settings.submission_form.body_font_size=10pt, and
+%     hotcrp.settings.submission_form.line_height=12pt
+%
+%   * Switched from \endnote-s to \footnote-s to match Usenix's policy.
+%
+%   * \section* => \begin{abstract} ... \end{abstract}
+%
+%   * Make template self-contained in terms of bibtex entires, to allow
+%     this file to be compiled. (And changing refs style to 'plain'.)
+%
+%   * Make template self-contained in terms of figures, to
+%     allow this file to be compiled. 
+%
+%   * Added packages for hyperref, embedding fonts, and improving
+%     appearance.
+%   
+%   * Removed outdated text.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[letterpaper,twocolumn,10pt]{article}
+\usepackage{usenix2019_v3}
+
+% packages for references
+\usepackage[square,sort,comma,numbers]{natbib}
+
+
+% to be able to draw some self-contained figs
+\usepackage{tikz}
+\usepackage{amsmath}
+
+% inlined bib file
+\usepackage{filecontents}
+
+\usepackage{subcaption}
+\usepackage{float}
+
+%-------------------------------------------------------------------------------
+\begin{filecontents}{\jobname.bib}
+%-------------------------------------------------------------------------------
+@Book{arpachiDusseau18:osbook,
+  author =       {Arpaci-Dusseau, Remzi H. and Arpaci-Dusseau Andrea C.},
+  title =        {Operating Systems: Three Easy Pieces},
+  publisher =    {Arpaci-Dusseau Books, LLC},
+  year =         2015,
+  edition =      {1.00},
+  note =         {\url{http://pages.cs.wisc.edu/~remzi/OSTEP/}}
+}
+@InProceedings{waldspurger02,
+  author =       {Waldspurger, Carl A.},
+  title =        {Memory resource management in {VMware ESX} server},
+  booktitle =    {USENIX Symposium on Operating System Design and
+                  Implementation (OSDI)},
+  year =         2002,
+  pages =        {181--194},
+  note =         {\url{https://www.usenix.org/legacy/event/osdi02/tech/waldspurger/waldspurger.pdf}}}
+\end{filecontents}
+
+%-------------------------------------------------------------------------------
+\begin{document}
+%-------------------------------------------------------------------------------
+
+%don't want date printed
+\date{}
+
+% make title bold and 14 pt font (Latex default is non-bold, 16 pt)
+\title{\Large \bf An exploration of prompt text utility in AI-generated image compression}
+
+%for single author (just remove % characters)
+\author{
+{\rm Mariya Pershyna}\\
+School of Engineering and Applied Sciences, Harvard University
+% copy the following lines to add more authors
+% \and
+% {\rm Name}\\
+%Name Institution
+} % end author
+
+\maketitle
+
+%-------------------------------------------------------------------------------
+\begin{abstract}
+%-------------------------------------------------------------------------------
+
+Due to the massive increase in AI-generated data in recent years, storage and transmission of AI-generated images is a more pressing problem. One solution is image compression that is specific to AI-generated images. This project reconstructs CATC, an image compression model for AI-generated images, and performs a prompt ablation study to understand to what extent prompt information improves AIGI compression. The findings are that altering the prompt does reduce image compression quality by a statistically significant amount, but this reduction is incredibly small (less than 0.1 dB). 
+
+\end{abstract}
+
+
+%-------------------------------------------------------------------------------
+\section{Introduction}
+%-------------------------------------------------------------------------------
+LLMs and generative models have become incredibly popular over the last few years, leading to enormous amounts of data generated daily. For example, Adobe reported that users generated over 1 billion images using Adobe Firefly in the three months following its release \cite{fu2023adobe}. In addition, anyone scrolling through social media today will quickly see large numbers of AI-generated images and videos. Storing this multi-modal data is becoming a challenge, as evidenced by the rising prices of SSDs \cite{kinghorn2026ssd}. One solution to this is the compression of AI-generated images for transmission and storage. The goal of this study is to explore AI-generated image (AIGI) compression and to understand the role that the associated image prompt plays in compression.
+
+%-------------------------------------------------------------------------------
+\section{Prior works}
+
+Currently, there is little work that has been done on storage systems for AI-generated data specifically. There have been papers published on adjacent topics, such as storage for the training data for AI models as well as for the models themselves. For example, Gautam 2025 discusses the role of data storage in AI and ML and as well as how different storage architectures may be applicable in AI workloads \cite{gautam_optimizing_2025}. Similarly, Adimulam 2024 discusses the issues that arise with storage for generative AI models (mainly storage of the model itself) and proposes new storage architectures for generative AI models that aim to increase scalability and efficiency \cite{adimulam_ai-optimized_2024}. There has also been work done on AI for storage, such as described in a 2022 survery article by Liu, Wang, et al \cite{liu_survey_2022}. I have not seen any papers on storage systems for the images generated by these models. One interesting resource is \href{https://lexica.art/}{Lexica}, a startup that allows users to search a database of images generated by Stable Diffusion. They later expanded to add their own image generation model. It would be interesting to see how they implement their storage of AIGIs, but I wasn’t able to find any details on the implementation.  \par
+As for image compression, there are three broad categories of image compression algorithms: learning-based or traditional algorithms that operate in the pixel space (such as the familiar JPEG standard \cite{wallace_jpeg_1992}), generative compression that aims to reconstruct compressed images using diffusion models \cite{santurkar_generative_2017}, and AIGI-specific image compression. The third category has been less well-studied and will be the focus of this project. Image compression algorithms for AIGI specifically often make use of the generation prompt to provide additional semantic information about the image and remove some image redundancy. One recent paper in the third category is by Gao, Feng, et al. (2025), which proposes AIGIF, a file format for AIGI that enables ultra-low bitrate encoding of AI-generated images \cite{gao_towards_nodate}. Another recent work is by Duan et al. (2024), which proposes a dataset of over 500,000 AI-generated images and their associated generation prompt, as well as CATC, an image compression model for AIGI \cite{duan2024PKU-AIGI-500K}. The focus of this project will be to reconstruct CATC and evaluate to what extent the image prompt information actually helps in image encoding. 
+%-------------------------------------------------------------------------------
+\section{Methodology}
+
+This project was composed of two parts: reconstructing the CATC image compression model \cite{duan2024PKU-AIGI-500K} and conducting experiments with the reconstructed model. The CATC model needed to be reconstructed based on the paper's description of it because, while they do provide a Github with some code, the code uses some dependencies that are not provided. The code from the original paper was used as a scaffolding for my implementation, with other details filled in based on the paper description of the model. \par
+See Figure \ref{fig:CATCArchitecture} for the paper's diagram of the CATC architecture \cite{duan2024PKU-AIGI-500K}. The main aspects of the model are the CLIP text encoder which creates a feature vector from the prompt text associated with each image. Cross-attention transformer blocks are then used to encode information from both the image and the associated text prompt. A latent representation of the image is formed and then decoded to get a reconstructed version of the image. As such, the model functions as an autoencoder that aims to recreate the original image as closely as possible. The loss function of this model is $$Loss = R(\hat{y}) + \lambda \cdot D(x, \hat{x}),$$ where $R(\hat{y})$ is the bit-rate of the latent representation (including both image and text data), $\lambda$ is the rate-distortion tradeoff parameter, and $D(x, \hat{x})$ is the distortion between the initial image and reconstructed image, measured using mean square error. \par
+
+\begin{figure}[H]
+  \includegraphics[scale=0.25]{CATCArchitecture.png}
+  \caption{The architecture of the CATC model, diagram from the original CATC paper \cite{duan2024PKU-AIGI-500K}.}
+  \label{fig:CATCArchitecture}
+\end{figure}
+
+Duan et al. also provided a dataset of over 500,000 AI-generated images and their associated prompts \cite{duan2024PKU-AIGI-500K}. This dataset is over 450 GB large. They break down the dataset into five different subsets, depending on which model generated the image (either Stable Diffusion or Midjourney). For the purpose of efficiency, my model was trained on the Midjourney (MJ) subset of PKU-AIGI-500K, which contains about 13,000 images and has a size of approximately 20 GB. This dataset was broken down into approximately 11,000 training images, 1000 validation images, and 1000 test images. The training was conducted on the Chameleon testbed. 20,000 training steps were used with a batch size of 10. The rate-distortion parameter $\lambda$ was chosen from the values of 0.0083, 0.015, 0.0275, 0.05 and the model was trained four times with each of these $\lambda$ values. \par
+Once the model was trained, Rate-Distortion curves were created to compare my model's performance with the original CATC model. The resulting image reconstructions were also closely inspected. A prompt ablation study was also performed by evaluating the model on four different prompt cases: correct prompts, empty prompts, prompts where the words were shuffled within each prompt, and prompts where the prompts were swapped between different images. The results of these studies can be seen in the next section.
+
+\section{Results}
+
+\subsection{Comparison to original CATC}
+
+Because my model is a reconstruction of the original CATC model and I trained the model on less data than the original (approximately 20 GB out of the original 455 GB), I wanted to confirm that my model was achieving comparable performance to the original CATC model. I did this by calculating bit-rate, PSNR, and MS-SIM from the test data (with correct prompts) and recreating the Rate-Distortion (R-D) curves used in the paper to present the model's performance. The various points on the curve were obtained by varying $\lambda$, the rate-distortion tradeoff parameter, and training CATC four times on the four different $\lambda$ values, effectively producing four different models of various lossiness. My R-D curve is shown in Figure \ref{fig:MyRDCurve} and the paper's original R-D curve is shown in \ref{fig:RDCurveOriginal}. \par
+Here PSNR refers to peak signal-to-noise ratio. PSNR is a metric often used in image compression to evaluate the distortion and quality loss of the compressed image, where ``signal'' refers to the data from the original image and ``noise'' refers to the error introduced by compression. MS-SSIM refers to multi-scale structural similarity, which is another metric of image distortion. Unlike PSNR, MS-SSIM measures how well more ``broad'' image qualities, such as luminance and contrast, are preserved in the compressed image. Together, MS-SSIM and PSNR provide valuable insight into how well the compression preserved image quality. Bit-rate is a measure of how much the size of the image is compressed. Bit-rate is measured in bits per pixel (bpp) and measures how many bits are needed to represent each pixel. Ideally, we want high PSNR/MS-SSIM (low image distortion) and low bit-rate (highly compressed image size). In practice, of course, there are tradeoffs between image quality and compressed size, which is what the R-D curve shows. \par
+
+Comparing Figures \ref{fig:MyRDCurve} and \ref{fig:RDCurveOriginal}, we can see that my model achieves lower image quality (has higher image distortion) at similar bit-rates. The original CATC model achieves PSNR values of 35-38 and MS-SSIM values of 18-22, depending on the bit-rate. In comparison, using the same underlying values of $\lambda$ (rate-distortion tradeoff parameter), my model achieves a PSNR of 30-31 and MS-SSIM of 15-17. The average bit-rate values of the four models tested were approximately 0.16, 0.24, 0.34, and 0.45 in the original CATC, and 0.1607, 0.2165, 0.2810, 0.4016 in my implementation of CATC. As such, my model has a higher image distortion than the original CATC model. However, my PSNR and MS-SSIM are still within the reasonable range for acceptable image quality and the model can thus be used for further analysis.
+
+\begin{figure}[H]
+\centering
+  \includegraphics[scale=0.37]{rd_curve.png}
+  \caption{The RD curve for my model, with bit-rate on the x-axis and PSNR and MS-SSIM on the y-axis.}
+  \label{fig:MyRDCurve}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+  \includegraphics[scale=0.48]{R-DcurveOriginal.png}
+  \caption{The RD curve from the original paper (evaluated on the MJ dataset) \cite{duan2024PKU-AIGI-500K}, with bit-rate on the x-axis and PSNR and MS-SSIM on the y-axis. The CATC model is labeled as ``ours''.}
+  \label{fig:RDCurveOriginal}
+\end{figure}
+
+\subsection{Closer look at compressed and decompressed image}
+
+I also wanted to take a closer look at the images outputted by the model. See Figures \ref{fig:OriginalAndReconstructed1} and \ref{fig:OriginalAndReconstructed2} for two original images from the MJ dataset (from my test subset), as well as reconstructions (compressed and decompressed) versions of both, with two different values of the rate-distortion tradeoff parameter $\lambda$. In CATC, the model compresses the original image to a quantized latent tensor representation (not an image directly), which can then be decompressed by the decoder. Thus CATC can be used to store and transmit compressed images as a latent representation, which would need to be decoded first before viewing the image. CATC currently is not a way of compressing the image size directly while keeping the image viewable without decoding (like JPEG). \par
+Looking at Figures \ref{fig:OriginalAndReconstructed1} and \ref{fig:OriginalAndReconstructed2}, we can see that the images remain recognizable after being compressed and decompressed. Small details, however, become blurred. For example, the flagpole at the top of the ATC tower or the fur of the cow have lost some detail. For reference, the PSNR values of the airplane images are 31.00 and 31.90, respectively, and the PSNR values of the cow images are 30.99 and 32.35, respectively. The original size of the airplane image is 1.4 million bytes, and the sizes of the two compressed latent representations (including both image and text data) are 18665 bytes and 45673 bytes, a reduction to 1.3\% and 3.2\% of the original image size. The original size of the cow image is 1.6 million bytes, and the sizes of the two compressed latent representations are 27892 bytes and 68916 bytes, a reduction to 1.7\% and 4.2\% of the original image size. This shows that CATC would be a good option for AIGI compression when the recipient or host of the images is able to decompress the compressed image representations before they need to be viewed.\par
+
+\begin{figure}[h]
+\centering
+
+\begin{subfigure}{0.32\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{original_image_0001_4.png}
+  \caption{Original image}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.32\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{reconstructed_image_0001_4_0083.png}
+  \caption{Reconstructed image with $\lambda = 0.0083$ (more lossy)}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.32\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{reconstructed_image_0001_4.png}
+  \caption{Reconstructed image with $\lambda = 0.05$ (less lossy)}
+\end{subfigure}
+
+\caption{An original image from the MJ dataset, as well as two reconstructed images with two different $\lambda$ values.}
+\label{fig:OriginalAndReconstructed1}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+
+\begin{subfigure}{0.32\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{original_image_1892_3.png}
+  \caption{Original image}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.32\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{reconstructed_image_1892_3_0083.png}
+  \caption{Reconstructed image with $\lambda = 0.0083$ (more lossy)}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.32\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{reconstructed_image_1892_3.png}
+  \caption{Reconstructed image with $\lambda = 0.05$ (less lossy)}
+\end{subfigure}
+
+\caption{An original image from the MJ dataset, as well as two reconstructed images with two different $\lambda$ values.}
+\label{fig:OriginalAndReconstructed2}
+\end{figure}
+
+\subsection{Prompt Ablation Study}
+
+The main goal of this study is to understand to what extent prompt information improves image compression in the CATC model. The original paper performed a prompt ablation study with empty text prompts and found that including the prompt text reduced the bit-rate slightly (by about 1\%). They did not report the effects of prompt ablation on image distortion or try other prompt cases. Here our goal is to perform a more complete prompt ablation study with four different prompt cases and report its impact on both bit-rate and image distortion, as measured by PSNR and MS-SSIM. The four prompt cases are correct prompts, empty prompts, prompts with shuffled words, and prompts that are swapped between images. The empty prompt case shows what would happen if the semantic information provided by the prompt is missing. The shuffled prompt case shows what would happen if the semantic information is present but slightly jumbled. The swapped prompt case shows what would happen if semantic information is present but incorrect. Here the model was still trained on correct prompts with various values of $\lambda$, but was evaluated on the four different prompt cases. \par
+The Rate-Distortion curves produced by the prompt ablation study can be seen in Figure \ref{fig:PromptAblationRDCurve}. Qualitatively we see that there is a very slight difference in image distortion between the four cases, with correct prompts generally having the highest image quality, followed by word-shuffled prompts, then empty prompts, then swapped prompts. \par
+
+\begin{figure}[H]
+\centering
+  \includegraphics[scale=0.6]{prompt_ablation_rd_curve.png}
+  \caption{A rate-distortion curve showing the results of evaluating our model on the four different prompt cases.}
+  \label{fig:PromptAblationRDCurve}
+\end{figure}
+
+To better understand the impact of prompt ablation, see Figure \ref{fig:PromptAblationConfidenceIntervals}. All of the datapoints have a statistically significant ($p<0.05$) difference from the correct prompt case, except for the bit-rate of empty prompts at $\lambda = 0.015$. The overall bit-rate change of the empty prompts across all $\lambda$ values is also not statistically significant. From Figure \ref{fig:PromptAblationConfidenceIntervals}, we can more clearly see that shuffled prompts produce a slightly lower image compression quality, followed by empty prompts, closely followed by swapped prompts. This shows that having no semantic information or incorrect semantic information both decrease image compression quality slightly, with no significant difference between these two cases. The bit-rate is increased the most in the swapped prompt case, with a slight increase in the shuffled prompt case and no statistically significant overall change in bit-rate in the empty prompt case. \par
+An analysis of the 95\% confidence intervals and $p$-values showed that prompt ablation does produce a statistically significant reduction in image compression quality as measured by PSNR and MS-SSIM. However, this difference in quality is still incredibly small, amounting to less than a 0.1\% reduction in image compression quality. 
+
+\begin{figure}[H]
+\centering
+  \includegraphics[scale=0.6]{prompt_ablation_confidence_intervals.png}
+  \caption{A plot showing the mean and 95\% confidence interval for the different metrics at all values of $\lambda$. The mean in the correct prompt case is denoted by a dashed line in each plot.}
+  \label{fig:PromptAblationConfidenceIntervals}
+\end{figure}
+
+\subsection{Evaluation on images produced by Stable Diffusion}
+
+Because this model was trained entirely on images produced by Midjourney, I was curious if it would perform well on images produced by another model (e.g. Stable Diffusion). Here I evaluated our model (trained on 20 GB of MJ images) on 1000 images from one of the Stable Diffusion (SD) subsets of PKU-AIGI-500k. The R-D curve produced by this evaluation is shown in Figure \ref{fig:SD_RDcurve}, and the R-D curve produced by evaluating on SD2.1 from the original paper is shown in Figure \ref{fig:PaperSD_RDcurve} \cite{duan2024PKU-AIGI-500K}. At the same $\lambda$ value of $\lambda = 0.05$, the PSNR of my model is approximately 29 dB, compared to 38 dB in the original model (with bit-rates of 0.66 and 0.72 bpp, respectively). This is a 9 dB reduction in PSNR, as compared to a 7 dB reduction in PSNR on evaluation on MJ, as shown in Figures \ref{fig:MyRDCurve} and \ref{fig:RDCurveOriginal} (with a similar reduction in bit-rate). Since training CATC on images produced by one model and evaluating on images produced by a different model did worsen performance, this suggests that images produced by different models have different characteristics which can be exploited for compression (as expected).
+
+\begin{figure}[H]
+\centering
+  \includegraphics[scale=0.37]{sd21_test_mj_trained_rd_curve.png}
+  \caption{A rate-distortion curve showing the results of evaluating our CATC model (trained on MJ) on images produced by Stable Diffusion.}
+  \label{fig:SD_RDcurve}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+  \includegraphics[scale=0.3]{Screenshot 2026-05-08 200254.png}
+  \caption{The rate-distortion curve from the original paper showing the results of evaluating CATC on the SD2.1 dataset \cite{duan2024PKU-AIGI-500K}. The CATC model is labeled as ``Ours''.}
+  \label{fig:PaperSD_RDcurve}
+\end{figure}
+
+\section{Conclusion}
+
+This project achieved its 100\% goal of reconstructing the CATC model and investigating the impact of prompt text on image compression quality. The reconstructed model achieved worse image distortion as measured by PSNR and MS-SSIM as compared to the original model, but the achieved image quality metrics are still within the reasonable range for an image compression model. The model likely achieves slightly worse image compression quality because the model was trained on fewer images (20 GB vs. approximately 450 GB) and for fewer training steps (20,000 vs. 2,000,000) as compared to the original model. This reduction was done out of necessity to keep the training time relatively reasonable. Two examples of original images from the PKU-AIGI-500K dataset were shown alongside two reconstructed versions of each. These image reconstructions show that there is some noticeable decline in image detail, but the image is still recognizeable and useable overall. Compressed images are repsented as a latent representation in CATC, so it would be best used in systems where the latent image representation can be decoded first before being accessed. This would be a good option for long-term AIGI storage in a tiered storage system for a tier of low-cost long-term storage that needs some time to decompress the image before being viewed by a user. \par
+Empty and swapped prompts produced a statistically significant reduction in image compression quality (as measured by PSNR and MS-SSIM), but this reduction was quite small (less than 0.1 dB). Word-shuffled prompts produced an even smaller reduction in image quality of less then 0.01 dB. As expected, the relative ranking of image quality in the four prompt cases was correct prompts, then shuffled prompts (which still provides semantic information but the information is slightly jumbled), empty prompts (which provides no semantic information), and swapped prompts (which provide incorrect semantic information). The very small increase in image compression quality was surprising, as I was expecting a larger reduction. \par
+Finally, the model was also tested on images produced by a different model than the training images. Our model was trained on MJ images and evaluated here on SD images. Here our implementation achieved a larger decrease in quality compared to the original model than when our model was tested on MJ images, which suggests that different models produce images with different characteristics which can be learned by the image compression model (as expected). \par
+The main limitation of this study is the limited training time (the model took 4 hours to train for each of the four $\lambda$ values). This is likely contributing to the slight decrease in model performance. Another limitation is that this model was trained only on images produced by MJ for simplicity, while the original model was trained on images from both MJ and SD. Future work could further explore why providing empty or incorrect prompt information led to such a small decrease in image compression quality, and whether the text information could be used to reduce image redundancy even further.
+
+%-------------------------------------------------------------------------------
+\section*{AI Usage Report}
+
+See AI usage report on the Github repository.
+
+%-------------------------------------------------------------------------------
+%\bibliographystyle{plain}
+%\bibliography{\jobname}
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%  LocalWords:  endnotes includegraphics fread ptr nobj noindent
+%%  LocalWords:  pdflatex acks
