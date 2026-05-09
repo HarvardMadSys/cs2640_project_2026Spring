@@ -10,11 +10,10 @@
 #include <curl/curl.h>
 #include <algorithm>
 
-// Global list to store tickers from .config
+// Globals
 std::vector<std::string> tickers;
+std::string target_domain; // Stores the domain passed via CLI
 
-// Helper to check if a path corresponds to a ticker in our list
-// Example: path "/AAPL" returns "AAPL", path "/invalid" returns ""
 std::string get_ticker_from_path(const char* path) {
     std::string p = path;
     if (p.length() <= 1) return "";
@@ -30,15 +29,14 @@ static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* use
     return size * nmemb;
 }
 
-// Helper to fetch data for a specific ticker
 std::string fetch_data(std::string ticker) {
     CURL* curl;
     CURLcode res;
     std::string readBuffer;
     curl = curl_easy_init();
     if(curl) {
-        // Updated to the URL format you specified
-        std::string url = "http://zanixu.com:5000/?ticker=" + ticker;
+        // Construct URL using the global target_domain
+        std::string url = "http://" + target_domain + "/?ticker=" + ticker;
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
@@ -65,7 +63,6 @@ static int do_getattr(const char *path, struct stat *st, struct fuse_file_info *
         if (!ticker.empty()) {
             st->st_mode = S_IFREG | 0444;
             st->st_nlink = 1;
-            // We fetch once to get the size
             st->st_size = fetch_data(ticker).length(); 
         } else {
             return -ENOENT;
@@ -120,18 +117,39 @@ static const struct fuse_operations operations = {
 
 void load_config() {
     std::ifstream file(".config");
+    if (!file.is_open()) {
+        std::cerr << "Error: Could not open .config file" << std::endl;
+        return;
+    }
     std::string line;
     while (std::getline(file, line)) {
-        // Remove trailing \r if file was saved with Windows line endings
         if (!line.empty() && line.back() == '\r') line.pop_back();
         if (!line.empty()) tickers.push_back(line);
     }
 }
 
 int main(int argc, char *argv[]) {
+    // Check if domain was provided (argv[0] is program, argv[1] should be domain)
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " <domain:port> [FUSE options] <mountpoint>" << std::endl;
+        return 1;
+    }
+
+    // Capture the domain
+    target_domain = argv[1];
+
+    // Shift arguments to hide the domain from FUSE
+    // FUSE expects argv[0] to be the program name and then its own options
+    for (int i = 1; i < argc - 1; i++) {
+        argv[i] = argv[i + 1];
+    }
+    argc--;
+
     load_config();
     curl_global_init(CURL_GLOBAL_DEFAULT);
+    
     int ret = fuse_main(argc, argv, &operations, NULL);
+    
     curl_global_cleanup();
     return ret;
 }
