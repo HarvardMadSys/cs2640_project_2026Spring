@@ -1,0 +1,15 @@
+L1:
+  size: 1MB
+  path:
+    - ../../../data/cloudPhysicsIO.oracleGeneral.bin
+
+L2:
+  size:
+    - 1MB
+    - 3MB
+    - 7MB
+    - 15MB
+    - 31MB
+    - 63MB
+
+output: result

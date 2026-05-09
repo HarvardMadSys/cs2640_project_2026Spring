@@ -16,4 +16,5 @@
 - [Aadit Saluja: THE NEW META: Metadata Management for CephFS with Cold Packing and Online Hot-Directory Learning](AaditSaluja/README.md)
 - [Waseem Ahmad: Workload-Aware KV-Cache Management for LLM Inference](waseemahmad1/README.md)
 - [Vlad Cainamisir: AdaptiveCache: A Lifetime-Cost Study of Context Management for LLM Agents under Prefix-Cache-Aware Pricing](cainamisir/README.md)
-- [Cole Harten: AsyncMux: Event-Driven Coordination for Multiplexed Tiered Storage](ColeHarten/README.md)
+- [Cole Harten: AsyncMux: Event-Driven Coordination for Multiplexed Tiered Storage](ColeHarten/README.md)
+- [Minkai Li: Easy Learned Caching: An Honest Look at Augmenting S3-FIFO with a Learned Promotion Gate](Minkai25/README.md)

@@ -1,0 +1,976 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ 
+\documentclass[letterpaper,twocolumn,10pt]{article}
+\usepackage{usenix-2020-09}
+ 
+\usepackage{tikz}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{filecontents}
+\usepackage{xcolor}
+\begin{filecontents}{\jobname.bib}
+@inproceedings{s3fifo,
+  author = {Yang, Juncheng and Qiu, Yazhuo and Zhang, Yao and Yue, Yue and Rashmi, K. V.},
+  title = {{FIFO} queues are all you need for cache eviction},
+  booktitle = {Proceedings of the 29th Symposium on Operating Systems Principles (SOSP '23)},
+  year = 2023,
+}
+@inproceedings{sieve,
+  author = {Zhang, Yazhuo and Yang, Juncheng and Yue, Yao and Vigfusson, Ymir and Rashmi, K. V.},
+  title = {{SIEVE} is simpler than {LRU}: an efficient turn-key eviction algorithm for web caches},
+  booktitle = {21st USENIX Symposium on Networked Systems Design and Implementation (NSDI '24)},
+  year = 2024,
+}
+@inproceedings{halp,
+  author = {Song, Zhenyu and Berger, Daniel S. and Li, Kai and Shaikh, Anees and Lloyd, Wyatt and Ghorbani, Soudeh and Kim, Changhoon and Akella, Aditya and Krishnamurthy, Arvind and Witchel, Emmett and Mittal, Radhika},
+  title = {Cache eviction in practice: a heuristic-augmented learned policy},
+  booktitle = {20th USENIX Symposium on Networked Systems Design and Implementation (NSDI '23)},
+  year = 2023,
+}
+@inproceedings{lrb,
+  author = {Song, Zhenyu and Berger, Daniel S. and Li, Kai and Lloyd, Wyatt},
+  title = {Learning relaxed {Belady} for content distribution network caching},
+  booktitle = {17th USENIX Symposium on Networked Systems Design and Implementation (NSDI '20)},
+  year = 2020,
+}
+@inproceedings{glcache,
+  author = {Yang, Juncheng and Mao, Ziming and Yue, Yao and Rashmi, K. V.},
+  title = {{GL-Cache}: group-level learning for efficient and high-performance caching},
+  booktitle = {21st USENIX Conference on File and Storage Technologies (FAST '23)},
+  year = 2023,
+}
+@inproceedings{lecar,
+  author = {Vietri, Giuseppe and Rodriguez, Liana V. and Martinez, Wendy A. and Lyons, Steven and Liu, Jason and Rangaswami, Raju and Zhao, Ming and Narasimhan, Giri},
+  title = {Driving cache replacement with {ML}-based {LeCaR}},
+  booktitle = {10th USENIX Workshop on Hot Topics in Storage and File Systems (HotStorage '18)},
+  year = 2018,
+}
+@inproceedings{cacheus,
+  author = {Rodriguez, Liana V. and Yusuf, Farzana and Lyons, Steven and Paz, Eysler and Rangaswami, Raju and Liu, Jason and Zhao, Ming and Narasimhan, Giri},
+  title = {Learning cache replacement with {CACHEUS}},
+  booktitle = {19th USENIX Conference on File and Storage Technologies (FAST '21)},
+  year = 2021,
+}
+@inproceedings{adaptsize,
+  author = {Berger, Daniel S. and Sitaraman, Ramesh K. and Harchol-Balter, Mor},
+  title = {{AdaptSize}: orchestrating the hot object memory cache in a content delivery network},
+  booktitle = {14th USENIX Symposium on Networked Systems Design and Implementation (NSDI '17)},
+  year = 2017,
+}
+@inproceedings{arc,
+  author = {Megiddo, Nimrod and Modha, Dharmendra S.},
+  title = {{ARC}: a self-tuning, low overhead replacement cache},
+  booktitle = {2nd USENIX Conference on File and Storage Technologies (FAST '03)},
+  year = 2003,
+}
+@inproceedings{lykourisvassil,
+  author = {Lykouris, Thodoris and Vassilvitskii, Sergei},
+  title = {Competitive caching with machine learned advice},
+  booktitle = {35th International Conference on Machine Learning (ICML '18)},
+  year = 2018,
+}
+@inproceedings{libcachesim,
+  author = {Yang, Juncheng and Mao, Ziming and Yue, Yao and Rashmi, K. V.},
+  title = {{libCacheSim}: a high-performance cache simulator},
+  note = {\url{https://github.com/cacheMon/libCacheSim}},
+}
+@inproceedings{twittertraces,
+  author = {Yang, Juncheng and Yue, Yao and Rashmi, K. V.},
+  title = {A large scale analysis of hundreds of in-memory cache clusters at {Twitter}},
+  booktitle = {14th USENIX Symposium on Operating Systems Design and Implementation (OSDI '20)},
+  year = 2020,
+}
+\end{filecontents}
+ 
+\begin{document}
+ 
+\date{}
+ 
+\title{\Large \bf Easy Learned Caching:\\
+  An Honest Look at Augmenting S3-FIFO with a Learned Promotion Gate}
+ 
+\author{
+{\rm Minkai Li}\\
+Harvard University
+}
+ 
+\maketitle
+ 
+%-------------------------------------------------------------------------------
+% \begin{abstract}
+% %-------------------------------------------------------------------------------
+% S3-FIFO and SIEVE have shown that simple FIFO-based caches with quick
+% demotion and lazy promotion can match or beat LRU-based
+% heuristics. At the same time, deployed learned policies such as HALP
+% demonstrate meaningful gains from augmenting heuristic structures with
+% small online models. We're interested in exploring learning in caching and use the case study of a very simple augmentation
+% ---replacing S3-FIFO's hardcoded \emph{promote-on-accessed-bit} rule
+% with a tiny online linear classifier---is worth its cost. While we ignore 
+% latency and other production concerns in this study, we intentionally evaluate a 
+% simple model that could potentially be used in production as opposed to less interpretable, higher scoring models that would likely never be used. 
+ 
+% We implement an online logistic-regression promotion gate over three
+% cache-internal features (log-hits, age in $S$, recency since last hit)
+% trained against a Belady-derived binary label. Against vanilla
+% S3-FIFO at the standard size split, the gate wins on most cells across
+% 14 production traces. But against a tuned model
+% (picking the best $|S|$ ratio per workload from a four-value grid),
+% the learning contribution collapses to a wash: 8 wins, 7 losses, 13
+% ties across 28 evaluation cells. We identify three workloads where
+% conditional learned policies provide real, defensible gains over
+% static tuning, one workload where the gate fails catastrophically,
+% and a mechanistic diagnosis (label sparsity and weight drift) for
+% both. We conclude that the standard ``learned beats heuristic''
+% framing in this regime is dominated by the tuning ablation,
+% and discuss what a publishable contribution looks like once that bar is
+% properly cleared.
+% \end{abstract}
+%-------------------------------------------------------------------------------
+\begin{abstract}
+S3-FIFO and SIEVE have shown that simple FIFO-based caches with quick
+demotion and lazy promotion can match or beat much more sophisticated
+LRU-based heuristics. In parallel, deployed learned policies such as
+HALP demonstrate meaningful gains from augmenting heuristic structures
+with small online models. We're interested in exploring learning in
+caching, and use a case study of a very simple augmentation---replacing
+S3-FIFO's hardcoded fixed-threshold promotion rule with a tiny online
+linear classifier---to ask whether such an augmentation is worth its
+cost. We ignore latency and other production concerns, but we
+deliberately evaluate a simple, interpretable model that could
+plausibly be deployed, rather than higher-scoring but less
+interpretable architectures that production systems will not adopt.
+
+We implement S3-FIFO-L, an online logistic-regression promotion gate
+over three cache-internal features (log-hits, age in $S$,
+recency-since-last-hit) trained against a Belady-derived binary
+label. Against vanilla S3-FIFO at the published default, the gate
+wins across our initial test set. Against a fully-tuned S3-FIFO
+baseline (the post-hoc-best $(|S|, T)$ per workload), the gate ties
+or loses on 23 of 28 cells with mean net effect $+0.39$~pp
+request-miss-ratio. However, despite this net loss, on three cells where the gate beats tuned S3-FIFO
+by $\geq 0.5$~pp, it also beats every other classical and learned
+baseline available---including on workloads where tuned S3-FIFO is
+already the best non-oracle policy, demonstrating the real potential of learned caching. We pair this with a
+diagnosis of two failure modes---
+label-horizon misalignment and S3FIFO's initial struggles---that explain where simple learned promotion gates can and
+cannot help. The contribution is the characterization that a learned
+promotion gate is a narrow but real augmentation lever for improving caching. 
+\end{abstract}
+%-------------------------------------------------------------------------------
+\section{Introduction}
+%-------------------------------------------------------------------------------
+ 
+Production caches rely on heuristics. LRU, FIFO, S3-FIFO, SIEVE, and
+LFU are each, in effect, a small hand-coded classifier: ``promote on
+hit,'' ``evict the tail,'' ``admit on miss.'' In parallel, deployed learned policies in industry have shown that
+augmenting these heuristic structures with small models can deliver
+meaningful gains. HALP, deployed on YouTube's CDN, achieves a
+9.1\% byte-miss-ratio reduction at 1.8\% CPU overhead by adding a
+small continuously-trained MLP that re-ranks the last $k=4$ eviction
+candidates selected by an LRU-based heuristic~\cite{halp}. The model is
+small, the features are few, and the heuristic stays in charge of the
+search space. The learner only re-orders. 
+In parallel, recent work in
+FIFO-based caches has shown that very simple structural changes,
+notably \emph{quick demotion} (the observation that most objects are
+accessed only once, so a probationary queue should evict them
+quickly) and \emph{lazy promotion} (the observation that promotion
+work can be batched at eviction time rather than performed at every
+access), suffice to match or beat much more sophisticated LRU-based
+designs~\cite{s3fifo,sieve}. \\
+In studying the potential of using learning in caching, this project uses the case study of S3-FIFO to analyze the potential of learning in new FIFO-based caches, namely on the binary classifier that decides
+whether a hit-on-$S$ (the probationary queue) object gets promoted to $M$ (the main queue). S3-FIFO's existing
+rule is a fixed-threshold rule: hit-once/twice $\Rightarrow$
+promote, otherwise demote. This is coarse. Replacing it with an online linear model adds at
+most a few multiply-adds per insertion and a handful of weights, while adding significant flexibility depending on the workload. \\
+We follow the literature-augmented-heuristic philosophy of HALP and
+build what we call \textbf{S3-FIFO-L}: a learned promotion gate
+running entirely on cache-internal state and trained online against
+a Belady-derived binary label. We evaluate it across 14 production
+traces from Twitter, MSR, Alibaba, CloudPhysics, Wikipedia, and
+Meta CDN/storage, against canonical caching
+baseline and a static-tuning baseline that we argue is
+the \emph{correct} comparison.
+% The paper is structured around an honest narrative arc. Early
+% results are encouraging: against vanilla S3-FIFO at the canonical
+% $|S| = 10\%$ split, the gate wins by 0.1--1.7~pp request-miss-ratio
+% across all six traces in our initial test set. But once we ablate
+% properly---comparing against S3-FIFO with a per-trace $|S|$ sweep, a
+% single-knob change with the same number of tuned parameters as the
+% gate---the learning contribution drops to a near-tie: 8 wins, 7
+% losses, 13 ties on 28 cells. We spend the rest of the paper
+% characterizing where the gate genuinely adds value (three cells
+% where the right policy is conditional rather than constant) and
+% where it fails (one cell where label misalignment causes an
+% 8-percentage-point regression). The finding is, we believe, the
+% \emph{honest} result for a class of learning-augmented cache
+% contributions whose published baselines have not been ablated this
+% way before.
+ 
+% The contributions are:
+% \begin{description}
+% \item[A 3-feature online linear gate] for S3-FIFO's $S\to M$ promotion
+%   decision, derived from the smallest plausible feature set after
+%   systematic ablation (Section~\ref{sec:design}).
+% \item[A canonical-baseline cross-trace evaluation] across 14 traces
+%   spanning KV, block I/O, CDN, and storage workloads, using
+%   libCacheSim's reference implementations (Section~\ref{sec:eval}).
+% \item[An honest ablation finding] that a same-knob-count static
+%   $|S|$ sweep captures essentially all of the gate's apparent
+%   improvement on average, with three cells of bona fide
+%   learning-driven win and one cell of catastrophic failure
+%   (Section~\ref{sec:honest}).
+% \item[A mechanistic diagnosis] of when and why the gate fails,
+%   rooted in Belady-label sparsity at large cache sizes and unbounded
+%   weight drift in the dominant feature
+%   (Section~\ref{sec:diagnostics}).
+% \end{description}
+ 
+%-------------------------------------------------------------------------------
+\section{Background and Related Work}
+\label{sec:related}
+%-------------------------------------------------------------------------------
+ 
+\subsection{S3-FIFO and lazy promotion}
+ 
+S3-FIFO~\cite{s3fifo} maintains three queues: a small probationary
+FIFO $S$ holding $\sim 10\%$ of cache capacity, a main FIFO $M$
+holding the remaining $\sim 90\%$, and a ghost queue $G$ tracking
+recently evicted object IDs. New objects are admitted to $S$. On a
+hit in $S$, the accessed bit(s) are incremented; at the time the object reaches
+the tail of $S$, if the bit(s) are above some threshold $T$ (generally 1 or 2), the object is promoted to $M$ or demoted to $G$ (if not). $M$ uses a similar
+visited-bit rule for its own re-insertion decisions. Ghost-hits in $G$
+admit the returning object directly to $M$.
+ 
+The design is built around two principles: \emph{quick demotion}, which gives one-hit
+wonders a single short residency window before they are removed,
+and \emph{lazy promotion}, which batches all promotion work to
+eviction time, removing the per-access, locking updates that
+LRU-based caches require.
+ 
+% The S3-FIFO authors explicitly flag two open questions that motivate
+% this work. First, the static $|S| = 10\%$ split is acknowledged as
+% suboptimal on some workloads, but the authors report that adaptive
+% sizing strategies they tried ``improve tail performance, but degrade
+% overall performance'' and ``tuning the adaptive algorithm is very
+% challenging''~\cite{s3fifo}. Second, the
+% promote-on-accessed-bit rule is the simplest possible binary
+% classifier and leaves substantial information unused.
+
+%  The S3-FIFO authors observe that the static $|S| = 10\%$ split is
+% suboptimal on a roughly 2\% tail of workloads, and that they
+% implemented an adaptive variant (S3-FIFO-d) that loses to static
+% S3-FIFO on most traces. They report that ``tuning for a few traces
+% is easy, but obtaining good results across traces is very
+% challenging''~\cite{s3fifo}. The promotion rule itself uses a 2-bit
+% access counter with a threshold of $T = 2$---promote on the second
+% hit in $S$. We adopt this as our motivation: the static $|S|$ split
+% and the fixed-threshold counter are both natural targets for
+% replacement with cache-internal learning.
+\subsection{Three paradigms of learned caching}
+ 
+Our literature review surfaced three structural patterns in learned
+cache replacement, broadly tracking the trade-off between expressive
+power and per-decision overhead.
+ 
+\textbf{Expert weighting.} The earliest and lightest paradigm.
+LeCaR~\cite{lecar} runs shadow LRU and LFU policies in parallel and
+uses regret minimization to
+combine their decisions, with ghost-cache hits providing the
+loss signal. CACHEUS~\cite{cacheus} extends this with two
+more principled experts (scan-resistant LRU and churn-resistant
+LFU) and learns the learning rate itself via stochastic
+hill-climbing. Across 17,766 experiments on 329 workloads,
+CACHEUS is the most consistently competitive policy in its
+benchmark. The cost is two parallel shadow policies; there is
+no per-object feature engineering.
+ 
+\textbf{Object-level Belady approximation.} The most expressive paradigm.
+LRB~\cite{lrb} trains a LightGBM model on $\sim 44$ per-object
+features---inter-request time deltas, exponentially decayed
+frequency counters at multiple timescales, object size---to
+predict next-access time. The object predicted farthest in the
+future is evicted. On six production CDN traces, LRB reduces WAN
+traffic by 5--24\%. 
+ 
+\textbf{Group-level learning.} The middle path.
+GL-Cache~\cite{glcache} clusters objects by insertion-time proximity
+and learns a utility function per group via online XGBoost. Eviction
+happens at the group level. Per-object metadata drops below 1
+byte, throughput is $228\times$ that of LRB, and hit-ratio improves
+by 7\% on average across 118 traces.
+ 
+% The takeaway from the survey is that simpler, low-latency learned
+% models are the production-deployable path. This is the design
+% constraint we adopt: cache-internal features only, online linear
+% models, no offline training pipeline.
+ 
+\subsection{HALP: the deployed template}
+ 
+HALP~\cite{halp} is the closest deployed analog of what we build.
+At YouTube's CDN, an LRU-class heuristic pre-selects $k=4$ eviction
+candidates from the tail, and a small continuously-trained MLP
+scores each candidate. Pairwise preference loss against
+Belady-derived ``correct'' pairs is the training signal. The
+heuristic stays in charge of the candidate set; the model only
+re-ranks. The reported gain is 9.1\% byte-miss-ratio reduction at
+1.8\% CPU overhead.
+ 
+We borrow three things from HALP: (i) the philosophy of leaving
+the heuristic in charge of the search space, (ii) the use of
+Belady-derived labels rather than reinforcement-style rewards,
+and (iii) the continuous-online-update training pattern.
+We diverge in three ways: (i) we apply the model at the
+\emph{promotion} decision rather than the eviction decision, (ii)
+we use an online linear model rather than an MLP, and (iii) we
+use cache-internal features only, with no per-object metadata
+beyond a few floats.
+ 
+%-------------------------------------------------------------------------------
+\section{Design}
+\label{sec:design}
+%-------------------------------------------------------------------------------
+ 
+\subsection{Decision rule}
+ 
+S3-FIFO-L modifies exactly one decision in S3-FIFO: the $S\to M$
+promotion classifier. At the time an object reaches the tail of
+$S$, instead of consulting the accessed bit alone, we score
+\begin{equation*}
+z = b + w_1\!\cdot\!\log(1+\textrm{hits}) + w_2\!\cdot\!\textrm{age}_S + w_3\!\cdot\!\textrm{rec},
+\end{equation*}
+and promote iff $\sigma(z) > 0.5$ ($z > 0$). The features are
+defined in Table~\ref{tab:features}; all are computable from
+state already maintained by S3-FIFO plus three additional floats
+per $S$-resident.
+ 
+\begin{table}[t]
+\small
+\begin{tabular}{ll}
+\toprule
+Feature & Definition \\
+\midrule
+$\log(1+\textrm{hits})$ & uncapped log-count of hits in $S$ \\
+$\textrm{age}_S$ & $(\textrm{now} - t_{\text{insert}}) / |S|$ \\
+$\textrm{rec}$ & $(\textrm{now} - t_{\text{lasthit}}) / |S|$ \\
+\bottomrule
+\end{tabular}
+\caption{The three V4 features. Times are in virtual units (request
+counts). Normalization by $|S|$ keeps the features
+scale-invariant under cache resizing.}
+\label{tab:features}
+\end{table}
+ 
+\subsection{Online training}
+ 
+The training label is a Belady-binary indicator:
+\[
+y = \mathbf{1}\big[\,\textrm{nxt\_acc\_vtime}(x) - \textrm{now} < H\,\big],
+\]
+with horizon $H = $ cache size. We use the
+\texttt{next\_access\_vtime} field already present in
+libCacheSim's \texttt{oracleGeneral} trace format, so no extra
+trace processing is required. Updates use online stochastic
+gradient descent on the logistic loss with learning rate
+$\eta = 0.05$ and L2 regularization $\lambda = 10^{-4}$.
+In a production deployment, the Belady label would not be
+available at decision time. Following HALP's
+delayed-online-update pattern, the production version of the gate
+would: (i) snapshot $\langle\textrm{obj\_id}, \phi(x), \textrm{gate output}\rangle$
+into a pending buffer at each promotion decision; (ii) wait for
+the label to resolve via either a hit on $x$ within the horizon
+($y=1$) or eviction of $x$ from $M$ or $G$ without a re-access
+($y=0$); (iii) apply one SGD step on the resolved tuple and drop
+it. The pending buffer size is bounded by the cache's residency
+window. For this paper, we use offline Belady labels directly
+as an upper bound on what the delayed-online scheme would learn.
+
+ 
+\subsection{Feature ablation: from V3 to V4}
+ 
+The headline feature set above (V4) is the result of a systematic
+ablation. An earlier version (V3) used four features: $\log(1+\textrm{hits})$,
+the 2-bit frequency counter S3-FIFO already maintains, 
+$\textrm{age}_S$, and recency since
+last hit. The 2-bit frequency counter is redundant with
+  $\log(1+\textrm{hits})$, which is the same quantity uncapped, and I saw no loss in accuracy from dropping these feature.
+Removing this feature produces V4: 3 features, 4 parameters.
+V4 ties or beats V3 on every cell in our evaluation. We also tried
+a piecewise-linear GAM extension (V9) with 16 parameters; it ties
+or loses to V4 and overall seemed to be much more finicky in training. Overall, early experiments suggested that the Belady boundary is well-approximated
+by a linear function of the V4 features at the
+trace lengths we run (500K requests).
+ 
+%-------------------------------------------------------------------------------
+\section{Implementation}
+\label{sec:impl}
+%-------------------------------------------------------------------------------
+ 
+\subsection{Harness architecture}
+
+We build on libCacheSim~\cite{libcachesim}, a high-performance C++ cache simulator that ships canonical implementations of 18 baselines: classical replacement policies (FIFO, LRU, LFU, ARC, TwoQ, SLRU, SIEVE, ClockPro, S3-FIFO), recency-based non-LRU policies (LIRS, Hyperbolic), frequency-aware policies (WTinyLFU, GDSF, LHD, QDLP), the Belady-optimal oracle, and the learning-augmented policies LeCaR and CACHEUS. Our harness has two components.
+
+\textbf{Native baseline path.} The standalone \texttt{cachesim} binary is invoked via a Python subprocess wrapper. Per-algorithm wall-clock throughput at cache size 10{,}000 is roughly $7$--$10$M requests/second on a 500K-request trace; at cache size 1{,}000 the same algorithms run at $\sim$20M requests/second. 
+\textbf{Python plugin path.} V4 and its ablations run in pure
+Python via libCacheSim's \texttt{PluginCache} interface, with
+\texttt{init/hit/miss/eviction/remove/free} hooks. This is
+slower but extensible: each ablation is a $\sim 100$-line
+subclass.
+ 
+\subsection{Trace selection}
+ 
+We evaluate on 14 traces from the libCacheSim public dataset
+collection, spanning four workload families:
+ 
+\begin{itemize}
+\item \textbf{Twitter KV} (5 traces): cluster10, 26, 45, 50, 52.
+  Key-value memcached traces released alongside the OSDI '20 Twitter
+  workload analysis~\cite{twittertraces}. Cluster52 is the
+  S3-FIFO paper's canonical hardest trace; clusters 45 and 50 are
+  write-heavy; cluster26 is locality-rich; cluster10 is near-uniform.
+\item \textbf{Block I/O} (6 traces): MSR Cambridge \texttt{hm\_0},
+  \texttt{proj\_0}, \texttt{prxy\_0}; CloudPhysics; Alibaba 110, 185.
+  \texttt{prxy\_0} has very high locality (Belady $\approx 0.04$ at
+  cache size 10K) and acts as a stress test where the right policy
+  is closer to LFU.
+\item \textbf{CDN} (2 traces): Wikipedia CDN 2019 and Meta CDN
+  \texttt{reag}.
+\item \textbf{Storage} (1 trace): Meta Tectonic \texttt{block1}.
+\end{itemize}
+ 
+All traces are in libCacheSim's \texttt{oracleGeneral} format, with
+the \texttt{next\_access\_vtime} field used for both Belady oracle
+computation and our V4 training labels. Two of the local CSV traces
+(Twitter cluster52 and CloudPhysics) required a one-time
+conversion script to add \texttt{next\_access\_vtime} via a backward
+pass over the trace.
+ 
+We evaluate two cache sizes per trace, chosen to roughly bracket
+the working-set knee (typical cache-fraction bands are 0.1--1\%
+and 1--10\% of the unique-object footprint). Each cell uses 500K
+requests; smaller traces use the full file.
+
+%-------------------------------------------------------------------------------
+\section{First Results: V4 vs.\ Vanilla S3-FIFO}
+\label{sec:eval}
+%-------------------------------------------------------------------------------
+ 
+We first evaluate V4 against vanilla S3-FIFO at
+$|S| = 10\%$, $T = 1$ split. Table~\ref{tab:initial} reports the
+six initial test cells. The pattern is encouraging: V4 wins on every
+cell, by 0.1--1.7~pp request-miss-ratio.
+ 
+\begin{table}[t]
+\small
+\centering
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{lrrrr}
+\toprule
+Trace & Cache & S3-FIFO & V4 & $\Delta$ \\
+\midrule
+twitter c52 & 1{,}000 & 0.3355 & 0.3184 & $-1.71$ \\
+twitter c52 & 10{,}000 & 0.2110 & 0.2078 & $-0.32$ \\
+twitter c45 & 1{,}000 & 0.5630 & 0.5459 & $-1.71$ \\
+twitter c45 & 10{,}000 & 0.4982 & 0.4940 & $-0.42$ \\
+msr hm\_0 & 1{,}000 & 0.3715 & 0.3704 & $-0.11$ \\
+cloudphys. & 5{,}000 & 0.7482 & 0.7365 & $-1.17$ \\
+\bottomrule
+\end{tabular}
+\caption{V4 vs.\ vanilla S3-FIFO at $|S|=10\%, T=1$. All deltas are
+in percentage points of request-miss-ratio. Negative is better.}
+\label{tab:initial}
+\end{table}
+ 
+The wins span workload families: Twitter KV (clusters 52 and 45),
+MSR block I/O, and CloudPhysics. 
+ 
+The trained weights are diagnostically distinct per cell, evidence
+the model is learning real workload structure rather than
+memorizing one. On Twitter cluster52 at cache size 10{,}000, the
+converged weights have $w_{\log\textrm{hits}} = +4.61$ and the
+gate effectively uses uncapped hit count to decide. On
+CloudPhysics 5{,}000, $w_{\textrm{rec}} = -1.08$ dominates,
+reflecting that recency-since-last-hit is the load-bearing
+feature on this temporally-clustered block-I/O trace. On Twitter
+cluster45 at cache size 1{,}000---a write-heavy trace---the
+model converges to an effectively NoPromote policy
+($z_{\max} \approx -0.68$ across all decisions); the right policy
+is to never promote, and the gate auto-discovers this.
+ 
+%-------------------------------------------------------------------------------
+\section{The Full Result: Is Learning Usable?}
+\label{sec:honest}
+%-------------------------------------------------------------------------------
+This initial result materialized somewhat early in the project's lifetime and showed the promise of applying learning to caching. However, as I expanded the project to involve testing over a greater number of traces, it also made sense to think more critically about the baselines I was comparing against.
+$|S| = 10\%$ is the S3FIFO's default, but the paper itself
+acknowledges that this split is suboptimal on some workloads. I would assume that 
+in cases where a production team is looking to apply some learning to their caching system, they're also willing to tune the basic hyperparameters of S3FIFO first. A
+proper comparison should let S3-FIFO use the ideal hyperparameters for the cache. This seems like a more reasonable and more effective baseline to compare S3FIFO-L on. 
+ 
+We therefore introduce two additional baselines:
+ 
+\begin{itemize}
+\item \textbf{OptS\_T2:} the post-hoc-best of S3-FIFO at $T=2$ with
+  $|S| \in \{0.01, 0.05, 0.10, 0.25\}$. One parameter and four configurations.
+\item \textbf{OptST:} the post-hoc-best of S3-FIFO over $|S| \in
+  \{0.01, 0.05, 0.10, 0.25\}$ and $T \in \{1, 2, 3\}$. Two parameters and 12 configurations.
+\end{itemize}
+ 
+Both OptS\_T2 and OptST are post-hoc oracles: they pick the right
+parameters with full knowledge of the trace, which is unfair to
+the gate (a true online learner). However, in production settings, I'd imagine that 
+deriving the optimal parameters is something that can be quickly back-tested and should remainly fairly static over time, except in cases of major distributional shift in workload (at which point, new values can be choosen). 
+
+For the sake of balance, we also add in a new learned model, V4+OptS. This model uses the V4 learning configuration but will run the configuration over $|S| \in
+  \{0.01, 0.05, 0.10, 0.25\}$, selecting the best post-hoc model for its performance. This emulates the fact that if a production team were to use learning in their cache system, they would also want to quickly tune the last remaining cache hyperparameter ($|S|$ size). 
+ 
+\subsection{Results across 14 traces}
+ 
+Table~\ref{tab:tally} reports the cross-trace win/loss tally. The wins-threshold is 0.1~pp.
+ 
+\begin{table}[t]
+\small
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+Comparison & W & L & T & mean$\Delta$ \\
+\midrule
+V4 vs.\ OptST                  & 3  & 16& 9  & $0.98$ \\
+V4+OptS vs.\ OptS\_T2 & 8  & 7 & 13 & $0.15$ \\
+\textbf{V4+OptS vs.\ OptST}             & \textbf{5}  & \textbf{10} & \textbf{13} & $\mathbf{0.39}$ \\
+\bottomrule
+\end{tabular}
+\caption{Win/loss tally on 28 cells. Mean$\Delta$ in pp; positive
+favors the second name. The decisive row is the bolded one:
+V4+OptS vs.\ OptST.}
+\label{tab:tally}
+\end{table}
+ 
+The decisive comparison is V4+OptS versus OptST: 5 wins, 10 losses, 13
+ties, with a mean $\Delta$ of $+0.39$~pp. \emph{The 4 trainable
+parameters of V4 contribute do not improve on
+average over a static $|S|$ and $T$ grid search.}
+ 
+% This is the honest finding. The earlier framing of ``V4 wins on
+% every cell'' was measuring against a non-canonical S3-FIFO
+% ($T=1$, $|S|=10\%$), which is the paper's published default with
+% the wrong $T$ and an un-tuned $S$. Once we hold knob count constant,
+% the learned gate has no demonstrable advantage on this trace set.
+ 
+\subsection{Three cells where learning genuinely helps}
+ 
+V4+OptS still beats OptST by at least 0.5~pp on three cells:
+\begin{itemize}
+  \item \textbf{cloudphysics 5{,}000:} V4+OptS $0.7333$ vs.\ OptST $0.7441$ ($-1.08$~pp). Recency-since-last-hit is the load-bearing feature ($w_{\textrm{rec}} = -1.08$); no static $(T, |S|)$ combination can express ``promote when recency is short.''
+  \item \textbf{msr\_proj\_0, cache 10{,}000:} V4+OptS $0.3673$ vs.\ OptST $0.3771$ ($-0.98$~pp). On this block-I/O workload the gate exploits a frequency-by-recency interaction that no static knob combination captures.
+  \item \textbf{twitter cluster52, cache 1{,}000:} V4+OptS $0.3133$ vs.\ OptST $0.3223$ ($-0.90$~pp). The gate converges to an NoPromote policy ($z_{max} < 0$), identifying that the S3FIFO policy over-promotes items that can appear in bursts. No static $(T, |S|)$ can reproduce this without being hand-set to skip promotion entirely.
+\end{itemize}
+
+\textbf{One of the most exciting results is that these traces are not ones in which OptST does poorly relative to other baselines -- in fact, it is the best on cloudphys and msr and 2nd to TwoQ on twitter\_52). This means that V4+OptS beats all baselines on these traces.} Unfortunately, I only discovered this property on the last day of the project, as I finish this writeup. However, this suggests an exciting research direction of learning augmentations to S3FIFO. The learned gate is not just boosting S3FIFO on traces where it is poor, allowing the learned cache to beform better (relative to S3FIFO) but to obtain middling results relative to other baselines. Instead, it suggests that there are cases where S3FIFO is already the best policy (and would perhaps be the choice for a production system) and that augmenting with simple learning can improve this system even more. 
+% These three cells share a property: the right policy is \emph{conditional} on a feature, not a constant choice of $(T, |S|)$. A static knob combination can shift where the policy sits but cannot make the policy change with workload state. This is what a defensible learning-augmented caching contribution looks like in this regime---narrow, not universal: across all 30 cells (15 traces $\times$ 2 cache sizes), V4+OptS wins on 11, ties on 2, and \emph{loses} on 17, including a $+9.6$~pp regression on \texttt{msr\_prxy\_0} at cache size 1{,}000 where the Belady-on-cache-size-horizon label is misaligned with the trace's high-locality structure. The honest contribution is the three cells where conditional promotion is the right policy; the rest of the workload space is well-served by static tuning.
+ 
+\subsection{One cell where learning fails catastrophically}
+
+\textbf{msr\_prxy\_0 at cache size 1{,}000} is the failure case. V4+OptS has a miss ratio of $0.5295$ whereas OptS\_T2 has $0.4472$; the best classical baseline (WTinyLFU) has $0.3733$. V4+OptS is $+8.23$~pp worse than the static-tuning ablation and $+15.62$~pp worse than the best classical contender.
+
+The mechanism is visible in the reuse-distance distribution (Figure~\ref{tab:msr_prxy_rdist}). 49.6\% of all reuses fall in the $[1024, 2048)$ bucket --- objects re-arrive immediately outside the cache. A further 27.8\% land in $[2048, 16384)$. Only 15.0\% of reuses are within the cache, so 85\% of all reuses miss; more than half of those would hit if the cache were doubled. The Belady-binary label with horizon $H = 1{,}000$ classifies the entire $[1024, \infty)$ tail as $y=0$, training the gate to demote exactly the objects that will return at distance $\sim$1{,}000. 
+
+This is a label-misalignment failure, not a feature failure or a capacity failure. In essence, the linear model and the labeling are not built to handle the issue of churning in caching, and the specific labeling decision exacerbates this issue. While this is a major issue, it is unclear if this is a problem that the learned gate should be particularly concerned with. OptST performs poorly on this trace relative to other classical baselines, and would not be selected for production in practice. 
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lrrr}
+\toprule
+Reuse distance & Reuses & \% of reuses & Cumulative \% \\
+\midrule
+$<64$              &       748{,}131 &  6.1\% &   6.1\% \\
+$[64,\,128)$       &        91{,}611 &  0.7\% &   6.8\% \\
+$[128,\,256)$      &       143{,}558 &  1.2\% &   8.0\% \\
+$[256,\,512)$      &       217{,}094 &  1.8\% &   9.8\% \\
+$[512,\,1024)$     &       654{,}214 &  5.3\% &  15.1\% \\
+\midrule
+\multicolumn{4}{l}{\textit{cache boundary \quad (15.0\% of reuses hit; 85.0\% miss)}} \\
+\midrule
+$[1024,\,2048)$    &  \textbf{6{,}134{,}361} & \textbf{49.6\%} &  64.7\% \\
+$[2048,\,4096)$    &     1{,}824{,}103 & 14.8\% &  79.5\% \\
+$[4096,\,8192)$    &     1{,}135{,}527 &  9.2\% &  88.7\% \\
+$[8192,\,16384)$   &       522{,}164 &  4.2\% &  92.9\% \\
+$[16384,\,32768)$  &       260{,}135 &  2.1\% &  95.0\% \\
+$[32768,\,65536)$  &       146{,}965 &  1.2\% &  96.2\% \\
+$[65536,\,131072)$ &       112{,}979 &  0.9\% &  97.1\% \\
+$[131072,\,262144)$ &       53{,}725 &  0.4\% &  97.5\% \\
+$\geq 262{,}144$   &       318{,}720 &  2.6\% & 100.0\% \\
+\midrule
+Total reuses       & 12{,}363{,}287 & 100.0\% & \\
+\bottomrule
+\end{tabular}
+\caption{Reuse-distance distribution on \texttt{msr\_prxy\_0} (12.4M reuses with a future access; 1.2\% of records have no future reuse and are excluded). Buckets are powers of two in number of intervening requests. The $[1024, 2048)$ bucket alone holds 49.6\% of reuses --- objects re-arrive just past the cache boundary at size 1{,}000. The Belady label with $H = 1{,}000$ marks the entire $[1024, \infty)$ tail as $y = 0$, training the gate to demote exactly the objects that will return at distance ${\sim}1{,}000$.}
+\label{tab:msr_prxy_rdist}
+\end{table}
+
+%  \subsection{One Explanation: Label sparsity}
+
+% One explanation for why the learning struggles is because of label sparsity. The Belady-binary label is heavily skewed toward $y = 0$ on every real trace we tested. The motivating example is on \texttt{cluster10}, the $y = 1$ rate is literally zero: no object's next access falls within $H = $ cache size. V4 collapses to a trivial ``never promote'' policy. On \texttt{cloudphysics 500}, the $y = 1$ rate is 0.5\% and 79\% of 200-decision windows contain zero positives. 
+
+% The decision-time hierarchy across all instrumented cells is:
+% \begin{itemize}
+%   \item \textbf{Degenerate ($y{=}1 = 0\%$):} cluster10 at any cache size.
+%   \item \textbf{Near-degenerate ($\leq 1\%$):} cloudphysics c=500 (0.48\%).
+%   \item \textbf{Light imbalance ($1{-}3\%$):} cluster45 c=1k (1.1\%), alibaba\_185 c=100 (1.6\%), cluster45 c=10k (2.1\%), msr\_hm\_0 c=1k (2.4\%).
+%   \item \textbf{Mild imbalance ($3{-}7\%$):} cloudphysics c=5k (3.8\%), msr\_proj\_0 c=1k (4.6\%), twitter c=1k (5.1\%), twitter c=10k (5.3\%).
+%   \item \textbf{High imbalance ($>7\%$):} alibaba\_110 c=100 (9.0\%), msr\_prxy\_0 c=1k (9.1\%), msr\_proj\_0 c=10k (9.8\%).
+% \end{itemize}
+
+% Cross-tabulating with V4+OptS performance against OptST: the mild bucket is the safest regime (mean $-0.63$~pp, 2 substantive wins, 0 losses); the high bucket is bimodal, containing both the largest single-cell win (\texttt{msr\_proj\_0 c=10k}, $-0.98$~pp) and the catastrophic failure (\texttt{msr\_prxy\_0 c=1k}, $+9.6$~pp). The light and near-degenerate buckets are dominated by ties: the predictor has too few positives per window to learn a useful signal. The degenerate bucket cannot be helped at all: every algorithm including Belady prints the same miss ratio.
+
+% We're not saying it is the case that label sparsity determines whether or not the learning approach suceeds -- msr\_prxy\_0 is a clear counter example of that. However, it is nearly impossible for S3FIFO-L to learn anything if there are too few examples to learn from -- suggesting future directions of attempting soft labels or altering the cutoff threshold in the future. 
+\subsection{Where S3-FIFO itself is the wrong substrate}
+
+Beyond \texttt{prxy\_0}, two cells reveal that the S3-FIFO substrate itself is mismatched to the workload regardless of the promotion gate.s
+
+On \texttt{cluster26} at cache size 1{,}000, LRU achieves $0.1044$ while V4+OptS achieves $0.1425$. The trace is locality-rich enough that pure recency dominates: LRU, ARC ($0.1069$), and LeCaR ($0.1075$) all beat every S3-FIFO variant. Even OptST only achieves $0.1272$ --- still $+2.28$~pp behind LRU. V4+OptS does beat the original S3-FIFO ($-3.88$~pp but cannot close the substrate gap; it ranks 11th of 17 non-Belady algorithms on this cell).
+
+On \texttt{block1} (Meta storage) at cache size 1{,}000, ARC gets $0.5445$ while V4+OptS gets $0.5526$. OptST gets $0.5468$, itself $+0.23$~pp behind ARC. V4+OptS shows improvement but still is 9th of 17 non-Belady algorithms.
+
+These are not failures of the learned gate but failures of the substrate: no S3-FIFO configuration, learned or statically tuned, reaches the right answer. 
+
+ %-------------------------------------------------------------------------------
+\section{Future Work}
+\textbf{Adaptive label horizons.} The single most concrete fix
+suggested by our failure analysis is to choose $H$ from the trace's
+reuse-distance distribution rather than from the cache size. A
+horizon at the 75th percentile of in-cache reuses, or a soft label
+would directly address the
+msr\_prxy\_0 failure mode. 
+\textbf{Apply the gate at the $M$-eviction decision.} S3-FIFO has
+a second hardcoded binary classifier at the $M$-eviction boundary
+(the $\textrm{freq} \geq 1$ rule, with reinsertion-with-decrement
+on the positive branch). A similar learned approach on this eviction boundary could perhaps yield complementary wins. 
+\textbf{Production-realistic delayed online updates.} The current
+results use offline Belady labels as an upper bound on what the
+delayed-online HALP-style update scheme would learn. A next step is to implement the delayed-update
+pipeline---snapshot at decision time, resolve at hit-or-eviction,
+SGD on the resolved tuple---and measure the gap to the offline
+upper bound.
+
+%-------------------------------------------------------------------------------
+\section{Conclusion}
+%-------------------------------------------------------------------------------
+
+We tested whether replacing S3-FIFO's hardcoded promotion rule with
+a tiny online linear classifier delivers reliable improvement
+across heterogeneous workloads. Against vanilla S3-FIFO the answer
+looked like yes; against fully-tuned S3-FIFO, the answer is mostly no, with a
+mean net effect that mildly favors static tuning.
+
+What survived the ablation is what makes the result interesting.
+On three cells, the gate beats not just every static S3-FIFO
+configuration but every classical and learned baseline we
+evaluated---including on workloads where tuned S3-FIFO is already
+the best non-oracle policy. These are precisely the cells where
+the optimal policy is conditional on a cache-internal feature. This empirical result shows the struggles and potentials of finding a useful learning-augmented caching
+contribution: narrow and difficulty to identify, but an opportunity for further exploration. 
+%-------------------------------------------------------------------------------
+% \section{Diagnostics}
+% \label{sec:diagnostics}
+% %-------------------------------------------------------------------------------
+ 
+% We instrumented V4's training trajectory on 9 cells, snapshotting
+% $(w, b)$ every 200 SGD updates and logging per-window $y=1$ rates.
+% Two pathologies emerged.
+ 
+% \subsection{Label sparsity}
+ 
+% The Belady-binary label is heavily skewed toward $y = 0$ on every
+% real trace we tested. On \texttt{cluster10}, the $y = 1$ rate is
+% literally zero: across 99{,}006 promotion decisions, no object's
+% next access falls within $H = $ cache size. V4 collapses to a
+% trivial ``never promote'' policy with one promotion in 99{,}006
+% calls. On \texttt{cloudphysics 500}, the $y = 1$ rate is 0.5\%
+% with 79\% of 200-decision windows containing zero positives---the
+% optimizer monotonically pushes weights toward $y = 0$ for most of
+% training, with rare positives yanking them back, producing visible
+% bias drift.
+ 
+% The full hierarchy is:
+% \begin{itemize}
+% \item \textbf{Degenerate ($y=1$ rate $= 0$):} cluster10 at any cache size.
+% \item \textbf{Near-degenerate ($\le 1\%$):} cloudphysics 500,
+%   alibaba\_185 100, cluster45 1{,}000.
+% \item \textbf{Heavy imbalance ($1$--$3\%$):} most block-I/O cells.
+% \item \textbf{Mild imbalance ($\sim 5\%$):} twitter cells.
+% \end{itemize}
+ 
+% The cells where learning genuinely helps from
+% Section~\ref{sec:honest} all sit in the mild-imbalance regime.
+ 
+% \subsection{Weight drift}
+ 
+% A second pathology shows up in the weight trajectories themselves.
+% On large-cache cells (cluster45 at 10K, twitter cluster52 at 10K),
+% $w_{\log\textrm{hits}}$ exhibits \emph{unbounded monotone drift}
+% rather than oscillation: zero sign-flips across the trajectory,
+% final value 4--5$\times$ the initial, with the stride-2 standard
+% deviation comparable to the absolute value of the weight. The
+% underlying cause is that L2 regularization at $\lambda = 10^{-4}$
+% provides no meaningful pull at these gradient magnitudes; the
+% weight grows monotonically until its predicted promotion rate
+% becomes too aggressive.
+ 
+% \textbf{The drift cells correlate with V4's losses to OptST.} On
+% \texttt{cluster45} at cache size 10{,}000, V4 is $+0.85$~pp behind
+% OptST and $w_{\log\textrm{hits}}$ has drifted to $+3.68$. On
+% \texttt{wiki} at cache size 10{,}000, V4 is $+0.34$~pp behind OptST.
+% Stronger or feature-specific L2 regularization is the obvious fix
+% and is the most concrete actionable result of the diagnostics.
+ 
+% \subsection{Implications}
+ 
+% The two pathologies are partially decoupled. Label sparsity makes
+% SGD oscillate around an effectively-uniform decision boundary on
+% small-cache cells; weight drift makes SGD over-commit to a single
+% feature on large-cache cells. Cluster10's 100\% degeneracy
+% explains why it appears as a ``safe'' cell in the cross-trace tally:
+% there is no decision V4 can make differently from ``never promote,''
+% so it cannot lose. It is not robustness; it is triviality.
+ 
+%-------------------------------------------------------------------------------
+% \section{Discussion and Future Work}
+% \label{sec:discussion}
+% %-------------------------------------------------------------------------------
+ 
+% \subsection{What the result means for learned-caching evaluations}
+ 
+% A number of recent learning-augmented caching papers report wins
+% against vanilla S3-FIFO at $|S|=10\%$ (or vanilla LRU/SIEVE) without
+% running the same-knob-count tuning ablation we run here. Our
+% finding---that a 4-value $|S|$ grid search at fixed $T=2$ explains
+% nearly all of V4's apparent average improvement---suggests that
+% this baseline-strength gap is a real concern. We do not claim
+% prior published results would necessarily collapse under this
+% ablation, but we suggest it is the right first comparison.
+ 
+% \subsection{Concrete next steps}
+ 
+% The diagnostic results identify three immediate follow-ups:
+ 
+% \textbf{1. Fix the label horizon.} The catastrophic failure on
+% \texttt{msr\_prxy\_0} is a label-misalignment artifact. A horizon $H$
+% chosen as a function of the trace's reuse-distance distribution
+% (e.g., the 75th percentile rather than $H = $ cache size) should
+% recover the cell. This is one trace-level statistic and a few lines
+% of code.
+ 
+% \textbf{2. Add per-feature L2 regularization.} The weight-drift cells
+% correlate with V4's losses to OptST. Strengthening the L2 penalty
+% on $w_{\log\textrm{hits}}$ specifically, or hard-clipping the weight
+% to a sensible range, should close those losses.
+ 
+% \textbf{3. Apply the gate at a second decision point.} S3-FIFO has a
+% \emph{second} hardcoded binary classifier at the $M$-eviction
+% boundary (the $\textrm{freq} \ge 1$ rule). The same model class,
+% features, and label apply. This roughly doubles the training data
+% for free and is $\sim 50$ lines of code.
+ 
+% \subsection{When to use a learned promotion gate}
+ 
+% The honest recommendation, given our results: don't replace the
+% S3-FIFO promotion rule with a learned gate by default. Instead,
+% identify the workload class. If the workload's optimal policy is
+% constant in cache-internal features (most KV and block-I/O traces
+% in our set), a 4-value $|S|$ grid search at $T = 2$ is the right
+% intervention---it captures essentially all the available
+% improvement at zero runtime overhead. If the workload's optimal
+% policy is conditional on a feature (CloudPhysics 5{,}000 is the
+% clearest example), then a learned gate provides defensible
+% additional gain on top of $|S|$ tuning. The gate is not free; it
+% should be deployed where the conditionality matters.
+ 
+% \subsection{When NOT to use it}
+ 
+% Workloads where the optimal substrate is not S3-FIFO at all
+% (\texttt{msr\_prxy\_0}, \texttt{cluster26}, \texttt{block1}) cannot be
+% rescued by any promotion gate. The right contribution for those
+% cells is a meta-policy over substrates, not a deeper gate. This
+% is the natural follow-up project.
+ 
+%-------------------------------------------------------------------------------
+% \section{Conclusion}
+% %-------------------------------------------------------------------------------
+ 
+% We set out to test whether replacing S3-FIFO's hardcoded
+% promote-on-accessed-bit rule with a tiny online linear classifier
+% delivers reliable improvement across heterogeneous workloads.
+% Against the canonical S3-FIFO baseline, the answer looks like
+% yes---wins on 8 out of 12 informative cells. Against a
+% same-knob-count static $|S|$ tuning ablation, the answer is
+% substantially more modest---a near-tie, with three cells of bona
+% fide conditional-policy improvement and one cell of catastrophic
+% label-misalignment failure.
+ 
+% The narrower, more defensible contribution is the
+% characterization itself: which workload shapes admit conditional
+% learned policies, which are dominated by static tuning, and which
+% lie outside the S3-FIFO substrate entirely. We hope this
+% serves as a methodological reference for future evaluations of
+% learning-augmented cache replacement, and as motivation for the
+% follow-up work---per-decision-point gates, label-horizon adaptation,
+% and meta-substrate selection---that the diagnostics here point
+% toward.
+
+ %-------------------------------------------------------------------------------
+% \section{Conclusion}
+% %-------------------------------------------------------------------------------
+
+% We set out to test whether replacing S3-FIFO's hardcoded
+% fixed-threshold promotion rule with a tiny online linear classifier
+% delivers reliable improvement across heterogeneous workloads. Against
+% the canonical S3-FIFO baseline, the answer looked like yes. Against a
+% fully-tuned S3-FIFO baseline that admits the same number of free
+% parameters as the gate, the answer is substantially more modest:
+% ties or losses on most cells, with a mean net effect that mildly
+% favors static tuning.
+
+% The defensible finding is what survives that ablation. On three
+% cells, the gate beats not just every static S3-FIFO configuration
+% but every classical and learned baseline available---including on
+% workloads where tuned S3-FIFO is already the best non-oracle policy.
+% These cells share a structural property visible in the converged
+% weights: the optimal policy is conditional on a cache-internal
+% feature, not constant in $(|S|, T)$. A static knob combination cannot
+% make the policy change with workload state; the gate can. This is
+% the empirical signature we would expect for a learning-augmented
+% contribution in this regime---narrow but real.
+
+% The failure modes point directly at the next steps. Label sparsity
+% is endemic to the Belady-on-cache-size-horizon objective and
+% degenerates entirely on workloads with no temporal structure within
+% $H$ requests. Soft labels, percentile-based horizons, or label
+% distillation from $M$-eviction outcomes would each address this.
+% The catastrophic regression on \texttt{msr\_prxy\_0} is a sharper
+% version of the same problem: $49.6\%$ of reuses land just past the
+% cache boundary at $H = 1{,}000$, and the Belady label trains the
+% gate to demote exactly the objects that will return. A horizon
+% chosen from the trace's reuse-distance distribution rather than the
+% cache size---one statistic, a few lines of code---should recover
+% this cell. The substrate-mismatch cells (\texttt{cluster26},
+% \texttt{block1}) are out of scope for any promotion-gate
+% contribution: no S3-FIFO configuration reaches the right answer.
+% The natural follow-up is a meta-policy that switches between
+% substrates---a Hedge-style combiner over \{S3-FIFO+V4, WTinyLFU,
+% ARC\}---and the cells where the gap to the right substrate is
+% $2$--$4$~pp and pure-S3-FIFO ablations cannot close it are exactly
+% the empirical motivation for that contribution.
+
+% A second concrete extension is to apply the same model class at
+% S3-FIFO's other binary classifier, the $M$-eviction rule (the
+% $\textrm{freq} \geq 1$ check). The same features, label, and training
+% loop apply. This roughly doubles the available training signal per
+% residency cycle.
+
+% The honest recommendation: do not replace S3-FIFO's promotion rule
+% with a learned gate by default. Identify the workload class first.
+% If the optimal policy is constant in cache-internal features, a
+% small $(|S|, T)$ grid search captures essentially all the available
+% improvement at zero runtime overhead. If the optimal policy is
+% conditional on a feature, the gate provides defensible additional
+% gain on top of $(|S|, T)$ tuning, and on the cells where this
+% happens the gain holds against every available baseline. The gate
+% is not free, and it should be deployed where the conditionality
+% matters.
+%-------------------------------------------------------------------------------
+%-------------------------------------------------------------------------------
+ 
+ 
+%-------------------------------------------------------------------------------
+%-------------------------------------------------------------------------------
+\begin{thebibliography}{99}
+ 
+\bibitem{s3fifo}
+Juncheng Yang, Yazhuo Qiu, Yao Zhang, Yue Yue, and K.~V. Rashmi.
+\newblock {FIFO} queues are all you need for cache eviction.
+\newblock In {\em Proceedings of the 29th Symposium on Operating Systems
+  Principles (SOSP '23)}, 2023.
+ 
+\bibitem{sieve}
+Yazhuo Zhang, Juncheng Yang, Yao Yue, Ymir Vigfusson, and K.~V. Rashmi.
+\newblock {SIEVE} is simpler than {LRU}: an efficient turn-key eviction
+  algorithm for web caches.
+\newblock In {\em 21st USENIX Symposium on Networked Systems Design and
+  Implementation (NSDI '24)}, 2024.
+ 
+\bibitem{halp}
+Zhenyu Song, Daniel~S. Berger, Kai Li, Anees Shaikh, Wyatt Lloyd, Soudeh
+  Ghorbani, Changhoon Kim, Aditya Akella, Arvind Krishnamurthy, Emmett
+  Witchel, and Radhika Mittal.
+\newblock Cache eviction in practice: a heuristic-augmented learned policy.
+\newblock In {\em 20th USENIX Symposium on Networked Systems Design and
+  Implementation (NSDI '23)}, 2023.
+ 
+\bibitem{lrb}
+Zhenyu Song, Daniel~S. Berger, Kai Li, and Wyatt Lloyd.
+\newblock Learning relaxed {Belady} for content distribution network caching.
+\newblock In {\em 17th USENIX Symposium on Networked Systems Design and
+  Implementation (NSDI '20)}, 2020.
+ 
+\bibitem{glcache}
+Juncheng Yang, Ziming Mao, Yao Yue, and K.~V. Rashmi.
+\newblock {GL-Cache}: group-level learning for efficient and high-performance
+  caching.
+\newblock In {\em 21st USENIX Conference on File and Storage Technologies
+  (FAST '23)}, 2023.
+ 
+\bibitem{lecar}
+Giuseppe Vietri, Liana~V. Rodriguez, Wendy~A. Martinez, Steven Lyons, Jason
+  Liu, Raju Rangaswami, Ming Zhao, and Giri Narasimhan.
+\newblock Driving cache replacement with {ML}-based {LeCaR}.
+\newblock In {\em 10th USENIX Workshop on Hot Topics in Storage and File
+  Systems (HotStorage '18)}, 2018.
+ 
+\bibitem{cacheus}
+Liana~V. Rodriguez, Farzana Yusuf, Steven Lyons, Eysler Paz, Raju Rangaswami,
+  Jason Liu, Ming Zhao, and Giri Narasimhan.
+\newblock Learning cache replacement with {CACHEUS}.
+\newblock In {\em 19th USENIX Conference on File and Storage Technologies
+  (FAST '21)}, 2021.
+ 
+\bibitem{adaptsize}
+Daniel~S. Berger, Ramesh~K. Sitaraman, and Mor Harchol-Balter.
+\newblock {AdaptSize}: orchestrating the hot object memory cache in a content
+  delivery network.
+\newblock In {\em 14th USENIX Symposium on Networked Systems Design and
+  Implementation (NSDI '17)}, 2017.
+ 
+\bibitem{arc}
+Nimrod Megiddo and Dharmendra~S. Modha.
+\newblock {ARC}: a self-tuning, low overhead replacement cache.
+\newblock In {\em 2nd USENIX Conference on File and Storage Technologies
+  (FAST '03)}, 2003.
+ 
+\bibitem{lykourisvassil}
+Thodoris Lykouris and Sergei Vassilvitskii.
+\newblock Competitive caching with machine learned advice.
+\newblock In {\em 35th International Conference on Machine Learning
+  (ICML '18)}, 2018.
+ 
+\bibitem{libcachesim}
+Juncheng Yang, Ziming Mao, Yao Yue, and K.~V. Rashmi.
+\newblock {libCacheSim}: a high-performance cache simulator.
+\newblock https://github.com/cacheMon/libCacheSim.
+ 
+\bibitem{twittertraces}
+Juncheng Yang, Yao Yue, and K.~V. Rashmi.
+\newblock A large scale analysis of hundreds of in-memory cache clusters at
+  {Twitter}.
+\newblock In {\em 14th USENIX Symposium on Operating Systems Design and
+  Implementation (OSDI '20)}, 2020.
+ 
+\end{thebibliography}
+ 
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%  LocalWords:  endnotes includegraphics fread ptr nobj noindent
+%%  LocalWords:  pdflatex acks
