@@ -1,6 +1,7 @@
 ## ConnectFS: A Real-time Internet Data Aggregator File System
 
 Author: Zani Xu
+
 Abstract: ConnectFS is a real-time internet data aggregator filesystem that extends the Unix “everything is a file” abstraction to the internet. Unix traditionally represents hardware devices, process metadata, and kernel parameters as local files, but ConnectFS enables users to access internet data using standard command-line tools such as cat and grep. The system utilizes a three-tier architecture in order to bridge the latency gap between local access and remote APIs. Tier 1 utilizes a FUSE-based daemon to intercept system calls and displays the data as a local virtual filesystem. Tier 2 consists of a Flask aggregator server that makes API requests and gives data to Tier 1 while utilizing polling and caching to maintain freshness while still keeping local latency low. Tier 3 consists of the external providers, which for the sake of this project is Yahoo Finance. The current implementation of the project supports dynamic updates through a writable .config file, allowing the user to change which tickers are being cached and polled.
 
 ## Repository Layout
