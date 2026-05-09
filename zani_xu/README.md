@@ -35,7 +35,7 @@ pip install -r requirements.txt
 flask --app app run --host=0.0.0.0
 ```
 
-To check, visit ttp://domainname.com:5000/?ticker=AAPL
+To check, visit http://domainname.com:5000/?ticker=AAPL
 
 In another terminal:
 ```
