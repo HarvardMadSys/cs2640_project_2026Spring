@@ -1,0 +1,164 @@
+syntax = "proto3";
+
+package kvstore;
+
+service KVStore {
+	rpc Put(PutRequest) returns (PutResponse);
+	rpc Get(GetRequest) returns (GetResponse);
+	rpc Delete(DeleteRequest) returns (DeleteResponse);
+
+	// Internal replication path used by leader -> follower
+	// and by the quorum coordinator -> peers.
+	rpc ReplicateWrite(ReplicateWriteRequest) returns (ReplicateWriteResponse);
+
+	// Anti-entropy RPCs used by the background DigestSync thread.
+	rpc DigestScan(DigestScanRequest) returns (DigestScanResponse);
+	rpc FetchKey(FetchKeyRequest) returns (FetchKeyResponse);
+
+	rpc Health(HealthRequest) returns (HealthResponse);
+	rpc Metrics(MetricsRequest) returns (MetricsResponse);
+
+	// Simple experiment control for failure injection.
+	rpc SetNodeState(SetNodeStateRequest) returns (SetNodeStateResponse);
+}
+
+// Version metadata used by both Lamport and vector-clock modes.
+// - logical_time + node_id are always populated.
+// - vector is populated only in vector-clock mode.
+message VectorEntry {
+	string node_id = 1;
+	uint64 time = 2;
+}
+
+message Version {
+	uint64 logical_time = 1;
+	string node_id = 2;
+	repeated VectorEntry vector = 3;
+}
+
+message PutRequest {
+	string key = 1;
+	bytes value = 2;
+}
+
+message PutResponse {
+	bool ok = 1;
+	string error = 2;
+	Version version = 3;
+}
+
+message GetRequest {
+	string key = 1;
+}
+
+message GetResponse {
+	bool found = 1;
+	bytes value = 2;
+	Version version = 3;
+	string error = 4;
+}
+
+message DeleteRequest {
+	string key = 1;
+}
+
+message DeleteResponse {
+	bool ok = 1;
+	string error = 2;
+	Version version = 3;
+}
+
+message ReplicateWriteRequest {
+	string key = 1;
+	bytes value = 2;
+	bool is_delete = 3;
+	Version version = 4;
+	string source_node_id = 5;
+	// When true, the receiver should treat this as a repair write
+	// (still applies LWW, but counts toward repair_ops/repair_bytes).
+	bool is_repair = 6;
+}
+
+message ReplicateWriteResponse {
+	bool ok = 1;
+	string error = 2;
+}
+
+message DigestEntry {
+	string key = 1;
+	Version version = 2;
+	bool is_tombstone = 3;
+}
+
+message DigestScanRequest {
+	// Optional: only return entries strictly newer than this floor
+	// (logical_time only; advisory, not authoritative).
+	uint64 since_logical_time = 1;
+}
+
+message DigestScanResponse {
+	repeated DigestEntry entries = 1;
+}
+
+message FetchKeyRequest {
+	string key = 1;
+}
+
+message FetchKeyResponse {
+	bool found = 1;
+	bytes value = 2;
+	Version version = 3;
+	bool is_tombstone = 4;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+	bool serving = 1;
+	string node_id = 2;
+	string mode = 3;
+	bool is_leader = 4;
+}
+
+message MetricsRequest {}
+
+message MetricsResponse {
+	uint64 put_count = 1;
+	uint64 get_count = 2;
+	uint64 delete_count = 3;
+	uint64 replicate_count = 4;
+
+	double put_p50_ms = 5;
+	double put_p95_ms = 6;
+	double put_p99_ms = 7;
+
+	double get_p50_ms = 8;
+	double get_p95_ms = 9;
+	double get_p99_ms = 10;
+
+	double delete_p50_ms = 11;
+	double delete_p95_ms = 12;
+	double delete_p99_ms = 13;
+
+	double replicate_p50_ms = 14;
+	double replicate_p95_ms = 15;
+	double replicate_p99_ms = 16;
+
+	// Repair / anti-entropy counters.
+	uint64 repair_ops = 17;
+	uint64 repair_bytes = 18;
+	uint64 read_repair_ops = 19;
+	uint64 anti_entropy_rounds = 20;
+
+	// Error counters.
+	uint64 error_count = 21;
+}
+
+message SetNodeStateRequest {
+	bool enabled = 1;
+}
+
+message SetNodeStateResponse {
+	bool ok = 1;
+	string error = 2;
+}
