@@ -28,9 +28,10 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from cycler import cycler
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-BUILD_BENCH_DIR = REPO_ROOT / "build" / "benchmarks"
-BUILD_DIR = REPO_ROOT / "build"
+SRC_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = SRC_ROOT.parent
+BUILD_BENCH_DIR = SRC_ROOT / "build" / "benchmarks"
+BUILD_DIR = SRC_ROOT / "build"
 HOST_BIN = BUILD_DIR / "host"
 RESULTS_DIR = REPO_ROOT / "results"
 
@@ -128,7 +129,7 @@ def label_for(series: str) -> str:
 def make_build() -> None:
     print("[make] build", file=sys.stderr)
     subprocess.run(
-        ["make", "build"], cwd=REPO_ROOT, check=True,
+        ["make", "build"], cwd=SRC_ROOT, check=True,
         stdout=subprocess.DEVNULL, stderr=sys.stderr,
     )
 

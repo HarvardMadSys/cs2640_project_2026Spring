@@ -28,12 +28,13 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO_ROOT / "benchmarks"))
+SRC_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = SRC_ROOT.parent
+sys.path.insert(0, str(SRC_ROOT / "benchmarks"))
 from run_benchmarks import configure_style
 
 RESULTS_DIR = REPO_ROOT / "results" / "ycsb"
-LIGHTNING_BUILD = REPO_ROOT / "external" / "lightning" / "build"
+LIGHTNING_BUILD = SRC_ROOT / "external" / "lightning" / "build"
 LIGHTNING_SOCKET = Path("/tmp/lightning")
 
 WORKLOADS = ["workloada", "workloadb", "workloadc", "workloadd", "workloadf"]
@@ -68,7 +69,7 @@ def parse_output(text: str) -> dict[str, float]:
 def make_invoke(env: dict[str, str], target: str) -> str:
     cmd = ["make", target] + [f"{k}={v}" for k, v in env.items()]
     print("[run]", " ".join(cmd), file=sys.stderr)
-    r = subprocess.run(cmd, cwd=REPO_ROOT, text=True, capture_output=True)
+    r = subprocess.run(cmd, cwd=SRC_ROOT, text=True, capture_output=True)
     if r.returncode != 0:
         sys.stderr.write(r.stdout)
         sys.stderr.write(r.stderr)
@@ -78,7 +79,7 @@ def make_invoke(env: dict[str, str], target: str) -> str:
 
 def build_ycsb() -> None:
     print("[build] make ycsb", file=sys.stderr)
-    subprocess.run(["make", "ycsb"], cwd=REPO_ROOT, check=True,
+    subprocess.run(["make", "ycsb"], cwd=SRC_ROOT, check=True,
                    stdout=subprocess.DEVNULL, stderr=sys.stderr)
 
 
@@ -117,7 +118,7 @@ def run_lightning(workload: str, threads: int) -> dict[str, float]:
             cmd = ["make", "ycsb-bench-only"] + [f"{k}={v}" for k, v in env.items()]
             if i == 0:
                 print(f"[run × {threads}]", " ".join(cmd), file=sys.stderr)
-            p = subprocess.Popen(cmd, cwd=REPO_ROOT,
+            p = subprocess.Popen(cmd, cwd=SRC_ROOT,
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE, text=True)
             procs.append(p)

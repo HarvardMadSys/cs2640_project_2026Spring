@@ -28,6 +28,16 @@ into a single flat address space. See `report/` for the write-up.
 
 ## Layout
 
+The repo is organized as:
+
+- `src/`: all C++ source, build files, and benchmarks.
+- `report/`: LaTeX paper.
+- `presentation/`: slides.
+- `results/`: benchmark output (JSON + PNG plots written by the scripts in
+  `src/benchmarks/`).
+
+Everything below is rooted at `src/`.
+
 ### Top-level Source
 
 - `client.h`: single-header client API (`sas::put`, `sas::get`, `sas::deref`,
@@ -62,7 +72,7 @@ under a *read* lock; SAS-DB's default backend.
 - `compare_{spinlock,sharded,ebr,hp,hybrid}.cpp`: per-backend microbenchmarks.
 - `compare_shm.cpp`, `sas.cpp`: SAS-vs-SHM architecture comparison.
 - `end_to_end.cpp`: end-to-end SAS-DB stack on top of the chosen backend.
-- `run_benchmarks.py`: sweep driver; writes JSON to `results/` and emits
+- `run_benchmarks.py`: sweep driver; writes JSON to `../results/` and emits
 matplotlib plots.
 - `run_ycsb.py`: YCSB driver; runs SAS and Lightning across workloads and thread
 counts.
@@ -89,14 +99,12 @@ Third party headers: `xxhash.h`, `zipfian_int_distribution.h`. `setup.sh`
 additionally fetches YCSB and Lightning into `external/{ycsb,lightning}` at
 install time.
 
-### `report/`, `presentation/`, `results/`
-
-LaTeX paper, slides, and benchmark output (JSONs + PNG plots written by
-`run_benchmarks.py` / `run_ycsb.py`).
-
 ## Build & test
 
+All build targets are run from `src/`.
+
 ```sh
+cd src
 ./setup.sh           # one-time setup
 make build           # compile to build/
 make test            # ctest
