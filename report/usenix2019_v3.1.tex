@@ -358,13 +358,13 @@ A \texttt{get} simply performs an atomic read of the pointer
 \texttt{\&table[hash(key)]}. Unfortunately, collisions are unavoidable, and
 resolving them in a lock-free table is substantially more involved. We discuss
 two influential designs. Michael's lock-free hash table~\cite{michael02highperf}
-resolves collssion by chaining each bucket to a Harris-Michael lock-free linked
+resolves collision by chaining each bucket to a Harris-Michael lock-free linked
 list~\cite{harris01lockfree}, with all of the insertion, lookup, and deletion
 operations expressible as CASes on node pointers. Shalev and Shavit's
 split-ordered list~\cite{shalev06splitorder} goes further and avoids rehashing
 entries on resize: keys are stored in a single linked list whose order is
-invariant under bucket-array growth, so resize updates pointers into the
-list rather than moving entries. Our implementation uses the first design for
+invariant under bucket-array growth, so resize updates pointers into the list
+rather than moving entries. Our implementation uses the first design for
 simplicity; note that since all of our values are pointers, copy overhead is not
 quite as important.
 
@@ -784,19 +784,19 @@ host.
 \end{figure}
 
 SAS-DB outperforms Lightning on every workload at every thread count we tested.
-The smallest 8-thread speedup, 5.7$\times$, occurs on the read-only workload C,
-which is the closest case to Lightning's best published configuration. The
-largest, 12.1$\times$, occurs on the 50/50 mixed workload A, where Lightning's
-global spinlock serializes both reads and writes. Two characteristics of the
-data are worth highlighting. First, SAS-DB's run-phase throughput grows roughly
-linearly with thread count: across the workload set, 8-thread throughput
-averages $3.8\times$ the single-threaded throughput, which is expected for a
-concurrent hash table with partitioned queries. Second, Lightning's run-phase
-throughput is essentially flat: its 8-thread numbers are within $\pm 15\%$ of
-its 1-thread numbers across all five workloads, consistent with the spinlock
-contention discussed in Section~\ref{sec:intro}. The gap therefore widens
-monotonically with thread count, and SAS-DB's advantage is not the result of a
-particular workload but the underlying scaling behavior.
+The smallest 8-thread speedup, 5.7x, occurs on the read-only workload C, which
+is the closest case to Lightning's best published configuration. The largest,
+12.1x, occurs on the 50/50 mixed workload A, where Lightning's global spinlock
+serializes both reads and writes. Two characteristics of the data are worth
+highlighting. First, SAS-DB's run-phase throughput grows roughly linearly with
+thread count: across the workload set, 8-thread throughput averages $3.8$x the
+single-threaded throughput, which is expected for a concurrent hash table with
+partitioned queries. Second, Lightning's run-phase throughput is essentially
+flat: its 8-thread numbers are within $\pm 15\%$ of its 1-thread numbers across
+all five workloads, consistent with the spinlock contention discussed in
+Section~\ref{sec:intro}. The gap therefore widens monotonically with thread
+count, and SAS-DB's advantage is not the result of a particular workload but the
+underlying scaling behavior.
 
 \section{Conclusion}
 
