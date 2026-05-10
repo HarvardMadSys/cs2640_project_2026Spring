@@ -1,0 +1,26 @@
+# CMake 
+src/build/
+src/build_san/
+
+# Python
+.venv/
+src/benchmarks/__pycache__/
+
+# YCSB
+src/external/ycsb/
+
+# Lightning
+src/external/lightning/
+
+# LaTeX
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.nav
+*.out
+*.snm
+*.synctex.gz
+*.toc
+*.bbl
+*.blg

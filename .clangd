@@ -1,0 +1,2 @@
+CompileFlags:
+  Add: [-I../, -std=c++23]
