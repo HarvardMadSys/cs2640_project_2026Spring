@@ -1,0 +1,13 @@
+{
+  "context": {},
+  "benchmarks": [
+    {
+      "name": "sas/real_time/threads:24",
+      "run_type": "iteration",
+      "iterations": 1,
+      "items_per_second": 47041433.6,
+      "page_walks_per_op": 0.23462898885802663,
+      "peak_rss_mb": 858.66015625
+    }
+  ]
+}

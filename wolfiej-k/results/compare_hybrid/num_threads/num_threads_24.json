@@ -1,0 +1,87 @@
+{
+  "context": {
+    "date": "2026-05-06T18:20:04-06:00",
+    "host_name": "node0.wolfiejk-304669.cs2640-pg0.utah.cloudlab.us",
+    "executable": "bench",
+    "num_cpus": 48,
+    "mhz_per_cpu": 2795,
+    "cpu_scaling_enabled": false,
+    "caches": [
+      {
+        "type": "Data",
+        "level": 1,
+        "size": 32768,
+        "num_sharing": 2
+      },
+      {
+        "type": "Instruction",
+        "level": 1,
+        "size": 32768,
+        "num_sharing": 2
+      },
+      {
+        "type": "Unified",
+        "level": 2,
+        "size": 524288,
+        "num_sharing": 2
+      },
+      {
+        "type": "Unified",
+        "level": 3,
+        "size": 16777216,
+        "num_sharing": 6
+      }
+    ],
+    "load_avg": [
+      11.6558,
+      14.3687,
+      13.2344
+    ],
+    "library_version": "v1.9.1",
+    "library_build_type": "release",
+    "json_schema_version": 1
+  },
+  "benchmarks": [
+    {
+      "name": "hybrid_fill/iterations:1/real_time/threads:24",
+      "family_index": 0,
+      "per_family_instance_index": 0,
+      "run_name": "hybrid_fill/iterations:1/real_time/threads:24",
+      "run_type": "iteration",
+      "repetitions": 1,
+      "repetition_index": 0,
+      "threads": 24,
+      "iterations": 24,
+      "real_time": 595736168.7511972,
+      "cpu_time": 562311723.5833334,
+      "time_unit": "ns",
+      "items_per_second": 293355.8105646166,
+      "peak_rss_mb": 700.17578125,
+      "wr_p50": 200.37582082701337,
+      "wr_p99": 1212.6315299691926,
+      "wr_p999": 4860.18709695236
+    },
+    {
+      "name": "hybrid/real_time/threads:24",
+      "family_index": 1,
+      "per_family_instance_index": 0,
+      "run_name": "hybrid/real_time/threads:24",
+      "run_type": "iteration",
+      "repetitions": 1,
+      "repetition_index": 0,
+      "threads": 24,
+      "iterations": 24377688,
+      "real_time": 573.5032119527827,
+      "cpu_time": 573.5029893318838,
+      "time_unit": "ns",
+      "items_per_second": 1743669.3974127756,
+      "peak_rss_mb": 538.15234375,
+      "rd_p50": 220.41340290971468,
+      "rd_p99": 912.067798728673,
+      "rd_p999": 1392.9697687135051,
+      "wr_p50": 90.169119372156,
+      "wr_p99": 851.9550524805695,
+      "wr_p999": 12743.544390632285
+    }
+  ]
+}

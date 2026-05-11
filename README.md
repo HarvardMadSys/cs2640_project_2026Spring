@@ -19,3 +19,4 @@
 - [Nicholas Yang: Mini Replicated KV Store](Nickanda/README.md)
 - [Cole Harten: AsyncMux: Event-Driven Coordination for Multiplexed Tiered Storage](ColeHarten/README.md)
 - [Minkai Li: Easy Learned Caching: An Honest Look at Augmenting S3-FIFO with a Learned Promotion Gate](Minkai25/README.md)
+- [Taj Jethwani-Keyser: In-Memory Object Storage in a Single Address Space](wolfiej-k/README.md)

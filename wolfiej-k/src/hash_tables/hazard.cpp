@@ -1,0 +1,106 @@
+#include <cassert>
+#include <vector>
+
+#include "common.h"
+#include "hash_table.h"
+#include "hazard.h"
+
+namespace sas::hp {
+
+hazard_domain::hazard_domain() {}
+
+hazard_domain::~hazard_domain() {
+    slots_.for_each([](hazard_node& node) {
+        for (auto& entry : node.orphaned) {
+            entry.free();
+        }
+    });
+}
+
+hazard_domain::hazard_node* hazard_domain::acquire_node() {
+    return slots_.acquire();
+}
+
+void hazard_domain::scan_and_reclaim(std::vector<retired_entry>& retired,
+                                     boost::unordered_flat_set<void*>& active) {
+    active.clear();
+    slots_.for_each_active([&](hazard_node& node) {
+        for (size_t i = 0; i < 2; ++i) {
+            void* hp = node.ptrs[i].load(std::memory_order_seq_cst);
+            if (hp) {
+                hp = reinterpret_cast<void*>(
+                    reinterpret_cast<uintptr_t>(hp) & ~1ULL);
+                active.insert(hp);
+            }
+        }
+    });
+
+    size_t kept = 0;
+    for (auto& entry : retired) {
+        if (active.contains(entry.ptr())) {
+            retired[kept++] = entry;
+        } else {
+            entry.free();
+        }
+    }
+    retired.resize(kept);
+}
+
+hazard_thread_state::hazard_thread_state() : domain_(*::sas::g_domain) {
+    ::sas::impl::init_pool();
+    ::sas::impl::init_node_pool();
+    node_ = domain_.acquire_node();
+    retired_.reserve(SCAN_THRESHOLD * 2);
+    active_.reserve(64);
+    for (auto& entry : node_->orphaned) {
+        push_retire(entry);
+    }
+    node_->orphaned.clear();
+}
+
+hazard_thread_state::~hazard_thread_state() {
+    for (auto& p : node_->ptrs) {
+        p.store(nullptr, std::memory_order_release);
+    }
+    domain_.scan_and_reclaim(retired_, active_);
+    node_->orphaned.insert(node_->orphaned.end(), retired_.begin(),
+                           retired_.end());
+    retired_.clear();
+    domain_.release_node(node_);
+}
+
+hash_table* hazard_thread_state::acquire_table(
+    const std::atomic<hash_table*>& src) noexcept {
+    hash_table* current = src.load(std::memory_order_acquire);
+    void* cached = node_->ptrs[impl::get_index<hash_table>()].load(
+        std::memory_order_relaxed);
+    if (static_cast<void*>(current) == cached) {
+        return current;
+    }
+    return domain_.protect<hash_table>(src, node_);
+}
+
+void hazard_thread_state::retire(object_handle* ptr) {
+    push_retire(tagged_ptr<void>(ptr, false));
+}
+
+void hazard_thread_state::retire(hash_table* ptr) {
+    push_retire(tagged_ptr<void>(ptr, true));
+}
+
+void hazard_thread_state::push_retire(tagged_ptr<void> ptr) {
+    retired_.push_back(ptr);
+    if (++retire_counter_ >= SCAN_THRESHOLD) {
+        retire_counter_ = 0;
+        domain_.scan_and_reclaim(retired_, active_);
+    }
+}
+
+hazard_domain::hazard_node* hazard_thread_state::node() { return node_; }
+
+hazard_thread_state& hazard_thread_state::get() {
+    thread_local hazard_thread_state state;
+    return state;
+}
+
+} // namespace sas::hp
